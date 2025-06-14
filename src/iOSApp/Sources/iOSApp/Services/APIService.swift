@@ -7,11 +7,17 @@ struct APIResponse<T: Decodable>: Decodable {
 
 class APIService {
     static let shared = APIService()
-    private let baseURL = URL(string: "https://your-api-base-url/api/")! // Please replace
+    private let baseURL = URL(string: "http://127.0.0.1:5001/api/")!
     private var csrfToken: String?
 
-    private func request<T: Decodable>(endpoint: String, method: String = "GET", body: Data? = nil, expectDataWrapper: Bool = true) async throws -> T {
-        let url = baseURL.appendingPathComponent(endpoint)
+    private func request<T: Decodable>(endpoint: String, method: String = "GET", queryItems: [URLQueryItem]? = nil, body: Data? = nil, expectDataWrapper: Bool = true) async throws -> T {
+        var urlComponents = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: false)!
+        urlComponents.queryItems = queryItems
+        
+        guard let url = urlComponents.url else {
+            throw AppError.invalidURL
+        }
+        
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -33,6 +39,8 @@ class APIService {
 
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             // Create a custom error and handle it
+            let dataString = String(data: data, encoding: .utf8) ?? "No data"
+            print("HTTP Error: \(response) with data: \(dataString)")
             throw AppError.networkError // Placeholder
         }
         
@@ -50,8 +58,14 @@ class APIService {
     // MARK: - Refactored Methods
 
     func fetchPriceAnalysis(stockCode: String, years: String, backTestDate: String?) async throws -> PriceAnalysisData {
-        let endpoint = "integrated-analysis?stockCode=\(stockCode)&years=\(years)&backTestDate=\(backTestDate ?? "")"
-        return try await request(endpoint: endpoint, expectDataWrapper: true)
+        var queryItems = [
+            URLQueryItem(name: "stockCode", value: stockCode),
+            URLQueryItem(name: "years", value: years)
+        ]
+        if let date = backTestDate {
+            queryItems.append(URLQueryItem(name: "backTestDate", value: date))
+        }
+        return try await request(endpoint: "integrated-analysis", queryItems: queryItems, expectDataWrapper: true)
     }
 
     func fetchMarketSentiment() async throws -> MarketSentimentResponse {
@@ -92,7 +106,7 @@ class APIService {
     }
 
     func searchStocks(keyword: String) async throws -> [SearchResult] {
-        let endpoint = "watchlist/search?keyword=\(keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        return try await request(endpoint: endpoint, expectDataWrapper: false)
+        let queryItems = [URLQueryItem(name: "keyword", value: keyword)]
+        return try await request(endpoint: "watchlist/search", queryItems: queryItems, expectDataWrapper: false)
     }
 } 

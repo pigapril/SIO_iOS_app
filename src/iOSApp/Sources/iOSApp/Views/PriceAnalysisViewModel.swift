@@ -10,7 +10,19 @@ class PriceAnalysisViewModel: ObservableObject {
     @Published var chartData: PriceAnalysisData?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var analysisResult: (price: Double, sentiment: String)?
+    @Published var analysisResult: (price: Double, sentimentKey: String)?
+    
+    @Published var analysisPeriod: AnalysisPeriod = .long {
+        didSet {
+            years = analysisPeriod.rawValue
+        }
+    }
+
+    enum AnalysisPeriod: String, CaseIterable {
+        case short = "0.5"
+        case medium = "1.5"
+        case long = "3.5"
+    }
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -18,6 +30,7 @@ class PriceAnalysisViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         analysisResult = nil
+        chartData = nil
 
         Task {
             do {
@@ -51,19 +64,38 @@ class PriceAnalysisViewModel: ObservableObject {
             return
         }
         
-        let sentiment: String
+        let sentimentKey: String
         if lastPrice >= lastPlus2Sd {
-            sentiment = "極度樂觀"
+            sentimentKey = "priceAnalysis.sentiment.extremeOptimism"
         } else if lastPrice > lastPlus1Sd {
-            sentiment = "樂觀"
+            sentimentKey = "priceAnalysis.sentiment.optimism"
         } else if lastPrice <= lastMinus2Sd {
-            sentiment = "極度悲觀"
+            sentimentKey = "priceAnalysis.sentiment.extremePessimism"
         } else if lastPrice < lastMinus1Sd {
-            sentiment = "悲觀"
+            sentimentKey = "priceAnalysis.sentiment.pessimism"
         } else {
-            sentiment = "中性"
+            sentimentKey = "priceAnalysis.sentiment.neutral"
         }
         
-        self.analysisResult = (price: lastPrice, sentiment: sentiment)
+        logLocalization(key: sentimentKey)
+        self.analysisResult = (price: lastPrice, sentimentKey: sentimentKey)
+    }
+
+    init() {
+        logLocalization(key: "priceAnalysis.pageTitle")
+        logLocalization(key: "priceAnalysis.form.title")
+        logLocalization(key: "priceAnalysis.chart.tabs.sd")
+        logLocalization(key: "nav.priceAnalysis")
+    }
+
+    private func logLocalization(key: String) {
+        let bundle = Bundle.module
+        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
+        
+        if localizedString == key {
+            print("❌ [Localization] Key not found: \(key) in bundle: \(bundle.bundleIdentifier ?? "N/A")")
+        } else {
+            print("✅ [Localization] Found value for key '\(key)': '\(localizedString)'")
+        }
     }
 } 

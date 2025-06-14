@@ -1,7 +1,9 @@
 import SwiftUI
 
-struct MainView: View {
-    var body: some View {
+public struct MainView: View {
+    public init() {}
+
+    public var body: some View {
         List {
             NavigationLink(destination: HomeView()) {
                 Label("首頁", systemImage: "house.fill")

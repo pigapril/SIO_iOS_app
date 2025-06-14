@@ -1,14 +1,22 @@
 import Foundation
 
 enum AppError: String, Error {
-    case networkError = "NETWORK_ERROR"
+    // General Errors
+    case invalidURL = "INVALID_URL"
+    case networkError = "NETWORK_ERROR" // Kept original for compatibility
     case timeoutError = "TIMEOUT_ERROR"
-    case googleAuthCancelled = "GOOGLE_AUTH_CANCELLED"
-    case googleAuthPopupBlocked = "GOOGLE_AUTH_POPUP_BLOCKED"
-    case turnstileRequired = "TURNSTILE_REQUIRED"
-    case turnstileError = "TURNSTILE_ERROR"
-    case turnstileExpired = "TURNSTILE_EXPIRED"
     case unknownError = "UNKNOWN_ERROR"
+    
+    // Auth Errors
+    case googleAuthCancelled = "GOOGLE_AUTH_CANCELLED"
+    case csrfError = "CSRF_ERROR"
+
+    // API-specific Errors
+    case unauthorized = "UNAUTHORIZED"
+    case forbidden = "FORBIDDEN"
+    case notFound = "NOT_FOUND"
+    case validationError = "VALIDATION_ERROR"
+    case serverError = "SERVER_ERROR"
 
     // Custom initializer to determine error from various sources
     init(error: Error) {

@@ -124,42 +124,46 @@ struct GaugeView: View {
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
 
-    var body: some View {
+    private var spyDomain: ClosedRange<Double> {
+        let spyData = data.map(\.spyClose)
+        let min = spyData.min() ?? 0
+        let max = spyData.max() ?? 500
+        return min...max
+    }
+
+    private var chartContent: some View {
         Chart {
             ForEach(data) { item in
                 LineMark(
                     x: .value("Date", item.date),
                     y: .value("Score", item.compositeScore)
                 )
-                .foregroundStyle(.blue)
-                .symbol(Circle().strokeBorder(lineWidth: 1.5))
                 .foregroundStyle(by: .value("Series", "Score"))
+                .symbol(by: .value("Series", "Score"))
 
                 LineMark(
                     x: .value("Date", item.date),
                     y: .value("S&P 500", item.spyClose)
                 )
-                .foregroundStyle(.green)
-                .symbol(Square().strokeBorder(lineWidth: 1.5))
                 .foregroundStyle(by: .value("Series", "S&P 500"))
                 .interpolationMethod(.catmullRom)
+                .symbol(by: .value("Series", "S&P 500"))
             }
         }
-        .chartYScale(domain: 0...100, for: "Score")
-        .chartYScale(domain: data.map(\.spyClose).min() ?? 0 ... data.map(\.spyClose).max() ?? 500, for: "S&P 500")
-        .chartYAxis {
-            AxisMarks(position: .leading, values: .automatic) { value in
-                AxisGridLine()
-                AxisTick()
-                AxisValueLabel()
+    }
+
+    var body: some View {
+        chartContent
+            .chartYScale(domain: 0...100)
+            .chartYAxis {
+                AxisMarks(position: .leading)
             }
-        }
-        .chartYAxis(for: "S&P 500") {
-            AxisMarks(position: .trailing, values: .automatic) { value in
-                 AxisGridLine()
-                AxisTick()
-                AxisValueLabel()
+            .chartYAxisLabel("Score", position: .leading)
+            
+            .chartYScale(domain: spyDomain)
+            .chartYAxis {
+                AxisMarks(position: .trailing)
             }
-        }
+            .chartYAxisLabel("S&P 500", position: .trailing)
     }
 } 
