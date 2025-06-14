@@ -9,6 +9,10 @@ class MarketSentimentViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedTimeRange: String = "1Y"
+    @Published var dateRange: ClosedRange<Date>? = nil
+    @Published var selectedDate: Date? = nil
+
+    private var fullDateRange: ClosedRange<Date>? = nil
 
     var compositeSentiment: String {
         guard let scoreString = sentimentData?.totalScore, let score = Double(scoreString) else {
@@ -33,6 +37,7 @@ class MarketSentimentViewModel: ObservableObject {
                 self.historicalData = try await history
                 
                 // Initial filter
+                setupDateRange()
                 filterData(for: selectedTimeRange)
 
             } catch {
@@ -41,6 +46,15 @@ class MarketSentimentViewModel: ObservableObject {
             }
             self.isLoading = false
         }
+    }
+
+    func setupDateRange() {
+        guard !historicalData.isEmpty else { return }
+        let dates = historicalData.map { $0.date }
+        guard let minDate = dates.min(), let maxDate = dates.max() else { return }
+        self.fullDateRange = minDate...maxDate
+        self.dateRange = minDate...maxDate
+        self.selectedDate = maxDate
     }
 
     func sentiment(for score: Double) -> String {
@@ -106,22 +120,67 @@ class MarketSentimentViewModel: ObservableObject {
         switch range {
         case "1M":
             startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
+        case "3M":
+            startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
         case "6M":
             startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
         case "1Y":
             startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
         case "3Y":
             startDate = calendar.date(byAdding: .year, value: -3, to: endDate)
+        case "5Y":
+            startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
         case "All":
             startDate = nil // No start date, show all
         default:
             startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
         }
 
+        let newFilteredData: [HistoricalDataItem]
         if let start = startDate {
-            filteredHistoricalData = historicalData.filter { $0.date >= start }
+            newFilteredData = historicalData.filter { $0.date >= start }
         } else {
-            filteredHistoricalData = historicalData
+            newFilteredData = historicalData
+        }
+
+        // Update the slider range based on the new filtered data
+        if let firstDate = newFilteredData.first?.date, let lastDate = newFilteredData.last?.date {
+            self.dateRange = firstDate...lastDate
+            if selectedDate == nil || !(dateRange?.contains(selectedDate!) ?? false) {
+                 self.selectedDate = lastDate
+            }
+        }
+        
+        filterDataBySlider()
+    }
+
+    func filterDataBySlider() {
+        guard let range = dateRange, let selected = selectedDate else {
+            if filteredHistoricalData.isEmpty {
+                 filteredHistoricalData = historicalData
+            }
+            return
+        }
+        
+        // This function now just filters based on the slider's current state
+        let sliderFilteredData = historicalData.filter { range.contains($0.date) }
+
+        // If you want the chart to only show data up to the selectedDate on the slider:
+        filteredHistoricalData = sliderFilteredData.filter { $0.date <= selected }
+    }
+}
+
+extension String {
+    var displayString: String {
+        switch self {
+        case "1M": return "1個月"
+        case "3M": return "3個月"
+        case "6M": return "6個月"
+        case "1Y": return "1年"
+        case "3Y": return "3年"
+        case "5Y": return "5年"
+        case "All": return "全部"
+        default: return self
         }
     }
 }
