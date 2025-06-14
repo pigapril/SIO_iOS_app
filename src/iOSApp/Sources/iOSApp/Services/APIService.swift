@@ -44,8 +44,12 @@ class APIService {
             throw AppError.networkError // Placeholder
         }
         
+        print("Raw JSON response for \(endpoint): \(String(data: data, encoding: .utf8) ?? "Unable to decode data")")
+        
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
 
         if expectDataWrapper {
             let wrappedResponse = try decoder.decode(APIResponse<T>.self, from: data)
@@ -74,6 +78,11 @@ class APIService {
 
     func fetchCompositeHistoricalData() async throws -> CompositeHistoricalDataResponse {
         return try await request(endpoint: "composite-historical-data", expectDataWrapper: false)
+    }
+
+    func fetchIndicatorHistoricalData(indicatorKey: String) async throws -> [IndicatorHistoricalDataItem] {
+        let queryItems = [URLQueryItem(name: "indicator", value: indicatorKey)]
+        return try await request(endpoint: "indicator-history", queryItems: queryItems, expectDataWrapper: false)
     }
 
     // MARK: - Watchlist Methods
