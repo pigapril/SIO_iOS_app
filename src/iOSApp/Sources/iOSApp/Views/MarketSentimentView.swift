@@ -208,6 +208,8 @@ struct SemiCircleGaugeView: View {
 
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
+    @State private var selectedDateForTooltip: Date? = nil
+    @State private var currentTooltipData: HistoricalDataItem? = nil
 
     private var spyDomain: ClosedRange<Double> {
         let spyData = data.map(\.spyClose)
@@ -265,7 +267,14 @@ struct HistoricalSentimentChart: View {
                     }
                 }
                 .chartYScale(domain: 0...100)
-                .chartYAxisLabel("綜合分數", position: .leading, alignment: .center)
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        // 移除 AxisValueLabel 以隱藏 Y 軸標籤
+                    }
+                }
+                .chartXAxis(.hidden)
 
                 // Chart for S&P 500
                 Chart {
@@ -282,15 +291,62 @@ struct HistoricalSentimentChart: View {
                     AxisMarks(position: .trailing) { value in
                         AxisGridLine().foregroundStyle(.clear)
                         AxisTick()
-                        if let doubleValue = value.as(Double.self) {
-                            AxisValueLabel(doubleValue.formatted(.number.precision(.fractionLength(0))))
+                        // 移除 AxisValueLabel 以隱藏 Y 軸標籤
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 5))
+                }
+                .chartOverlay { proxy in
+                    GeometryReader { geometry in
+                        Rectangle().fill(.clear).contentShape(Rectangle())
+                            .gesture(DragGesture()
+                                .onChanged { value in
+                                    let location = value.location
+                                    if let date: Date = proxy.value(atX: location.x) {
+                                        let closestItem = data.min(by: {
+                                            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+                                        })
+                                        
+                                        if let item = closestItem {
+                                            selectedDateForTooltip = item.date
+                                            currentTooltipData = item
+                                        }
+                                    }
+                                }
+                                .onEnded { _ in
+                                    selectedDateForTooltip = nil
+                                    currentTooltipData = nil
+                                }
+                            )
+
+                        if let selectedDate = selectedDateForTooltip,
+                           let xPosition = proxy.position(forX: selectedDate) {
+                            Rectangle()
+                                .fill(Color.secondary)
+                                .frame(width: 1, height: geometry.size.height)
+                                .position(x: xPosition, y: geometry.size.height / 2)
+                            
+                            if let tooltipData = currentTooltipData {
+                                VStack(alignment: .leading) {
+                                    Text(tooltipData.date, style: .date)
+                                        .font(.caption)
+                                        .bold()
+                                    Text("綜合分數: \(tooltipData.compositeScore, format: .number.precision(.fractionLength(0)))")
+                                        .font(.caption)
+                                    Text("S&P 500: \(tooltipData.spyClose, format: .number.precision(.fractionLength(0)))")
+                                        .font(.caption)
+                                }
+                                .padding(8)
+                                .background(Color.white)
+                                .cornerRadius(8)
+                                .shadow(radius: 5)
+                                .offset(x: xPosition > geometry.size.width / 2 ? xPosition - 160 : xPosition + 10, y: 10) // Dynamically adjust position
+                                .fixedSize() // Prevent text wrapping
+                            }
                         }
                     }
                 }
-                .chartYAxisLabel("S&P 500 價格", position: .trailing, alignment: .center)
-            }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 5))
             }
             
             // Custom Legend
