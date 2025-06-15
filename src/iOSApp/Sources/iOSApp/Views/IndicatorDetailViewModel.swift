@@ -15,6 +15,7 @@ class IndicatorDetailViewModel: ObservableObject {
     }
 
     func fetchData() {
+        
         isLoading = true
         errorMessage = nil
 

@@ -45,7 +45,7 @@ public struct MarketSentimentView: View {
         .navigationTitle(Text("nav.marketSentiment", bundle: .module))
         .background(Color(.systemGroupedBackground))
         .sheet(item: $selectedIndicatorKey) { key in
-            IndicatorDetailView(indicatorKey: key)
+            IndicatorDetailView(indicatorName: key)
         }
         .onAppear {
             if viewModel.sentimentData == nil {
@@ -140,7 +140,7 @@ public struct MarketSentimentView: View {
                             percentileRank: indicator.percentileRank,
                             viewModel: viewModel
                         )
-                        .onTapGesture { self.selectedIndicatorKey = detailKey }
+                        .onTapGesture { self.selectedIndicatorKey = key }
                     }
                 }
             }
