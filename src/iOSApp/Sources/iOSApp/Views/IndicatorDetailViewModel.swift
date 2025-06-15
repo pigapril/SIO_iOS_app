@@ -3,25 +3,55 @@ import Combine
 
 @MainActor
 class IndicatorDetailViewModel: ObservableObject {
-    @Published var historicalData: [IndicatorHistoricalDataItem] = []
+    // MARK: - Published Properties
+    @Published var filteredHistoricalData: [IndicatorHistoricalDataItem] = []
+    @Published var latestIndicatorData: IndicatorHistoricalDataItem?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var selectedTimeRange: TimeRangeOption = .oneYear
 
+    // MARK: - Private Properties
     private let indicatorKey: String
+    private var fullHistoricalData: [IndicatorHistoricalDataItem] = []
     private var cancellables = Set<AnyCancellable>()
+
+    // Enum for type-safe time range selection
+    enum TimeRangeOption: String, CaseIterable, Identifiable {
+        case oneMonth = "1M", threeMonths = "3M", sixMonths = "6M"
+        case oneYear = "1Y", twoYears = "2Y", fiveYears = "5Y", all = "All"
+        
+        var id: String { self.rawValue }
+        
+        var localizedKey: String {
+            switch self {
+                case .oneMonth: "timeRangeSelector.month1"
+                case .threeMonths: "timeRangeSelector.month3"
+                case .sixMonths: "timeRangeSelector.month6"
+                case .oneYear: "timeRangeSelector.year1"
+                case .twoYears: "timeRangeSelector.year2"
+                case .fiveYears: "timeRangeSelector.year5"
+                case .all: "All" // Assuming 'All' doesn't need translation or has a key
+            }
+        }
+    }
 
     init(indicatorKey: String) {
         self.indicatorKey = indicatorKey
     }
 
+    // MARK: - Data Fetching and Filtering
     func fetchData() {
+        guard fullHistoricalData.isEmpty else { return } // Fetch only once
         
         isLoading = true
         errorMessage = nil
 
         Task {
             do {
-                self.historicalData = try await APIService.shared.fetchIndicatorHistoricalData(indicatorKey: indicatorKey)
+                let data = try await APIService.shared.fetchIndicatorHistoricalData(indicatorKey: indicatorKey)
+                self.fullHistoricalData = data
+                self.latestIndicatorData = data.last
+                self.filterData(for: self.selectedTimeRange) // Apply initial filter
             } catch {
                 self.errorMessage = error.localizedDescription
                 ErrorHandler.handle(error: error, component: "IndicatorDetailViewModel")
@@ -29,31 +59,32 @@ class IndicatorDetailViewModel: ObservableObject {
             self.isLoading = false
         }
     }
-}
 
-// You will need to add this method to your APIService.swift
-/*
-extension APIService {
-    func fetchIndicatorHistoricalData(indicatorKey: String) async throws -> [IndicatorHistoricalDataItem] {
-        let url = baseURL.appendingPathComponent("/api/indicator-history")
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
-        components.queryItems = [
-            URLQueryItem(name: "indicator", value: indicatorKey)
-        ]
-
-        guard let requestUrl = components.url else {
-            throw URLError(.badURL)
+    func filterData(for range: TimeRangeOption) {
+        self.selectedTimeRange = range
+        guard !fullHistoricalData.isEmpty else {
+            filteredHistoricalData = []
+            return
         }
-        
-        var request = URLRequest(url: requestUrl)
-        request.httpMethod = "GET"
-        
-        let (data, _) = try await URLSession.shared.data(for: request)
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601 // Or whatever strategy you use globally
-        
-        return try decoder.decode([IndicatorHistoricalDataItem].self, from: data)
+
+        let calendar = Calendar.current
+        guard let endDate = fullHistoricalData.last?.date else { return }
+        var startDate: Date?
+
+        switch range {
+            case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
+            case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
+            case .sixMonths: startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
+            case .oneYear: startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
+            case .twoYears: startDate = calendar.date(byAdding: .year, value: -2, to: endDate)
+            case .fiveYears: startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
+            case .all: startDate = nil // No start date for all data
+        }
+
+        if let start = startDate {
+            self.filteredHistoricalData = fullHistoricalData.filter { $0.date >= start }
+        } else {
+            self.filteredHistoricalData = fullHistoricalData
+        }
     }
 }
-*/ 

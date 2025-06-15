@@ -1,105 +1,176 @@
 import SwiftUI
 import Charts
 
-struct IndicatorDetail: Decodable, Identifiable {
-    var id: String { title }
-    let title: String
-    let content: String
-}
-
+// Main Detail View
 struct IndicatorDetailView: View {
     @StateObject private var viewModel: IndicatorDetailViewModel
     @Environment(\.dismiss) private var dismiss
     
-    // **主要修改點**: 屬性名稱變更，使其更清晰
-    private let apiIndicatorKey: String
-    private let translationIndicatorKey: String
+    // Translation keys
+    private let indicatorTitleKey: String
+    private let descriptionShortKey: String
+    private let descriptionSectionsKey: String
 
-    // **主要修改點**: init 方法現在接收原始的 indicatorName
     init(indicatorName: String) {
-        self.apiIndicatorKey = indicatorName
-        // 內部轉換，找到用於翻譯的 key
-        self.translationIndicatorKey = Self.getTranslationKey(for: indicatorName)
+        let key = Self.getTranslationKey(for: indicatorName)
+        self.indicatorTitleKey = "indicators.\(key)"
+        self.descriptionShortKey = "marketSentiment.descriptions.\(key).shortDescription"
+        self.descriptionSectionsKey = "marketSentiment.descriptions.\(key).sections"
         _viewModel = StateObject(wrappedValue: IndicatorDetailViewModel(indicatorKey: indicatorName))
-    }
-
-    // **主要修改點**: 新增一個靜態方法，用於從 API 的 key 找到翻譯用的 key
-    private static func getTranslationKey(for name: String) -> String {
-        let map: [String: String] = [
-            "AAII Bull-Bear Spread": "aaiiSpread",
-            "CBOE Put/Call Ratio 5-Day Avg": "cboeRatio",
-            "Market Momentum": "marketMomentum",
-            "VIX MA50": "vixMA50",
-            "Safe Haven Demand": "safeHaven",
-            "Junk Bond Spread": "junkBond",
-            "S&P 500 COT Index": "cotIndex",
-            "NAAIM Exposure Index": "naaimIndex"
-        ]
-        return map[name] ?? "unknown"
-    }
-
-    private var shortDescription: String {
-        NSLocalizedString("marketSentiment.descriptions.\(translationIndicatorKey).shortDescription", comment: "")
-    }
-
-    private var sections: [IndicatorDetail] {
-        let jsonString = NSLocalizedString("marketSentiment.descriptions.\(translationIndicatorKey).sections", comment: "")
-        guard let data = jsonString.data(using: .utf8),
-              let decodedSections = try? JSONDecoder().decode([IndicatorDetail].self, from: data) else {
-            return []
-        }
-        return decodedSections
-    }
-    
-    private var indicatorTitle: String {
-         NSLocalizedString("indicators.\(translationIndicatorKey)", comment: "")
     }
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    
+                VStack(alignment: .leading, spacing: 24) {
                     if viewModel.isLoading {
-                        ProgressView().frame(height: 200)
+                        ProgressView().frame(maxWidth: .infinity, minHeight: 200)
                     } else if let errorMessage = viewModel.errorMessage {
-                        Text("圖表載入失敗: \(errorMessage)").foregroundColor(.red).frame(height: 200)
-                    } else if !viewModel.historicalData.isEmpty {
-                        VStack(alignment: .leading) {
-                            Text("歷史圖表").font(.title2.bold())
-                            IndicatorHistoricalChart(data: viewModel.historicalData)
-                                .frame(height: 250)
-                        }
-                        .padding(.bottom, 10)
-                    }
-                    
-                    Text(shortDescription).font(.body)
-
-                    ForEach(sections) { section in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(section.title).font(.title2).fontWeight(.bold)
-                            Text(section.content).font(.body)
-                        }
+                        errorView(message: errorMessage)
+                    } else {
+                        summaryView
+                        chartView
+                        descriptionView
                     }
                 }
                 .padding()
             }
-            .navigationTitle(indicatorTitle)
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(Text(LocalizedStringKey(indicatorTitleKey), bundle: .module))
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") { dismiss() }
+                    Button("Done") { dismiss() } // "Done" should be localized
                 }
             }
-            .onAppear {
-                if viewModel.historicalData.isEmpty {
-                    viewModel.fetchData()
+            .onAppear(perform: viewModel.fetchData)
+        }
+    }
+
+    // MARK: - Subviews
+
+    private var summaryView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("indicatorItem.latestDataLabel", bundle: .module)
+                .font(.headline)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: 20) {
+                MetricView(
+                    label: NSLocalizedString("indicatorItem.latestDataLabel", bundle: .module, comment: ""),
+                    value: viewModel.latestIndicatorData?.value.formatted(.number.precision(.fractionLength(2))) ?? "N/A"
+                )
+                Divider()
+                MetricView(
+                    label: NSLocalizedString("indicatorItem.fearGreedScoreLabel", bundle: .module, comment: ""),
+                    value: (viewModel.latestIndicatorData?.percentileRank?.formatted(.percent.precision(.fractionLength(0))) ?? "N/A")
+                )
+            }
+        }
+        .cardStyle()
+    }
+    
+    private var chartView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker("Time Range", selection: $viewModel.selectedTimeRange) {
+                ForEach(IndicatorDetailViewModel.TimeRangeOption.allCases) { option in
+                    Text(LocalizedStringKey(option.localizedKey), bundle: .module).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: viewModel.selectedTimeRange) { newRange in
+                viewModel.filterData(for: newRange)
+            }
+
+            IndicatorHistoricalChart(data: viewModel.filteredHistoricalData)
+                .frame(height: 250)
+        }
+        .cardStyle()
+    }
+
+    private var descriptionView: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text(LocalizedStringKey(descriptionShortKey), bundle: .module)
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            // The JSON parsing for sections remains the same logic as your original code
+            ForEach(getSections()) { section in
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(section.title).font(.headline)
+                    Text(section.content).font(.subheadline).foregroundColor(.secondary)
                 }
             }
         }
+        .cardStyle()
+    }
+
+    private func errorView(message: String) -> some View {
+        VStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.largeTitle)
+                .foregroundColor(.red)
+            Text("Error Loading Data") // Should be localized
+                .font(.headline)
+                .padding(.top, 4)
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, minHeight: 200)
+    }
+    
+    // MARK: - Helper Functions
+
+    private func getSections() -> [IndicatorDetailSection] {
+        // This helper function parses the localized string for sections
+        // It's safer to handle potential JSON parsing errors here.
+        let jsonString = NSLocalizedString(descriptionSectionsKey, bundle: .module, comment: "JSON array of sections")
+        guard let data = jsonString.data(using: .utf8),
+              let sections = try? JSONDecoder().decode([IndicatorDetailSection].self, from: data) else {
+            return []
+        }
+        return sections
+    }
+    
+    private static func getTranslationKey(for name: String) -> String {
+        // Same mapping as your original code
+        let map = [
+            "AAII Bull-Bear Spread": "aaiiSpread", "CBOE Put/Call Ratio 5-Day Avg": "cboeRatio",
+            "Market Momentum": "marketMomentum", "VIX MA50": "vixMA50",
+            "Safe Haven Demand": "safeHaven", "Junk Bond Spread": "junkBond",
+            "S&P 500 COT Index": "cotIndex", "NAAIM Exposure Index": "naaimIndex"
+        ]
+        return map[name] ?? "unknown"
     }
 }
 
-// IndicatorHistoricalChart 和 NumberFormatter extension 保持不變
+// Reusable Metric View for the summary
+struct MetricView: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(value)
+                .font(.title2.bold())
+            Text(LocalizedStringKey(label), bundle: .module)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// Placeholder for section data structure
+struct IndicatorDetailSection: Codable, Identifiable {
+    var id: String { title }
+    let title: String
+    let content: String
+}
+
+// MARK: - Chart View (Restored from original file)
 struct IndicatorHistoricalChart: View {
     let data: [IndicatorHistoricalDataItem]
 
@@ -107,41 +178,21 @@ struct IndicatorHistoricalChart: View {
         Chart {
             ForEach(data) { item in
                 LineMark(x: .value("Date", item.date), y: .value("Value", item.value))
-                    .foregroundStyle(by: .value("Series", "指標數值"))
+                    .foregroundStyle(by: .value("Series", "Indicator Value")) // Localize this
                 
                 if let percentileRank = item.percentileRank {
                     LineMark(x: .value("Date", item.date), y: .value("Percentile", percentileRank))
-                        .foregroundStyle(by: .value("Series", "恐懼貪婪分數 (0-100)"))
+                        .foregroundStyle(by: .value("Series", "Sentiment Score (0-100)")) // Localize this
                 }
             }
         }
-        .chartYAxis {
-            AxisMarks(position: .leading) { value in
-                AxisGridLine()
-                AxisTick()
-                AxisValueLabel {
-                    if let doubleValue = value.as(Double.self) {
-                        Text(NSNumber(value: doubleValue), formatter: NumberFormatter.currency)
-                    }
-                }
-            }
-        }
-        .chartYAxisLabel("指標數值", position: .leading)
-        
         .chartYScale(domain: 0...100)
         .chartYAxis {
             AxisMarks(position: .trailing, values: .automatic) { value in
                 AxisGridLine()
                 AxisTick()
-                AxisValueLabel("\(value.as(Double.self) ?? 0, specifier: "%.0f")%")
+                AxisValueLabel("\(value.as(Double.self) ?? 0, specifier: "%.0f")")
             }
         }
-        .chartYAxisLabel("恐懼貪婪分數", position: .trailing)
-    }
-}
-
-extension NumberFormatter {
-    static var currency: NumberFormatter {
-        let formatter = NumberFormatter(); formatter.numberStyle = .decimal; formatter.minimumFractionDigits = 2; formatter.maximumFractionDigits = 2; return formatter
     }
 }
