@@ -35,7 +35,7 @@ public struct MarketSentimentView: View {
                 case .overview:
                     Group { gaugeView }.cardStyle()
                 case .timeline:
-                    Group { historicalChartView }.cardStyle()
+                    Group { historicalChartView.frame(minHeight: 400) }.cardStyle()
                 case .composition:
                     compositionListView
                 }
@@ -105,7 +105,6 @@ public struct MarketSentimentView: View {
                 .padding([.horizontal, .top])
 
                 HistoricalSentimentChart(data: viewModel.filteredHistoricalData)
-                    .frame(height: 300)
                 
                 if let range = viewModel.dateRange, let selected = viewModel.selectedDate {
                     VStack {
