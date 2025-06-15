@@ -217,6 +217,10 @@ struct SemiCircleGaugeView: View {
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
     
+    // MARK: - Tooltip State
+    @State private var selectedDate: Date?
+    @State private var selectedValues: (score: Double, price: Double)?
+
     private var spyDomain: ClosedRange<Double> {
         let spyData = data.map(\.spyClose)
         guard let min = spyData.min(), let max = spyData.max(), min != max else { return (spyData.first ?? 0)...(spyData.first ?? 500) }
@@ -231,13 +235,20 @@ struct HistoricalSentimentChart: View {
                     AreaMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(.linearGradient(stops: [.init(color: Color(hex: "#D24A93").opacity(0.6), location: 0.0), .init(color: Color(hex: "#708090").opacity(0.4), location: 0.5), .init(color: .blue.opacity(0.0), location: 1.0)], startPoint: .top, endPoint: .bottom))
                     LineMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(Color(hex: "#9D00FF"))
                 }
+                
+                // MARK: - RuleMark for Tooltip
+                if let selectedDate {
+                    RuleMark(x: .value("Selected Date", selectedDate))
+                        .foregroundStyle(Color.gray.opacity(0.5))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
+                }
             }
             .chartYScale(domain: 0...100)
             .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
+                // MARK: - Y-Axis Change
+                AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine()
-                    // **最終修正點**
-                    AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0)))
+                    // No AxisValueLabel to hide values
                 }
             }
             
@@ -248,15 +259,38 @@ struct HistoricalSentimentChart: View {
             }
             .chartYScale(domain: spyDomain)
             .chartYAxis {
-                AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { value in
-                    AxisGridLine().foregroundStyle(.clear)
-                    // **最終修正點**
-                    AxisValueLabel(format: FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0)))
+                // MARK: - Y-Axis Change
+                AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
+                    AxisGridLine().foregroundStyle(.clear) // Hide secondary grid line
+                    // No AxisValueLabel to hide values
                 }
             }
         }
         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
+        .chartLegend(.hidden)
+        // MARK: - Tooltip ChartOverlay
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle().fill(.clear).contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                updateSelection(at: value.location, proxy: proxy, geometry: geometry.size)
+                            }
+                            .onEnded { _ in
+                                selectedDate = nil
+                                selectedValues = nil
+                            }
+                    )
+            }
+        }
+        .chartOverlay { proxy in
+            if let selectedDate, let selectedValues {
+                chartTooltip(selectedDate: selectedDate, values: selectedValues, proxy: proxy)
+            }
+        }
         
+        // Custom Legend
         HStack(spacing: 20) {
             HStack(spacing: 5) {
                 Rectangle().fill(Color(hex: "#9D00FF")).frame(width: 15, height: 3)
@@ -268,7 +302,61 @@ struct HistoricalSentimentChart: View {
             }
         }.padding(.top, 5)
     }
+    
+    // MARK: - Tooltip Helper Functions
+    
+    private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize) {
+        guard location.x >= 0, location.x <= geometry.width,
+              let date: Date = proxy.value(atX: location.x) else {
+            self.selectedDate = nil
+            self.selectedValues = nil
+            return
+        }
+        
+        let closestItem = data.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
+        
+        if let closestItem {
+            self.selectedDate = closestItem.date
+            self.selectedValues = (score: closestItem.compositeScore, price: closestItem.spyClose)
+        }
+    }
+    
+    @ViewBuilder
+    private func chartTooltip(selectedDate: Date, values: (score: Double, price: Double), proxy: ChartProxy) -> some View {
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 4) {
+                Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption).bold().foregroundColor(.secondary)
+                
+                HStack {
+                    Circle().fill(Color(hex: "#9D00FF")).frame(width: 8, height: 8)
+                    Text("Score:", bundle: .module).font(.caption)
+                    Spacer()
+                    Text(String(format: "%.2f", values.score)).font(.caption.bold())
+                }
+                
+                HStack {
+                    Circle().fill(.gray.opacity(0.8)).frame(width: 8, height: 8)
+                    Text("SPY:", bundle: .module).font(.caption)
+                    Spacer()
+                    Text(String(format: "%.2f", values.price)).font(.caption.bold())
+                }
+            }
+            .padding(8)
+            .background(Color(UIColor.systemBackground).opacity(0.85).cornerRadius(8))
+            .shadow(radius: 4)
+            .frame(width: 150)
+            .position(
+                x: {
+                    let datePosition = proxy.position(forX: selectedDate) ?? 0
+                    return (datePosition < geometry.size.width / 2) ? datePosition + 80 : datePosition - 80
+                }(),
+                y: geometry.size.height / 2 - 50
+            )
+        }
+    }
 }
+
 
 // MARK: - View Modifiers
 struct CardViewModifier: ViewModifier {
