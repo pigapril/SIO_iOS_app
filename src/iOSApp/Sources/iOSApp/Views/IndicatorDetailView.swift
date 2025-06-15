@@ -57,13 +57,13 @@ struct IndicatorDetailView: View {
 
             HStack(spacing: 20) {
                 MetricView(
-                    label: NSLocalizedString("indicatorItem.latestDataLabel", bundle: .module, comment: ""),
+                    labelKey: "indicatorItem.latestDataLabel",
                     value: viewModel.latestIndicatorData?.value.formatted(.number.precision(.fractionLength(2))) ?? "N/A"
                 )
                 Divider()
                 MetricView(
-                    label: NSLocalizedString("indicatorItem.fearGreedScoreLabel", bundle: .module, comment: ""),
-                    value: (viewModel.latestIndicatorData?.percentileRank?.formatted(.percent.precision(.fractionLength(0))) ?? "N/A")
+                    labelKey: "indicatorItem.fearGreedScoreLabel",
+                    value: viewModel.latestIndicatorData?.percentileRank?.formatted(.number.precision(.fractionLength(0))) ?? "N/A"
                 )
             }
         }
@@ -94,7 +94,6 @@ struct IndicatorDetailView: View {
                 .font(.body)
                 .foregroundColor(.secondary)
             
-            // The JSON parsing for sections remains the same logic as your original code
             ForEach(getSections()) { section in
                 VStack(alignment: .leading, spacing: 5) {
                     Text(section.title).font(.headline)
@@ -110,7 +109,7 @@ struct IndicatorDetailView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.red)
-            Text("Error Loading Data") // Should be localized
+            Text("Error Loading Data")
                 .font(.headline)
                 .padding(.top, 4)
             Text(message)
@@ -124,8 +123,6 @@ struct IndicatorDetailView: View {
     // MARK: - Helper Functions
 
     private func getSections() -> [IndicatorDetailSection] {
-        // This helper function parses the localized string for sections
-        // It's safer to handle potential JSON parsing errors here.
         let jsonString = NSLocalizedString(descriptionSectionsKey, bundle: .module, comment: "JSON array of sections")
         guard let data = jsonString.data(using: .utf8),
               let sections = try? JSONDecoder().decode([IndicatorDetailSection].self, from: data) else {
@@ -135,7 +132,6 @@ struct IndicatorDetailView: View {
     }
     
     private static func getTranslationKey(for name: String) -> String {
-        // Same mapping as your original code
         let map = [
             "AAII Bull-Bear Spread": "aaiiSpread", "CBOE Put/Call Ratio 5-Day Avg": "cboeRatio",
             "Market Momentum": "marketMomentum", "VIX MA50": "vixMA50",
@@ -148,14 +144,14 @@ struct IndicatorDetailView: View {
 
 // Reusable Metric View for the summary
 struct MetricView: View {
-    let label: String
+    let labelKey: String
     let value: String
 
     var body: some View {
         VStack(alignment: .leading) {
             Text(value)
                 .font(.title2.bold())
-            Text(LocalizedStringKey(label), bundle: .module)
+            Text(LocalizedStringKey(labelKey), bundle: .module)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -170,29 +166,92 @@ struct IndicatorDetailSection: Codable, Identifiable {
     let content: String
 }
 
-// MARK: - Chart View (Restored from original file)
+// MARK: - Chart View (Corrected)
 struct IndicatorHistoricalChart: View {
     let data: [IndicatorHistoricalDataItem]
 
+    private var valueDomain: ClosedRange<Double> {
+        let values = data.map(\.value)
+        guard let min = values.min(), let max = values.max(), min != max else {
+            return (values.first ?? 0)...((values.first ?? 0) + 1)
+        }
+        let padding = (max - min) * 0.1
+        return (min - padding)...(max + padding)
+    }
+    
     var body: some View {
-        Chart {
-            ForEach(data) { item in
-                LineMark(x: .value("Date", item.date), y: .value("Value", item.value))
-                    .foregroundStyle(by: .value("Series", "Indicator Value")) // Localize this
-                
-                if let percentileRank = item.percentileRank {
-                    LineMark(x: .value("Date", item.date), y: .value("Percentile", percentileRank))
-                        .foregroundStyle(by: .value("Series", "Sentiment Score (0-100)")) // Localize this
+        VStack(spacing: 10) {
+            ZStack {
+                // Chart for Percentile Rank (Sentiment Score) on the left
+                Chart {
+                    ForEach(data) { item in
+                        if let rank = item.percentileRank {
+                            LineMark(
+                                x: .value("Date", item.date),
+                                y: .value("Sentiment Score", rank)
+                            )
+                            .foregroundStyle(Color.blue)
+                        }
+                    }
+                }
+                .chartYScale(domain: 0...100)
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        // **FIXED**: Using a closure with String(format:) for clarity
+                        AxisValueLabel {
+                            Text(String(format: "%.0f", value.as(Double.self) ?? 0))
+                        }
+                    }
+                }
+                .chartYAxisLabel(position: .leading, alignment: .center) {
+                    Text("Sentiment Score", bundle: .module)
+                }
+
+                // Chart for raw Indicator Value on the right
+                Chart {
+                    ForEach(data) { item in
+                        LineMark(
+                            x: .value("Date", item.date),
+                            y: .value("Indicator Value", item.value)
+                        )
+                        .foregroundStyle(Color.orange)
+                    }
+                }
+                .chartYScale(domain: valueDomain)
+                .chartYAxis {
+                    AxisMarks(position: .trailing) { value in
+                        AxisGridLine().foregroundStyle(.clear)
+                        AxisTick()
+                        // **FIXED**: Using a closure with String(format:) for clarity
+                        AxisValueLabel {
+                             Text(String(format: "%.2f", value.as(Double.self) ?? 0))
+                        }
+                    }
+                }
+                .chartYAxisLabel(position: .trailing, alignment: .center) {
+                     Text("Indicator Value", bundle: .module)
                 }
             }
-        }
-        .chartYScale(domain: 0...100)
-        .chartYAxis {
-            AxisMarks(position: .trailing, values: .automatic) { value in
-                AxisGridLine()
-                AxisTick()
-                AxisValueLabel("\(value.as(Double.self) ?? 0, specifier: "%.0f")")
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5))
             }
+            .chartLegend(.hidden)
+            
+            // Custom Legend
+            HStack(spacing: 20) {
+                legendItem(color: .orange, label: "Indicator Value")
+                legendItem(color: .blue, label: "Sentiment Score (0-100)")
+            }
+            .padding(.top, 5)
+        }
+    }
+
+    private func legendItem(color: Color, label: LocalizedStringKey) -> some View {
+        HStack(spacing: 5) {
+            Rectangle().fill(color).frame(width: 15, height: 3)
+            Text(label, bundle: .module).font(.caption).foregroundColor(.secondary)
         }
     }
 }

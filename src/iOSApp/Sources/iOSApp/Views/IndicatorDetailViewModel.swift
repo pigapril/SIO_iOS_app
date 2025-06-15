@@ -17,20 +17,19 @@ class IndicatorDetailViewModel: ObservableObject {
 
     // Enum for type-safe time range selection
     enum TimeRangeOption: String, CaseIterable, Identifiable {
-        case oneMonth = "1M", threeMonths = "3M", sixMonths = "6M"
-        case oneYear = "1Y", twoYears = "2Y", fiveYears = "5Y", all = "All"
+        case oneMonth, threeMonths, sixMonths, oneYear, twoYears, fiveYears, all
         
         var id: String { self.rawValue }
         
         var localizedKey: String {
             switch self {
-                case .oneMonth: "timeRangeSelector.month1"
-                case .threeMonths: "timeRangeSelector.month3"
-                case .sixMonths: "timeRangeSelector.month6"
-                case .oneYear: "timeRangeSelector.year1"
-                case .twoYears: "timeRangeSelector.year2"
-                case .fiveYears: "timeRangeSelector.year5"
-                case .all: "All" // Assuming 'All' doesn't need translation or has a key
+            case .oneMonth: "timeRangeSelector.month1"
+            case .threeMonths: "timeRangeSelector.month3"
+            case .sixMonths: "timeRangeSelector.month6"
+            case .oneYear: "timeRangeSelector.year1"
+            case .twoYears: "timeRangeSelector.year2"
+            case .fiveYears: "timeRangeSelector.year5"
+            case .all: "All" // "All" likely doesn't need translation
             }
         }
     }
@@ -72,13 +71,13 @@ class IndicatorDetailViewModel: ObservableObject {
         var startDate: Date?
 
         switch range {
-            case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
-            case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
-            case .sixMonths: startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
-            case .oneYear: startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
-            case .twoYears: startDate = calendar.date(byAdding: .year, value: -2, to: endDate)
-            case .fiveYears: startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
-            case .all: startDate = nil // No start date for all data
+        case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
+        case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
+        case .sixMonths: startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
+        case .oneYear: startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
+        case .twoYears: startDate = calendar.date(byAdding: .year, value: -2, to: endDate)
+        case .fiveYears: startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
+        case .all: startDate = nil // No start date for all data
         }
 
         if let start = startDate {
