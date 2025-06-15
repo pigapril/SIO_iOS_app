@@ -1,12 +1,12 @@
 import SwiftUI
 import Charts
 
-// Main Detail View
+// MARK: - 主視圖
 struct IndicatorDetailView: View {
     @StateObject private var viewModel: IndicatorDetailViewModel
     @Environment(\.dismiss) private var dismiss
     
-    // Translation keys
+    // 用於本地化的翻譯鍵
     private let indicatorTitleKey: String
     private let descriptionShortKey: String
     private let descriptionSectionsKey: String
@@ -16,6 +16,7 @@ struct IndicatorDetailView: View {
         self.indicatorTitleKey = "indicators.\(key)"
         self.descriptionShortKey = "marketSentiment.descriptions.\(key).shortDescription"
         self.descriptionSectionsKey = "marketSentiment.descriptions.\(key).sections"
+        // 使用 StateObject 的 wrappedValue 來初始化 ViewModel
         _viewModel = StateObject(wrappedValue: IndicatorDetailViewModel(indicatorKey: indicatorName))
     }
 
@@ -40,14 +41,14 @@ struct IndicatorDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() } // "Done" should be localized
+                    Button("完成") { dismiss() } // "Done" 應該也要本地化
                 }
             }
             .onAppear(perform: viewModel.fetchData)
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - 子視圖
 
     private var summaryView: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -57,7 +58,7 @@ struct IndicatorDetailView: View {
 
             HStack(spacing: 20) {
                 MetricView(
-                    labelKey: "indicatorItem.latestDataLabel",
+                    labelKey: "indicatorItem.valueLabel",
                     value: viewModel.latestIndicatorData?.value.formatted(.number.precision(.fractionLength(2))) ?? "N/A"
                 )
                 Divider()
@@ -72,16 +73,28 @@ struct IndicatorDetailView: View {
     
     private var chartView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Time Range", selection: $viewModel.selectedTimeRange) {
-                ForEach(IndicatorDetailViewModel.TimeRangeOption.allCases) { option in
-                    Text(LocalizedStringKey(option.localizedKey), bundle: .module).tag(option)
+            HStack {
+                Text("歷史走勢", bundle: .module)
+                    .font(.title3.bold())
+                Spacer()
+                Menu {
+                    ForEach(IndicatorDetailViewModel.TimeRangeOption.allCases) { option in
+                        Button(action: {
+                            viewModel.filterData(for: option)
+                        }) {
+                            Text(LocalizedStringKey(option.localizedKey), bundle: .module)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text(LocalizedStringKey(viewModel.selectedTimeRange.localizedKey), bundle: .module)
+                        Image(systemName: "chevron.down")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                 }
             }
-            .pickerStyle(.segmented)
-            .onChange(of: viewModel.selectedTimeRange) { newRange in
-                viewModel.filterData(for: newRange)
-            }
-
+            
             IndicatorHistoricalChart(data: viewModel.filteredHistoricalData)
                 .frame(height: 250)
         }
@@ -109,7 +122,7 @@ struct IndicatorDetailView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.red)
-            Text("Error Loading Data")
+            Text("資料載入錯誤")
                 .font(.headline)
                 .padding(.top, 4)
             Text(message)
@@ -120,7 +133,7 @@ struct IndicatorDetailView: View {
         .frame(maxWidth: .infinity, minHeight: 200)
     }
     
-    // MARK: - Helper Functions
+    // MARK: - 輔助函式
 
     private func getSections() -> [IndicatorDetailSection] {
         let jsonString = NSLocalizedString(descriptionSectionsKey, bundle: .module, comment: "JSON array of sections")
@@ -142,7 +155,7 @@ struct IndicatorDetailView: View {
     }
 }
 
-// Reusable Metric View for the summary
+// 可重用的指標數據視圖
 struct MetricView: View {
     let labelKey: String
     let value: String
@@ -159,14 +172,14 @@ struct MetricView: View {
     }
 }
 
-// Placeholder for section data structure
+// 指標描述區塊的資料結構
 struct IndicatorDetailSection: Codable, Identifiable {
     var id: String { title }
     let title: String
     let content: String
 }
 
-// MARK: - Chart View (Corrected)
+// MARK: - 圖表視圖 (已修正)
 struct IndicatorHistoricalChart: View {
     let data: [IndicatorHistoricalDataItem]
 
@@ -182,13 +195,13 @@ struct IndicatorHistoricalChart: View {
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                // Chart for Percentile Rank (Sentiment Score) on the left
+                // 左 Y 軸：情緒分數 (百分位數)
                 Chart {
                     ForEach(data) { item in
                         if let rank = item.percentileRank {
                             LineMark(
-                                x: .value("Date", item.date),
-                                y: .value("Sentiment Score", rank)
+                                x: .value("日期", item.date),
+                                y: .value("情緒分數", rank)
                             )
                             .foregroundStyle(Color.blue)
                         }
@@ -199,22 +212,23 @@ struct IndicatorHistoricalChart: View {
                     AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
                         AxisGridLine()
                         AxisTick()
-                        // **FIXED**: Using a closure with String(format:) for clarity
-                        AxisValueLabel {
-                            Text(String(format: "%.0f", value.as(Double.self) ?? 0))
-                        }
+                        // **FIXED**: 使用空的 Text View 來隱藏 Y 軸數值
+                        AxisValueLabel { Text("") }
                     }
                 }
-                .chartYAxisLabel(position: .leading, alignment: .center) {
-                    Text("Sentiment Score", bundle: .module)
-                }
 
-                // Chart for raw Indicator Value on the right
+                // 右 Y 軸：指標原始數值
                 Chart {
                     ForEach(data) { item in
+                        AreaMark(
+                            x: .value("日期", item.date),
+                            y: .value("指標數值", item.value)
+                        )
+                        .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
+                        
                         LineMark(
-                            x: .value("Date", item.date),
-                            y: .value("Indicator Value", item.value)
+                            x: .value("日期", item.date),
+                            y: .value("指標數值", item.value)
                         )
                         .foregroundStyle(Color.orange)
                     }
@@ -224,14 +238,9 @@ struct IndicatorHistoricalChart: View {
                     AxisMarks(position: .trailing) { value in
                         AxisGridLine().foregroundStyle(.clear)
                         AxisTick()
-                        // **FIXED**: Using a closure with String(format:) for clarity
-                        AxisValueLabel {
-                             Text(String(format: "%.2f", value.as(Double.self) ?? 0))
-                        }
+                        // **FIXED**: 使用空的 Text View 來隱藏 Y 軸數值
+                        AxisValueLabel { Text("") }
                     }
-                }
-                .chartYAxisLabel(position: .trailing, alignment: .center) {
-                     Text("Indicator Value", bundle: .module)
                 }
             }
             .chartXAxis {
@@ -239,10 +248,10 @@ struct IndicatorHistoricalChart: View {
             }
             .chartLegend(.hidden)
             
-            // Custom Legend
+            // 自定義圖例
             HStack(spacing: 20) {
-                legendItem(color: .orange, label: "Indicator Value")
-                legendItem(color: .blue, label: "Sentiment Score (0-100)")
+                legendItem(color: .orange, label: "指標數值")
+                legendItem(color: .blue, label: "情緒分數 (0-100)")
             }
             .padding(.top, 5)
         }
