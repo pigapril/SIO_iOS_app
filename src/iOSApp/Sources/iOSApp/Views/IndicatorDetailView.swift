@@ -41,7 +41,7 @@ struct IndicatorDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") { dismiss() } // "Done" 應該也要本地化
+                    Button("完成") { dismiss() }
                 }
             }
             .onAppear(perform: viewModel.fetchData)
@@ -179,67 +179,85 @@ struct IndicatorDetailSection: Codable, Identifiable {
     let content: String
 }
 
-// MARK: - 圖表視圖 (已修正)
+
+// MARK: - 圖表視圖 (已修正對齊與編譯問題)
 struct IndicatorHistoricalChart: View {
     let data: [IndicatorHistoricalDataItem]
 
-    private var valueDomain: ClosedRange<Double> {
+    // 1. 定義主軸 (情緒分數) 的數據域
+    private let primaryDomain: ClosedRange<Double> = 0...100
+    
+    // 2. 計算副軸 (指標數值) 的數據域
+    private var secondaryDomain: ClosedRange<Double> {
         let values = data.map(\.value)
         guard let min = values.min(), let max = values.max(), min != max else {
-            return (values.first ?? 0)...((values.first ?? 0) + 1)
+            // 處理數據為空或數值全部相同的邊界情況
+            let val = values.first ?? 0
+            return (val - 1)...(val + 1)
         }
-        let padding = (max - min) * 0.1
+        let padding = (max - min) * 0.1 // 增加一點邊界，避免圖形貼邊
         return (min - padding)...(max + padding)
     }
     
+    // 3. 手動計算刻度值
+    private var axisValues: (primary: [Double], secondary: [Double]) {
+        let desiredTickCount = 5 // 定義你想要的網格線/刻度數量
+        
+        // 主軸的刻度 (例如：0, 25, 50, 75, 100)
+        let primaryTicks = stride(from: primaryDomain.lowerBound, through: primaryDomain.upperBound, by: primaryDomain.upperBound / Double(desiredTickCount - 1)).map { $0 }
+        
+        // 副軸的刻度
+        let secondaryTicks = primaryTicks.map { primaryValue -> Double in
+            // 將主軸刻度值從 [0, 100] 的範圍正規化到 [0, 1]
+            let normalizedValue = (primaryValue - primaryDomain.lowerBound) / (primaryDomain.upperBound - primaryDomain.lowerBound)
+            
+            // 將正規化後的值映射到副軸的數據範圍
+            let secondaryRange = secondaryDomain.upperBound - secondaryDomain.lowerBound
+            return secondaryDomain.lowerBound + (normalizedValue * secondaryRange)
+        }
+        
+        return (primaryTicks, secondaryTicks)
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                // 左 Y 軸：情緒分數 (百分位數)
+                // 左 Y 軸：情緒分數 (百分位數) - 負責畫網格線
                 Chart {
                     ForEach(data) { item in
                         if let rank = item.percentileRank {
-                            LineMark(
-                                x: .value("日期", item.date),
-                                y: .value("情緒分數", rank)
-                            )
-                            .foregroundStyle(Color.blue)
+                            LineMark(x: .value("日期", item.date), y: .value("情緒分數", rank))
+                                .foregroundStyle(Color.blue)
                         }
                     }
                 }
-                .chartYScale(domain: 0...100)
+                .chartYScale(domain: primaryDomain)
                 .chartYAxis {
-                    AxisMarks(position: .leading, values: .automatic(desiredCount: 5)) { value in
-                        AxisGridLine()
+                    // 使用手動計算的 primaryTicks
+                    AxisMarks(position: .leading, values: axisValues.primary) { _ in
+                        AxisGridLine() // 畫網格線
                         AxisTick()
-                        // **FIXED**: 使用空的 Text View 來隱藏 Y 軸數值
-                        AxisValueLabel { Text("") }
+                        // ✅ FIX: 直接移除 AxisValueLabel 即可隱藏標籤
                     }
                 }
 
                 // 右 Y 軸：指標原始數值
                 Chart {
                     ForEach(data) { item in
-                        AreaMark(
-                            x: .value("日期", item.date),
-                            y: .value("指標數值", item.value)
-                        )
-                        .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
+                        AreaMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
+                            .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
                         
-                        LineMark(
-                            x: .value("日期", item.date),
-                            y: .value("指標數值", item.value)
-                        )
-                        .foregroundStyle(Color.orange)
+                        LineMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
+                            .foregroundStyle(Color.orange)
                     }
                 }
-                .chartYScale(domain: valueDomain)
+                .chartYScale(domain: secondaryDomain)
                 .chartYAxis {
-                    AxisMarks(position: .trailing) { value in
-                        AxisGridLine().foregroundStyle(.clear)
+                    // 使用手動計算的 secondaryTicks
+                    AxisMarks(position: .trailing, values: axisValues.secondary) { _ in
+                        AxisGridLine().foregroundStyle(.clear) // 右軸不畫網格線
                         AxisTick()
-                        // **FIXED**: 使用空的 Text View 來隱藏 Y 軸數值
-                        AxisValueLabel { Text("") }
+                        // ✅ FIX: 直接移除 AxisValueLabel 即可隱藏標籤
                     }
                 }
             }
