@@ -1,71 +1,108 @@
 import SwiftUI
 
+// 主視圖：LegalView
 struct LegalView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("法律資訊")
+                // 使用 "legal.mainHeading" 作為頁面主標題
+                Text("legal.mainHeading", bundle: .module)
                     .font(.largeTitle)
                     .bold()
 
+                // 隱私權政策區塊
                 LegalSection(
-                    title: "隱私權政策",
+                    titleKey: "legal.privacyPolicyTitle",
                     subsections: [
                         LegalSubsection(
-                            title: "我們收集的資訊",
-                            points: [
-                                "您註冊時提供的個人資訊，如電子郵件地址。",
-                                "您在使用服務時產生的數據，如您的觀察清單和搜尋紀錄。",
-                                "我們透過 Cookies 和其他技術收集的匿名使用數據。"
+                            titleKey: "legal.dataCollectionTitle",
+                            introKey: "legal.dataCollectionIntro",
+                            pointKeys: [
+                                "legal.dataCollectionItem1",
+                                "legal.dataCollectionItem2",
+                                "legal.dataCollectionItem3"
                             ]
                         ),
                         LegalSubsection(
-                            title: "我們如何使用您的資訊",
-                            points: [
-                                "提供、維護及改進我們的服務。",
-                                "個人化您的使用體驗。",
-                                "與您溝通，包括回覆您的查詢和發送服務相關通知。"
+                            titleKey: "legal.dataUsageTitle",
+                            introKey: "legal.dataUsageIntro",
+                            pointKeys: [
+                                "legal.dataUsageItem1",
+                                "legal.dataUsageItem2",
+                                "legal.dataUsageItem3"
+                            ]
+                        ),
+                        LegalSubsection(
+                            titleKey: "legal.dataProtectionTitle",
+                            introKey: "legal.dataProtectionIntro",
+                            pointKeys: [
+                                "legal.dataProtectionItem1",
+                                "legal.dataProtectionItem2",
+                                "legal.dataProtectionItem3"
+                            ]
+                        ),
+                        LegalSubsection(
+                            titleKey: "legal.userRightsTitle",
+                            introKey: "legal.userRightsIntro",
+                            pointKeys: [
+                                "legal.userRightsItem1",
+                                "legal.userRightsItem2",
+                                "legal.userRightsItem3",
+                                "legal.userRightsItem4"
                             ]
                         )
-                        // Add more subsections here
                     ]
                 )
 
+                // 服務條款區塊
                 LegalSection(
-                    title: "服務條款",
+                    titleKey: "legal.termsOfServiceTitle",
                     subsections: [
                         LegalSubsection(
-                            title: "服務說明",
-                            points: [
-                                "本服務提供市場情緒分析和相關數據，僅供參考，不構成任何投資建議。",
-                                "我們保留隨時修改或終止服務的權利。"
+                            titleKey: "legal.serviceDescriptionTitle",
+                            introKey: "legal.serviceDescriptionIntro",
+                            pointKeys: [
+                                "legal.serviceDescriptionItem1",
+                                "legal.serviceDescriptionItem2"
                             ]
                         ),
                         LegalSubsection(
-                            title: "免責聲明",
-                            points: [
-                                "您承認使用本服務的風險由您自行承擔。",
-                                "我們不保證服務的準確性、完整性或及時性。",
-                                "對於您因使用或無法使用本服務而造成的任何損失，我們概不負責。"
+                            titleKey: "legal.usageRulesTitle",
+                            introKey: "legal.usageRulesIntro",
+                            pointKeys: [
+                                "legal.usageRulesItem1",
+                                "legal.usageRulesItem2",
+                                "legal.usageRulesItem3",
+                                "legal.usageRulesItem4"
+                            ]
+                        ),
+                        LegalSubsection(
+                            titleKey: "legal.disclaimerTitle",
+                            introKey: "legal.disclaimerIntro",
+                            pointKeys: [
+                                "legal.disclaimerItem1",
+                                "legal.disclaimerItem2",
+                                "legal.disclaimerItem3"
                             ]
                         )
-                        // Add more subsections here
                     ]
                 )
             }
             .padding()
         }
-        .navigationTitle("法律資訊")
+        // 使用 "legal.pageTitle" 作為導航列標題
+        .navigationTitle(Text("legal.pageTitle", bundle: .module))
     }
 }
 
+// 子視圖：LegalSection (無需修改，但保持清晰)
 struct LegalSection: View {
-    let title: String
+    let titleKey: LocalizedStringKey
     let subsections: [LegalSubsection]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
+            Text(titleKey, bundle: .module)
                 .font(.title)
                 .bold()
             ForEach(subsections) { subsection in
@@ -75,20 +112,39 @@ struct LegalSection: View {
     }
 }
 
+// 子視圖：LegalSubsection (已修正)
 struct LegalSubsection: View, Identifiable {
     let id = UUID()
-    let title: String
-    let points: [String]
+    let titleKey: LocalizedStringKey
+    let introKey: LocalizedStringKey?
+    let pointKeys: [String] // <--- *** 修正點 1: 型別改為 [String] ***
+
+    // 初始化方法也更新參數型別
+    init(titleKey: LocalizedStringKey, introKey: LocalizedStringKey? = nil, pointKeys: [String]) {
+        self.titleKey = titleKey
+        self.introKey = introKey
+        self.pointKeys = pointKeys
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title)
+            Text(titleKey, bundle: .module)
                 .font(.title2)
                 .bold()
-            ForEach(points, id: \.self) { point in
-                Text("• \(point)")
+            
+            if let intro = introKey {
+                Text(intro, bundle: .module)
+            }
+            
+            // <--- *** 修正點 2: ForEach 遍歷 String 陣列 ***
+            ForEach(pointKeys, id: \.self) { key in
+                HStack(alignment: .top) {
+                    Text("•")
+                    // <--- *** 修正點 3: 在此處將 String 轉為 LocalizedStringKey ***
+                    Text(LocalizedStringKey(key), bundle: .module)
+                }
             }
         }
         .padding(.leading)
     }
-} 
+}

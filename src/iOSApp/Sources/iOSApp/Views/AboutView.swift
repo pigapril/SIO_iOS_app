@@ -4,45 +4,59 @@ struct AboutView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Image("aboutme_placeholder") // Replace with actual image name
+                Image("aboutme_placeholder") // 圖片名稱通常不需要本地化
                     .resizable()
                     .scaledToFit()
                     .cornerRadius(10)
                 
-                Text("關於我們")
+                // --- 修改開始: 使用翻譯鍵 ---
+                Text("about.heading", bundle: .module)
                     .font(.largeTitle)
                     .bold()
                 
-                SectionView(title: "我們的使命", text: "在資訊爆炸的時代，我們致力於提供最精準、最即時的市場情緒分析，幫助投資者洞悉市場動態，做出更明智的投資決策。")
+                // 使用修改後的 SectionView，直接傳入翻譯鍵
+                SectionView(titleKey: "about.section1Title", textKey: "about.section1Text")
                 
-                SectionView(title: "我們的技術", text: "我們結合了先進的自然語言處理（NLP）技術、機器學習模型以及大數據分析，從海量的市場資訊中，提煉出有價值的市場情緒指標。")
+                SectionView(titleKey: "about.section2Title", textKey: "about.section2Text")
 
-                SectionView(title: "我們的團隊", text: "我們的團隊由一群對金融科技充滿熱情的資料科學家、工程師和金融分析師組成，我們相信數據的力量，並致力於將複雜的數據轉化為簡單易懂的投資洞見。")
+                SectionView(titleKey: "about.section3Title", textKey: "about.section3Text")
 
                 Divider()
 
-                HStack {
-                    Image(systemName: "envelope.fill")
-                    Link("support@sentimentinsideout.com", destination: URL(string: "mailto:support@sentimentinsideout.com")!)
+                // 聯絡方式區塊
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("about.contactTitle", bundle: .module)
+                        .font(.title2)
+                        .bold()
+                    HStack {
+                        Image(systemName: "envelope.fill")
+                        // Email 地址本身通常不翻譯
+                        Link("support@sentimentinsideout.com", destination: URL(string: "mailto:support@sentimentinsideout.com")!)
+                    }
                 }
+                // --- 修改結束 ---
             }
             .padding()
         }
-        .navigationTitle("關於")
+        // --- 修改開始: 使用翻譯鍵 ---
+        .navigationTitle(Text("about.pageTitle", bundle: .module))
+        // --- 修改結束 ---
     }
 }
 
+// --- 修改開始: 內部輔助視圖 SectionView 現在接收 LocalizedStringKey ---
 struct SectionView: View {
-    let title: String
-    let text: String
+    let titleKey: LocalizedStringKey
+    let textKey: LocalizedStringKey
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title)
+            Text(titleKey, bundle: .module)
                 .font(.title2)
                 .bold()
-            Text(text)
+            Text(textKey, bundle: .module)
                 .font(.body)
         }
     }
-} 
+}
+// --- 修改結束 ---

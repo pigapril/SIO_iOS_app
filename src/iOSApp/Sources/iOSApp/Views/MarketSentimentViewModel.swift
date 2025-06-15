@@ -1,6 +1,40 @@
 import SwiftUI
 import Combine
 
+// 新增：用於時間範圍選擇的 Enum，包含翻譯鍵
+enum TimeRangeOption: String, CaseIterable, Identifiable {
+    case oneMonth, threeMonths, sixMonths, oneYear, threeYears, fiveYears, all
+    
+    var id: String { self.rawValue }
+    
+    // 返回對應的翻譯鍵
+    var localizedKey: LocalizedStringKey {
+        switch self {
+        case .oneMonth: return "timeRangeSelector.month1"
+        case .threeMonths: return "timeRangeSelector.month3"
+        case .sixMonths: return "timeRangeSelector.month6"
+        case .oneYear: return "timeRangeSelector.year1"
+        case .threeYears: return "timeRangeSelector.year3"
+        case .fiveYears: return "timeRangeSelector.year5"
+        case .all: return "timeRangeSelector.all" // 假設你在 translation.json 中新增了 "all": "全部"
+        }
+    }
+    
+    // 返回 API 需要的字串值
+    var stringValue: String {
+        switch self {
+        case .oneMonth: return "1M"
+        case .threeMonths: return "3M"
+        case .sixMonths: return "6M"
+        case .oneYear: return "1Y"
+        case .threeYears: return "3Y"
+        case .fiveYears: return "5Y"
+        case .all: return "All"
+        }
+    }
+}
+
+
 @MainActor
 class MarketSentimentViewModel: ObservableObject {
     @Published var sentimentData: MarketSentimentResponse?
@@ -8,17 +42,19 @@ class MarketSentimentViewModel: ObservableObject {
     @Published var filteredHistoricalData: [HistoricalDataItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var selectedTimeRange: String = "1Y"
+    // 修改：使用新的 Enum 來管理狀態
+    @Published var selectedTimeRange: TimeRangeOption = .oneYear
     @Published var dateRange: ClosedRange<Date>? = nil
     @Published var selectedDate: Date? = nil
 
     private var fullDateRange: ClosedRange<Date>? = nil
 
-    var compositeSentiment: String {
+    // 修改：回傳翻譯鍵
+    var compositeSentimentKey: String {
         guard let scoreString = sentimentData?.totalScore, let score = Double(scoreString) else {
-            return "中性"
+            return "sentiment.notAvailable"
         }
-        return sentiment(for: score)
+        return sentimentKey(for: score)
     }
 
     private var cancellables = Set<AnyCancellable>()
@@ -29,14 +65,12 @@ class MarketSentimentViewModel: ObservableObject {
 
         Task {
             do {
-                // Fetch both data points in parallel
                 async let sentiment = APIService.shared.fetchMarketSentiment()
                 async let history = APIService.shared.fetchCompositeHistoricalData()
                 
                 self.sentimentData = try await sentiment
                 self.historicalData = try await history
                 
-                // Initial filter
                 setupDateRange()
                 filterData(for: selectedTimeRange)
 
@@ -57,20 +91,16 @@ class MarketSentimentViewModel: ObservableObject {
         self.selectedDate = maxDate
     }
 
-    func sentiment(for score: Double) -> String {
+    // 修改：回傳翻譯鍵
+    func sentimentKey(for score: Double?) -> String {
+        guard let score = score else { return "sentiment.notAvailable" }
         switch score {
-        case 0..<20:
-            return "極度恐懼"
-        case 20..<40:
-            return "恐懼"
-        case 40..<60:
-            return "中性"
-        case 60..<80:
-            return "貪婪"
-        case 80...100:
-            return "極度貪婪"
-        default:
-            return "中性"
+        case 0..<20: return "sentiment.extremeFear"
+        case 20..<40: return "sentiment.fear"
+        case 40..<60: return "sentiment.neutral"
+        case 60..<80: return "sentiment.greed"
+        case 80...100: return "sentiment.extremeGreed"
+        default: return "sentiment.neutral"
         }
     }
 
@@ -88,24 +118,19 @@ class MarketSentimentViewModel: ObservableObject {
         return map[name]
     }
 
-    func sentimentColor(for sentiment: String) -> Color {
-        switch sentiment {
-        case "極度恐懼":
-            return Color(hex: "#0000FF")
-        case "恐懼":
-            return Color(hex: "#5B9BD5")
-        case "中性":
-            return Color(hex: "#708090")
-        case "貪婪":
-            return Color(hex: "#F0B8CE")
-        case "極度貪婪":
-            return Color(hex: "#D24A93")
-        default:
-            return Color.gray
+    func sentimentColor(for sentimentKey: String) -> Color {
+        // ✅ **修正點：將顏色字串改為十六進位數字**
+        switch sentimentKey {
+        case "sentiment.extremeFear": return Color(hex: 0x0000FF)
+        case "sentiment.fear": return Color(hex: 0x5B9BD5)
+        case "sentiment.neutral": return Color(hex: 0x708090)
+        case "sentiment.greed": return Color(hex: 0xF0B8CE)
+        case "sentiment.extremeGreed": return Color(hex: 0xD24A93)
+        default: return Color.gray
         }
     }
 
-    func filterData(for range: String) {
+    func filterData(for range: TimeRangeOption) {
         selectedTimeRange = range
         
         guard !historicalData.isEmpty else {
@@ -118,22 +143,13 @@ class MarketSentimentViewModel: ObservableObject {
         var startDate: Date?
 
         switch range {
-        case "1M":
-            startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
-        case "3M":
-            startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
-        case "6M":
-            startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
-        case "1Y":
-            startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
-        case "3Y":
-            startDate = calendar.date(byAdding: .year, value: -3, to: endDate)
-        case "5Y":
-            startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
-        case "All":
-            startDate = nil // No start date, show all
-        default:
-            startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
+        case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
+        case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
+        case .sixMonths: startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
+        case .oneYear: startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
+        case .threeYears: startDate = calendar.date(byAdding: .year, value: -3, to: endDate)
+        case .fiveYears: startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
+        case .all: startDate = nil
         }
 
         let newFilteredData: [HistoricalDataItem]
@@ -143,7 +159,6 @@ class MarketSentimentViewModel: ObservableObject {
             newFilteredData = historicalData
         }
 
-        // Update the slider range based on the new filtered data
         if let firstDate = newFilteredData.first?.date, let lastDate = newFilteredData.last?.date {
             self.dateRange = firstDate...lastDate
             if selectedDate == nil || !(dateRange?.contains(selectedDate!) ?? false) {
@@ -162,52 +177,7 @@ class MarketSentimentViewModel: ObservableObject {
             return
         }
         
-        // This function now just filters based on the slider's current state
         let sliderFilteredData = historicalData.filter { range.contains($0.date) }
-
-        // If you want the chart to only show data up to the selectedDate on the slider:
         filteredHistoricalData = sliderFilteredData.filter { $0.date <= selected }
     }
 }
-
-extension String {
-    var displayString: String {
-        switch self {
-        case "1M": return "1個月"
-        case "3M": return "3個月"
-        case "6M": return "6個月"
-        case "1Y": return "1年"
-        case "3Y": return "3年"
-        case "5Y": return "5年"
-        case "All": return "全部"
-        default: return self
-        }
-    }
-}
-
-// Extension to allow creating Color from hex string
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-} 

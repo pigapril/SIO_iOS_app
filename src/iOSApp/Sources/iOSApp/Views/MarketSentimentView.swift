@@ -91,12 +91,14 @@ public struct MarketSentimentView: View {
                         .font(.title2.bold())
                     Spacer()
                     Menu {
-                        ForEach(["1M", "3M", "6M", "1Y", "3Y", "5Y", "All"], id: \.self) { range in
-                            Button(range.displayString) { viewModel.filterData(for: range) }
+                        ForEach(TimeRangeOption.allCases) { range in
+                            Button(action: { viewModel.filterData(for: range) }) {
+                                Text(range.localizedKey, bundle: .module)
+                            }
                         }
                     } label: {
                         HStack {
-                            Text(viewModel.selectedTimeRange.displayString)
+                            Text(viewModel.selectedTimeRange.localizedKey, bundle: .module)
                             Image(systemName: "chevron.down")
                         }
                         .font(.subheadline).foregroundColor(.secondary)
@@ -144,10 +146,10 @@ public struct MarketSentimentView: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .frame(minHeight: CGFloat(displayableIndicatorKeys.count) * 55) // 動態最小高度
+            .frame(minHeight: CGFloat(displayableIndicatorKeys.count) * 55)
             .overlay {
                 if displayableIndicatorKeys.isEmpty && !viewModel.isLoading {
-                    Text("No component indicators to display.").foregroundColor(.secondary)
+                    Text("marketSentiment.composition.noIndicators", bundle: .module).foregroundColor(.secondary)
                 }
             }
         } else if let errorMessage = viewModel.errorMessage {
@@ -158,7 +160,7 @@ public struct MarketSentimentView: View {
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundColor(.red)
-            Text("Error").font(.headline)
+            Text("common.error", bundle: .module).font(.headline)
             Text(message).foregroundColor(.secondary).multilineTextAlignment(.center)
         }.padding().frame(minHeight: 300)
     }
@@ -180,9 +182,13 @@ struct IndicatorRowView: View {
             Text(indicatorName).font(.subheadline)
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                let sentiment = viewModel.sentiment(for: percentileRank)
-                Text(sentiment).font(.footnote).fontWeight(.medium).foregroundColor(viewModel.sentimentColor(for: sentiment))
-                ProgressView(value: percentileRank, total: 100).progressViewStyle(LinearProgressViewStyle(tint: viewModel.sentimentColor(for: sentiment))).frame(width: 80)
+                let sentimentKey = viewModel.sentimentKey(for: percentileRank)
+                Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                    .font(.footnote).fontWeight(.medium)
+                    .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
+                ProgressView(value: percentileRank, total: 100)
+                    .progressViewStyle(LinearProgressViewStyle(tint: viewModel.sentimentColor(for: sentimentKey)))
+                    .frame(width: 80)
             }
             Image(systemName: "chevron.right").font(.caption).foregroundColor(.secondary)
         }.contentShape(Rectangle())
@@ -193,8 +199,8 @@ struct SemiCircleGaugeView: View {
     let value: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
     
-    private var sentiment: String { viewModel.sentiment(for: value) }
-    private var color: Color { viewModel.sentimentColor(for: sentiment) }
+    private var sentimentKey: String { viewModel.sentimentKey(for: value) }
+    private var color: Color { viewModel.sentimentColor(for: sentimentKey) }
 
     var body: some View {
         ZStack {
@@ -202,7 +208,7 @@ struct SemiCircleGaugeView: View {
             Circle().trim(from: 0.5, to: 0.5 + (value / 100.0) / 2.0).stroke(color, style: StrokeStyle(lineWidth: 35, lineCap: .round)).animation(.easeInOut(duration: 1.0), value: value)
             VStack(spacing: 4) {
                 Text(String(format: "%.0f", value)).font(.system(size: 70, weight: .bold))
-                Text(sentiment).font(.title2.bold()).foregroundColor(color)
+                Text(LocalizedStringKey(sentimentKey), bundle: .module).font(.title2.bold()).foregroundColor(color)
             }.offset(y: -40)
             HStack {
                 Text("sentiment.extremeFear", bundle: .module).font(.callout).foregroundColor(.secondary)
@@ -216,7 +222,6 @@ struct SemiCircleGaugeView: View {
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
     
-    // MARK: - Tooltip State
     @State private var selectedDate: Date?
     @State private var selectedValues: (score: Double, price: Double)?
 
@@ -231,11 +236,11 @@ struct HistoricalSentimentChart: View {
         ZStack {
             Chart {
                 ForEach(data) { item in
-                    AreaMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(.linearGradient(stops: [.init(color: Color(hex: "#D24A93").opacity(0.6), location: 0.0), .init(color: Color(hex: "#708090").opacity(0.4), location: 0.5), .init(color: .blue.opacity(0.0), location: 1.0)], startPoint: .top, endPoint: .bottom))
-                    LineMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(Color(hex: "#9D00FF"))
+                    // ✅ **修正點：將顏色字串改為十六進位數字**
+                    AreaMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(.linearGradient(stops: [.init(color: Color(hex: 0xD24A93).opacity(0.6), location: 0.0), .init(color: Color(hex: 0x708090).opacity(0.4), location: 0.5), .init(color: .blue.opacity(0.0), location: 1.0)], startPoint: .top, endPoint: .bottom))
+                    LineMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(Color(hex: 0x9D00FF))
                 }
                 
-                // MARK: - RuleMark for Tooltip
                 if let selectedDate {
                     RuleMark(x: .value("Selected Date", selectedDate))
                         .foregroundStyle(Color.gray.opacity(0.5))
@@ -244,7 +249,6 @@ struct HistoricalSentimentChart: View {
             }
             .chartYScale(domain: 0...100)
             .chartYAxis {
-                // MARK: - Y-Axis Change
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine()
                     // No AxisValueLabel to hide values
@@ -258,7 +262,6 @@ struct HistoricalSentimentChart: View {
             }
             .chartYScale(domain: spyDomain)
             .chartYAxis {
-                // MARK: - Y-Axis Change
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine().foregroundStyle(.clear) // Hide secondary grid line
                     // No AxisValueLabel to hide values
@@ -267,7 +270,6 @@ struct HistoricalSentimentChart: View {
         }
         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
         .chartLegend(.hidden)
-        // MARK: - Tooltip ChartOverlay
         .chartOverlay { proxy in
             GeometryReader { geometry in
                 Rectangle().fill(.clear).contentShape(Rectangle())
@@ -292,7 +294,8 @@ struct HistoricalSentimentChart: View {
         // Custom Legend
         HStack(spacing: 20) {
             HStack(spacing: 5) {
-                Rectangle().fill(Color(hex: "#9D00FF")).frame(width: 15, height: 3)
+                // ✅ **修正點：將顏色字串改為十六進位數字**
+                Rectangle().fill(Color(hex: 0x9D00FF)).frame(width: 15, height: 3)
                 Text("marketSentiment.chart.compositeIndexLabel", bundle: .module).font(.caption)
             }
             HStack(spacing: 5) {
@@ -301,8 +304,6 @@ struct HistoricalSentimentChart: View {
             }
         }.padding(.top, 5)
     }
-    
-    // MARK: - Tooltip Helper Functions
     
     private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize) {
         guard location.x >= 0, location.x <= geometry.width,
@@ -328,15 +329,16 @@ struct HistoricalSentimentChart: View {
                     .font(.caption).bold().foregroundColor(.secondary)
                 
                 HStack {
-                    Circle().fill(Color(hex: "#9D00FF")).frame(width: 8, height: 8)
-                    Text("Score:", bundle: .module).font(.caption)
+                    // ✅ **修正點：將顏色字串改為十六進位數字**
+                    Circle().fill(Color(hex: 0x9D00FF)).frame(width: 8, height: 8)
+                    Text("marketSentiment.chart.tooltipScore", bundle: .module).font(.caption)
                     Spacer()
                     Text(String(format: "%.2f", values.score)).font(.caption.bold())
                 }
                 
                 HStack {
                     Circle().fill(.gray.opacity(0.8)).frame(width: 8, height: 8)
-                    Text("SPY:", bundle: .module).font(.caption)
+                    Text("marketSentiment.chart.tooltipSPY", bundle: .module).font(.caption)
                     Spacer()
                     Text(String(format: "%.2f", values.price)).font(.caption.bold())
                 }
@@ -365,7 +367,7 @@ struct CardViewModifier: ViewModifier {
             .background(Color(.secondarySystemGroupedBackground))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            .padding([.horizontal, .bottom]) // 將 .horizontal 和 .bottom 合併
+            .padding([.horizontal, .bottom])
     }
 }
 
