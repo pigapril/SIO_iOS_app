@@ -77,25 +77,6 @@ class PriceAnalysisViewModel: ObservableObject {
             sentimentKey = "priceAnalysis.sentiment.neutral"
         }
         
-        logLocalization(key: sentimentKey)
         self.analysisResult = (price: lastPrice, sentimentKey: sentimentKey)
     }
-
-    init() {
-        logLocalization(key: "priceAnalysis.pageTitle")
-        logLocalization(key: "priceAnalysis.form.title")
-        logLocalization(key: "priceAnalysis.chart.tabs.sd")
-        logLocalization(key: "nav.priceAnalysis")
-    }
-
-    private func logLocalization(key: String) {
-        let bundle = Bundle.module
-        let localizedString = NSLocalizedString(key, bundle: bundle, comment: "")
-        
-        if localizedString == key {
-            print("❌ [Localization] Key not found: \(key) in bundle: \(bundle.bundleIdentifier ?? "N/A")")
-        } else {
-            print("✅ [Localization] Found value for key '\(key)': '\(localizedString)'")
-        }
-    }
-} 
+}

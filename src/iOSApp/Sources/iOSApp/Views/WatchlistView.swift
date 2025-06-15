@@ -1,5 +1,6 @@
 import SwiftUI
 
+// MARK: - 主視圖 (WatchlistView)
 struct WatchlistView: View {
     @StateObject private var viewModel = WatchlistViewModel()
     @State private var showingSearch = false
@@ -10,12 +11,13 @@ struct WatchlistView: View {
             if viewModel.isLoading {
                 ProgressView()
             } else if let errorMessage = viewModel.errorMessage {
+                // 錯誤訊息通常來自後端，不進行本地化，或由 ViewModel 處理
                 Text(errorMessage)
             } else {
                 if #available(iOS 16.0, *) {
                     TabView(selection: $viewModel.selectedCategoryId) {
                         ForEach(viewModel.categories) { category in
-                            StockListView(stocks: category.stocks)
+                            StockListView(stocks: category.stocks, categoryId: category.id, viewModel: viewModel)
                                 .tabItem {
                                     Text(category.name)
                                 }
@@ -24,11 +26,22 @@ struct WatchlistView: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .always))
                 } else {
-                    // Fallback on earlier versions
+                    // 舊版 iOS 的備用方案
+                    Picker("Category", selection: $viewModel.selectedCategoryId) {
+                        ForEach(viewModel.categories) { category in
+                            Text(category.name).tag(category.id)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    if let selectedCategory = viewModel.categories.first(where: { $0.id == viewModel.selectedCategoryId }) {
+                        StockListView(stocks: selectedCategory.stocks, categoryId: selectedCategory.id, viewModel: viewModel)
+                    }
                 }
             }
         }
-        .navigationTitle("觀察清單")
+        // 使用翻譯鍵
+        .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showingCategoryManager = true }) {
@@ -53,16 +66,32 @@ struct WatchlistView: View {
     }
 }
 
+// MARK: - 股票列表 (StockListView)
 struct StockListView: View {
     let stocks: [Stock]
+    let categoryId: Int
+    @ObservedObject var viewModel: WatchlistViewModel
 
     var body: some View {
-        List(stocks) { stock in
-            StockRow(stock: stock)
+        List {
+            ForEach(stocks) { stock in
+                StockRow(stock: stock)
+            }
+            .onDelete(perform: deleteStock)
+        }
+    }
+    
+    private func deleteStock(at offsets: IndexSet) {
+        let stocksToDelete = offsets.map { stocks[$0] }
+        Task {
+            for stock in stocksToDelete {
+                await viewModel.removeStock(categoryId: categoryId, itemId: stock.id)
+            }
         }
     }
 }
 
+// MARK: - 股票行 (StockRow)
 struct StockRow: View {
     let stock: Stock
     
@@ -82,6 +111,7 @@ struct StockRow: View {
     }
 }
 
+// MARK: - 股票搜尋視圖 (StockSearchView)
 struct StockSearchView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var searchText = ""
@@ -89,8 +119,11 @@ struct StockSearchView: View {
     var body: some View {
         NavigationView {
             VStack {
-                TextField("搜尋股票...", text: $searchText)
+                // 使用翻譯鍵
+                let placeholder = NSLocalizedString("watchlist.searchBox.placeholder", bundle: .module, comment: "Search stocks...")
+                TextField(placeholder, text: $searchText)
                     .padding()
+                    .textFieldStyle(.roundedBorder)
                     .onChange(of: searchText) { newValue in
                         viewModel.searchStocks(keyword: newValue)
                     }
@@ -105,11 +138,13 @@ struct StockSearchView: View {
                     }
                 }
             }
-            .navigationTitle("新增股票")
+            // 使用翻譯鍵
+            .navigationTitle(Text("watchlist.addStockTitle", bundle: .module))
         }
     }
 }
 
+// MARK: - 分類管理視圖 (CategoryManagerView)
 struct CategoryManagerView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var newCategoryName = ""
@@ -132,19 +167,26 @@ struct CategoryManagerView: View {
                 }
                 
                 HStack {
-                    TextField("新分類名稱", text: $newCategoryName)
+                    // 使用翻譯鍵
+                    let placeholder = NSLocalizedString("watchlist.newCategoryPlaceholder", bundle: .module, comment: "New category name")
+                    TextField(placeholder, text: $newCategoryName)
+                        .textFieldStyle(.roundedBorder)
+                    
                     Button(action: {
                         Task {
                             await viewModel.createCategory(name: newCategoryName)
                             newCategoryName = ""
                         }
                     }) {
-                        Text("新增")
+                        // 使用翻譯鍵
+                        Text("watchlist.addButton", bundle: .module)
                     }
+                    .buttonStyle(.borderedProminent)
                 }
                 .padding()
             }
-            .navigationTitle("管理分類")
+            // 使用翻譯鍵
+            .navigationTitle(Text("watchlist.manageCategoriesTitle", bundle: .module))
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
             }
@@ -152,6 +194,7 @@ struct CategoryManagerView: View {
     }
 }
 
+// MARK: - 編輯分類視圖 (EditCategoryView)
 struct EditCategoryView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     let category: Category
@@ -167,15 +210,17 @@ struct EditCategoryView: View {
     var body: some View {
         NavigationView {
             Form {
-                TextField("分類名稱", text: $newName)
-                Button("儲存") {
+                // 使用翻譯鍵
+                TextField(LocalizedStringKey("watchlist.categoryNameLabel"), text: $newName)
+                Button(LocalizedStringKey("watchlist.saveButton")) {
                     Task {
                         await viewModel.updateCategory(category: category, newName: newName)
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
             }
-            .navigationTitle("編輯分類")
+            // 使用翻譯鍵
+            .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
         }
     }
-} 
+}

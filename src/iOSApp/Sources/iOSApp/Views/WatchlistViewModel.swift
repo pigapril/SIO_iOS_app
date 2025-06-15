@@ -19,24 +19,24 @@ class WatchlistViewModel: ObservableObject {
             do {
                 let fetchedCategories = try await APIService.shared.fetchCategories()
                 self.categories = fetchedCategories
-                if let firstCategory = fetchedCategories.first {
+                if let firstCategory = fetchedCategories.first, self.selectedCategoryId == nil {
                     self.selectedCategoryId = firstCategory.id
                 }
             } catch {
                 self.errorMessage = error.localizedDescription
-                ErrorHandler.handle(error: error, component: "WatchlistViewModel")
+                ErrorHandler.handle(error: error, component: "WatchlistViewModel.fetchCategories")
             }
             self.isLoading = false
         }
     }
     
-    // Add other methods for creating/deleting categories and stocks
     func createCategory(name: String) async {
         do {
             let newCategory = try await APIService.shared.createCategory(name: name)
             categories.append(newCategory)
         } catch {
-            // ... error handling
+            self.errorMessage = error.localizedDescription
+            ErrorHandler.handle(error: error, component: "WatchlistViewModel.createCategory")
         }
     }
 
@@ -48,7 +48,22 @@ class WatchlistViewModel: ObservableObject {
                 categories[index].stocks.append(newStock)
             }
         } catch {
-            // ... error handling
+            self.errorMessage = error.localizedDescription
+            ErrorHandler.handle(error: error, component: "WatchlistViewModel.addStock")
+        }
+    }
+    
+    // ✅ **解決方案：新增 removeStock 函式**
+    func removeStock(categoryId: Int, itemId: Int) async {
+        do {
+            try await APIService.shared.removeStock(categoryId: categoryId, itemId: itemId)
+            // 直接從本地端移除，避免重新抓取所有資料，優化體驗
+            if let categoryIndex = categories.firstIndex(where: { $0.id == categoryId }) {
+                categories[categoryIndex].stocks.removeAll { $0.id == itemId }
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+            ErrorHandler.handle(error: error, component: "WatchlistViewModel.removeStock")
         }
     }
     
@@ -58,7 +73,8 @@ class WatchlistViewModel: ObservableObject {
             do {
                 self.searchResults = try await APIService.shared.searchStocks(keyword: keyword)
             } catch {
-                // ... error handling
+                self.errorMessage = error.localizedDescription
+                ErrorHandler.handle(error: error, component: "WatchlistViewModel.searchStocks")
             }
             isSearching = false
         }
@@ -72,7 +88,8 @@ class WatchlistViewModel: ObservableObject {
                     try await APIService.shared.deleteCategory(id: category.id)
                     categories.removeAll { $0.id == category.id }
                 } catch {
-                    // ... error handling
+                    self.errorMessage = error.localizedDescription
+                    ErrorHandler.handle(error: error, component: "WatchlistViewModel.deleteCategory")
                 }
             }
         }
@@ -80,12 +97,13 @@ class WatchlistViewModel: ObservableObject {
 
     func updateCategory(category: Category, newName: String) async {
         do {
-            var updatedCategory = try await APIService.shared.updateCategory(id: category.id, name: newName)
+            let updatedCategory = try await APIService.shared.updateCategory(id: category.id, name: newName)
             if let index = categories.firstIndex(where: { $0.id == category.id }) {
                 categories[index].name = updatedCategory.name
             }
         } catch {
-            // ... error handling
+            self.errorMessage = error.localizedDescription
+            ErrorHandler.handle(error: error, component: "WatchlistViewModel.updateCategory")
         }
     }
-} 
+}
