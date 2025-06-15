@@ -222,7 +222,7 @@ struct IndicatorHistoricalChart: View {
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                // 左 Y 軸：情緒分數 (百分位數) - 負責畫網格線
+                // Y 軸 1：情緒分數 (百分位數) - 負責畫網格線
                 Chart {
                     ForEach(data) { item in
                         if let rank = item.percentileRank {
@@ -234,14 +234,13 @@ struct IndicatorHistoricalChart: View {
                 .chartYScale(domain: primaryDomain)
                 .chartYAxis {
                     // 使用手動計算的 primaryTicks
-                    AxisMarks(position: .leading, values: axisValues.primary) { _ in
+                    AxisMarks(position: .trailing, values: axisValues.primary) { _ in // <-- Changed to .trailing
                         AxisGridLine() // 畫網格線
                         AxisTick()
-                        // ✅ FIX: 直接移除 AxisValueLabel 即可隱藏標籤
                     }
                 }
 
-                // 右 Y 軸：指標原始數值
+                // Y 軸 2：指標原始數值
                 Chart {
                     ForEach(data) { item in
                         AreaMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
@@ -257,7 +256,6 @@ struct IndicatorHistoricalChart: View {
                     AxisMarks(position: .trailing, values: axisValues.secondary) { _ in
                         AxisGridLine().foregroundStyle(.clear) // 右軸不畫網格線
                         AxisTick()
-                        // ✅ FIX: 直接移除 AxisValueLabel 即可隱藏標籤
                     }
                 }
             }
