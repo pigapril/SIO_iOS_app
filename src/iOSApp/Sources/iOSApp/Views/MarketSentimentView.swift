@@ -1,7 +1,8 @@
+// pigapril/sio_ios_app/SIO_iOS_app-MarketSentiment/src/iOSApp/Sources/iOSApp/Views/MarketSentimentView.swift
+
 import SwiftUI
 import Charts
 
-// MARK: - 主視圖
 public struct MarketSentimentView: View {
     @StateObject private var viewModel = MarketSentimentViewModel()
     @State private var selectedIndicatorKey: String?
@@ -33,6 +34,7 @@ public struct MarketSentimentView: View {
 
                 switch selectedView {
                 case .overview:
+                    // ✅ 主要修改區域
                     Group { gaugeView }.cardStyle()
                 case .timeline:
                     Group { historicalChartView }.cardStyle()
@@ -59,25 +61,33 @@ public struct MarketSentimentView: View {
     @ViewBuilder
     private var gaugeView: some View {
         if viewModel.isLoading {
-            ProgressView().frame(minHeight: 300)
+            ProgressView().frame(minHeight: 350) // 增加最小高度以適應新版面
         } else if let sentimentData = viewModel.sentimentData {
+            // ✅ 使用 VStack 和 Spacer 進行垂直置中
             VStack {
+                Spacer() // <-- 將內容推向中間
+                
                 let score = Double(sentimentData.totalScore) ?? 0.0
-                SemiCircleGaugeView(value: score, viewModel: viewModel)
-                    .frame(height: 250)
+                SpeedometerGaugeView(value: score, viewModel: viewModel) // <-- 使用新的儀表板元件
+                
+                Spacer() // <-- 將內容推向中間
+
                 HStack {
                     Text("marketSentiment.lastUpdateLabel", bundle: .module)
                     Text(": \(sentimentData.compositeScoreLastUpdate, formatter: Self.dateFormatter)")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .padding(.top, 10)
+                .padding(.bottom, 10) // 增加一些底部間距
             }
+            .frame(minHeight: 350) // 給予足夠的顯示空間
+            
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage)
         }
     }
     
+    // ... (historicalChartView 和 compositionListView 保持不變) ...
     @ViewBuilder
     private var historicalChartView: some View {
         if viewModel.isLoading && viewModel.historicalData.isEmpty {
@@ -155,7 +165,7 @@ public struct MarketSentimentView: View {
             errorView(message: errorMessage).padding()
         }
     }
-    
+
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundColor(.red)
@@ -169,8 +179,7 @@ public struct MarketSentimentView: View {
     }()
 }
 
-// MARK: - 子元件
-
+// ... (其他子元件保持不變) ...
 struct IndicatorRowView: View {
     let indicatorName: String
     let percentileRank: Double
@@ -190,30 +199,7 @@ struct IndicatorRowView: View {
     }
 }
 
-struct SemiCircleGaugeView: View {
-    let value: Double
-    @ObservedObject var viewModel: MarketSentimentViewModel
-    
-    private var sentiment: String { viewModel.sentiment(for: value) }
-    private var color: Color { viewModel.sentimentColor(for: sentiment) }
-
-    var body: some View {
-        ZStack {
-            Circle().trim(from: 0.5, to: 1.0).stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 35, lineCap: .round))
-            Circle().trim(from: 0.5, to: 0.5 + (value / 100.0) / 2.0).stroke(color, style: StrokeStyle(lineWidth: 35, lineCap: .round)).animation(.easeInOut(duration: 1.0), value: value)
-            VStack(spacing: 4) {
-                Text(String(format: "%.0f", value)).font(.system(size: 70, weight: .bold))
-                Text(sentiment).font(.title2.bold()).foregroundColor(color)
-            }.offset(y: -40)
-            HStack {
-                Text("sentiment.extremeFear", bundle: .module).font(.callout).foregroundColor(.secondary)
-                Spacer()
-                Text("sentiment.extremeGreed", bundle: .module).font(.callout).foregroundColor(.secondary)
-            }.offset(y: 40)
-        }.padding(.horizontal, 20)
-    }
-}
-
+// ... HistoricalSentimentChart ...
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
     
