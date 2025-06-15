@@ -183,6 +183,8 @@ struct IndicatorDetailSection: Codable, Identifiable {
 // MARK: - 圖表視圖 (已修正對齊與編譯問題)
 struct IndicatorHistoricalChart: View {
     let data: [IndicatorHistoricalDataItem]
+    @State private var selectedDate: Date?
+    @State private var selectedValues: [String: Double]?
 
     // 1. 定義主軸 (情緒分數) 的數據域
     private let primaryDomain: ClosedRange<Double> = 0...100
@@ -218,44 +220,72 @@ struct IndicatorHistoricalChart: View {
         
         return (primaryTicks, secondaryTicks)
     }
+    
+    // Tooltip Helper
+    struct TidyChartDataPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let value: Double
+        let series: String
+    }
+    
+    private let seriesKeyMap: [String: Color] = [
+        "指標數值": .orange,
+        "情緒分數": .blue
+    ]
+
+    private var dataWithRank: [IndicatorHistoricalDataItem] {
+        data.filter { $0.percentileRank != nil }
+    }
 
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
                 // Y 軸 1：情緒分數 (百分位數) - 負責畫網格線
-                Chart {
-                    ForEach(data) { item in
-                        if let rank = item.percentileRank {
-                            LineMark(x: .value("日期", item.date), y: .value("情緒分數", rank))
-                                .foregroundStyle(Color.blue)
+                if !dataWithRank.isEmpty {
+                    Chart {
+                        ForEach(dataWithRank) { item in
+                            LineMark(
+                                x: .value("日期", item.date),
+                                y: .value("情緒分數", item.percentileRank!)
+                            )
+                            .foregroundStyle(Color.blue)
                         }
                     }
-                }
-                .chartYScale(domain: primaryDomain)
-                .chartYAxis {
-                    // 使用手動計算的 primaryTicks
-                    AxisMarks(position: .trailing, values: axisValues.primary) { _ in // <-- Changed to .trailing
-                        AxisGridLine() // 畫網格線
-                        AxisTick()
+                    .chartYScale(domain: primaryDomain)
+                    .chartYAxis {
+                        AxisMarks(position: .trailing, values: axisValues.primary) { _ in
+                            AxisGridLine()
+                            AxisTick()
+                        }
                     }
                 }
 
                 // Y 軸 2：指標原始數值
-                Chart {
-                    ForEach(data) { item in
-                        AreaMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
-                            .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
+                if !data.isEmpty {
+                    Chart {
+                        ForEach(data) { item in
+                            // ✅ *** 修正點：移除 AreaMark ***
+                            // AreaMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
+                            //     .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
+                            
+                            LineMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
+                                .foregroundStyle(Color.orange)
+                        }
                         
-                        LineMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
-                            .foregroundStyle(Color.orange)
+                        // RuleMark 必須被放置在 Chart 的內容中
+                        if let selectedDate {
+                            RuleMark(x: .value("Date", selectedDate))
+                                .foregroundStyle(Color.gray.opacity(0.5))
+                                .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
+                        }
                     }
-                }
-                .chartYScale(domain: secondaryDomain)
-                .chartYAxis {
-                    // 使用手動計算的 secondaryTicks
-                    AxisMarks(position: .trailing, values: axisValues.secondary) { _ in
-                        AxisGridLine().foregroundStyle(.clear) // 右軸不畫網格線
-                        AxisTick()
+                    .chartYScale(domain: secondaryDomain)
+                    .chartYAxis {
+                        AxisMarks(position: .trailing, values: axisValues.secondary) { _ in
+                            AxisGridLine().foregroundStyle(.clear)
+                            AxisTick()
+                        }
                     }
                 }
             }
@@ -263,6 +293,29 @@ struct IndicatorHistoricalChart: View {
                 AxisMarks(values: .automatic(desiredCount: 5))
             }
             .chartLegend(.hidden)
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    updateSelection(at: value.location, proxy: proxy, geometry: geometry.size)
+                                }
+                                .onEnded { _ in
+                                    selectedDate = nil
+                                    selectedValues = nil
+                                }
+                        )
+                }
+            }
+            .chartOverlay { proxy in
+                // Tooltip 視圖
+                if let selectedDate, let selectedValues {
+                    chartTooltip(selectedDate: selectedDate, selectedValues: selectedValues, proxy: proxy)
+                } else {
+                    EmptyView()
+                }
+            }
             
             // 自定義圖例
             HStack(spacing: 20) {
@@ -278,5 +331,83 @@ struct IndicatorHistoricalChart: View {
             Rectangle().fill(color).frame(width: 15, height: 3)
             Text(label, bundle: .module).font(.caption).foregroundColor(.secondary)
         }
+    }
+    
+    @ViewBuilder
+    private func chartTooltip(selectedDate: Date, selectedValues: [String: Double], proxy: ChartProxy) -> some View {
+        GeometryReader { geometry in
+            let sortedItems = selectedValues.sorted { $0.value > $1.value }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption).bold()
+                    .foregroundColor(.secondary)
+                
+                ForEach(sortedItems, id: \.key) { seriesKey, value in
+                    HStack {
+                        Circle()
+                            .fill(seriesKeyMap[seriesKey] ?? .gray)
+                            .frame(width: 8, height: 8)
+                        Text(LocalizedStringKey(seriesKey), bundle: .module)
+                            .font(.caption)
+                        Spacer()
+                        Text(String(format: "%.2f", value))
+                            .font(.caption.bold())
+                    }
+                }
+            }
+            .padding(8)
+            .background(Color(UIColor.systemBackground).opacity(0.85).cornerRadius(8))
+            .shadow(radius: 4)
+            .frame(width: 150)
+            .position(
+                x: {
+                    let datePosition = proxy.position(forX: selectedDate) ?? 0
+                    if datePosition < geometry.size.width / 2 {
+                        return datePosition + 80
+                    } else {
+                        return datePosition - 80
+                    }
+                }(),
+                y: geometry.size.height / 2 - 50
+            )
+        }
+    }
+
+    private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize) {
+        guard location.x >= 0, location.x <= geometry.width else {
+            self.selectedDate = nil
+            self.selectedValues = nil
+            return
+        }
+        guard let date: Date = proxy.value(atX: location.x) else { return }
+        
+        self.selectedDate = date
+        
+        let allPoints = transformData()
+        let closestPoints = Dictionary(grouping: allPoints, by: { $0.series })
+            .mapValues { seriesPoints -> TidyChartDataPoint? in
+                seriesPoints.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
+            }
+
+        var newValues: [String: Double] = [:]
+        for (series, point) in closestPoints {
+            if let point {
+                newValues[series] = point.value
+            }
+        }
+        
+        self.selectedValues = newValues
+    }
+    
+    private func transformData() -> [TidyChartDataPoint] {
+        var tidyData: [TidyChartDataPoint] = []
+        for item in data {
+            tidyData.append(TidyChartDataPoint(date: item.date, value: item.value, series: "指標數值"))
+            if let rank = item.percentileRank {
+                tidyData.append(TidyChartDataPoint(date: item.date, value: rank, series: "情緒分數"))
+            }
+        }
+        return tidyData
     }
 }
