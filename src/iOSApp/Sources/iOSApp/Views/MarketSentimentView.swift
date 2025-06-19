@@ -65,6 +65,7 @@ public struct MarketSentimentView: View {
                 let score = Double(sentimentData.totalScore) ?? 0.0
                 SemiCircleGaugeView(value: score, viewModel: viewModel)
                     .frame(height: 250)
+                    .offset(y: -60)
                 HStack {
                     Text("marketSentiment.lastUpdateLabel", bundle: .module)
                     Text(": \(sentimentData.compositeScoreLastUpdate, formatter: Self.dateFormatter)")
@@ -195,78 +196,117 @@ struct IndicatorRowView: View {
     }
 }
 
-// MARK: - 全新設計的儀表盤 (GaugeView)
+
+// MARK: - 優化後的儀表盤 (GaugeView)
 struct SemiCircleGaugeView: View {
     let value: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
 
-    // 使用 AppColors 中定義的顏色以保持一致性
-    private let gaugeColors = [
-        AppColors.minus2SD,        // Extreme Fear
-        AppColors.minus1SD,        // Fear
-        AppColors.trend,           // Neutral
-        AppColors.plus1SD,         // Greed
-        AppColors.plus2SD          // Extreme Greed
-    ]
-    
-    // 計算指針的旋轉角度，將 0-100 的數值映射到 -90° 至 +90°
-    private var needleRotation: Angle {
-        .degrees((value / 100.0) * 180.0 - 90.0)
+    // 使用漸層來呈現五種情緒顏色
+    private var sentimentGradient: AngularGradient {
+        let colors = [
+            AppColors.minus2SD,        // Extreme Fear
+            AppColors.minus1SD,        // Fear
+            AppColors.trend,           // Neutral
+            AppColors.plus1SD,         // Greed
+            AppColors.plus2SD          // Extreme Greed
+        ]
+        return AngularGradient(
+            gradient: Gradient(colors: colors),
+            center: .center,
+            startAngle: .degrees(180), // 從左側開始
+            endAngle: .degrees(360)    // 到右側結束
+        )
     }
 
     var body: some View {
-        ZStack {
-            // 1. 繪製五個分段顏色的圓弧背景
-            ForEach(0..<gaugeColors.count, id: \.self) { index in
+        GeometryReader { geometry in
+            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
+            let radius = min(geometry.size.width / 2, geometry.size.height) * 0.85
+            let lineWidth = radius * 0.25
+
+            let needleRotation = Angle.degrees((value / 100.0) * 180.0 - 90.0)
+            
+            ZStack {
+                // 1. 灰色背景弧形
                 Circle()
-                    .trim(from: 0.5 + (Double(index) * 0.1), to: 0.5 + (Double(index + 1) * 0.1))
-                    .stroke(gaugeColors[index], style: StrokeStyle(lineWidth: 30, lineCap: .butt))
-            }
-            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5) // 增加陰影以提升立體感
+                    .trim(from: 0.5, to: 1.0)
+                    .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .frame(width: radius * 2, height: radius * 2)
+                    .position(center)
+                    
+                // 2. 漸層情緒色環
+                Circle()
+                    .trim(from: 0.5, to: 1.0)
+                    .stroke(sentimentGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .frame(width: radius * 2, height: radius * 2)
+                    .position(center)
+                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 5)
 
-            // 2. 繪製指針
-            Rectangle()
-                .frame(width: 3, height: 60) // 指針的形狀與大小
-                .foregroundColor(Color(.label)) // 使用系統標籤顏色以確保對比度
-                .offset(y: -30) // 將指針向上移動，使其底部對齊中心點
-                .rotationEffect(needleRotation)
-                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: value) // 為指針添加彈簧動畫
-
-            // 3. 繪製指針的中心樞軸點
-            Circle()
-                .frame(width: 15, height: 15)
-                .foregroundColor(Color(.label))
-                .overlay(
-                    Circle().stroke(Color(.systemBackground), lineWidth: 3)
-                )
-
-            // 4. 在儀表盤下方顯示中央的數值與文字
-            VStack(spacing: 2) {
-                Text(String(format: "%.0f", value))
-                    .font(.system(size: 50, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(.label))
+                // 3. 精緻化的指針
+                NeedleShape()
+                    .fill(Color(.secondaryLabel))
+                    .frame(width: radius * 0.05, height: radius * 0.75)
+                    .offset(y: -radius * 0.375)
+                    .rotationEffect(needleRotation)
+                    .position(center)
+                    .shadow(color: .black.opacity(0.3), radius: 3, y: 3)
+                    .animation(.interactiveSpring(response: 0.6, dampingFraction: 0.6), value: value)
                 
-                Text(LocalizedStringKey(viewModel.sentimentKey(for: value)), bundle: .module)
-                    .font(.title3.bold())
-                    .foregroundColor(viewModel.sentimentColor(for: viewModel.sentimentKey(for: value)))
-            }
-            .offset(y: 40) // 將文字向下移動，使其位於樞軸點下方
+                // 4. 指針樞軸點
+                Circle()
+                    .frame(width: lineWidth * 0.5, height: lineWidth * 0.5)
+                    .foregroundColor(Color(.systemGray4))
+                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    .shadow(radius: 4, y: 2)
+                    .position(center)
+                    
+                // 5. 中央文字顯示 (採用相對定位)
+                VStack(spacing: 4) {
+                    let sentimentKey = viewModel.sentimentKey(for: value)
+                    Text(String(format: "%.0f", value))
+                        .font(.system(size: radius * 0.4, weight: .bold, design: .rounded))
+                    
+                    Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                        .font(.system(size: radius * 0.14, weight: .bold))
+                        .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                .position(x: center.x, y: center.y - radius * 0.75)
 
-            // 5. 在儀表盤底部兩側顯示標籤
-            HStack {
-                Text("sentiment.extremeFear", bundle: .module)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-                Text("sentiment.extremeGreed", bundle: .module)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // 6. 底部標籤 (採用相對定位)
+                HStack {
+                    Text("sentiment.extremeFear", bundle: .module)
+                    Spacer()
+                    Text("sentiment.extremeGreed", bundle: .module)
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: radius * 2.4) // 讓標籤寬度略小於儀表盤
+                .position(x: center.x, y: center.y + 40)
             }
-            .frame(width: 220) // 調整寬度以對齊儀表盤的兩端
-            .offset(y: 100) // 將標籤向下移動到儀表盤下方
-
         }
-        .frame(height: 250) // 為整個 ZStack 設定一個固定的框架高度
+    }
+}
+
+// 輔助形狀：自定義指針外觀
+struct NeedleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX, y: rect.maxY),
+            control: CGPoint(x: rect.minX, y: rect.midY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control: CGPoint(x: rect.maxX, y: rect.midY)
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -288,7 +328,6 @@ struct HistoricalSentimentChart: View {
         ZStack {
             Chart {
                 ForEach(data) { item in
-                    // ✅ **修正點：將顏色字串改為十六進位數字**
                     AreaMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(.linearGradient(stops: [.init(color: Color(hex: 0xD24A93).opacity(0.6), location: 0.0), .init(color: Color(hex: 0x708090).opacity(0.4), location: 0.5), .init(color: .blue.opacity(0.0), location: 1.0)], startPoint: .top, endPoint: .bottom))
                     LineMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(Color(hex: 0x9D00FF))
                 }
@@ -303,7 +342,6 @@ struct HistoricalSentimentChart: View {
             .chartYAxis {
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine()
-                    // No AxisValueLabel to hide values
                 }
             }
             
@@ -315,8 +353,7 @@ struct HistoricalSentimentChart: View {
             .chartYScale(domain: spyDomain)
             .chartYAxis {
                 AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
-                    AxisGridLine().foregroundStyle(.clear) // Hide secondary grid line
-                    // No AxisValueLabel to hide values
+                    AxisGridLine().foregroundStyle(.clear)
                 }
             }
         }
@@ -346,7 +383,6 @@ struct HistoricalSentimentChart: View {
         // Custom Legend
         HStack(spacing: 20) {
             HStack(spacing: 5) {
-                // ✅ **修正點：將顏色字串改為十六進位數字**
                 Rectangle().fill(Color(hex: 0x9D00FF)).frame(width: 15, height: 3)
                 Text("marketSentiment.chart.compositeIndexLabel", bundle: .module).font(.caption)
             }
@@ -381,7 +417,6 @@ struct HistoricalSentimentChart: View {
                     .font(.caption).bold().foregroundColor(.secondary)
                 
                 HStack {
-                    // ✅ **修正點：將顏色字串改為十六進位數字**
                     Circle().fill(Color(hex: 0x9D00FF)).frame(width: 8, height: 8)
                     Text("marketSentiment.chart.tooltipScore", bundle: .module).font(.caption)
                     Spacer()
