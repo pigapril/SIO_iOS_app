@@ -61,18 +61,49 @@ public struct MarketSentimentView: View {
         if viewModel.isLoading {
             ProgressView().frame(minHeight: 300)
         } else if let sentimentData = viewModel.sentimentData {
-            VStack {
+            VStack(spacing: 15) {
                 let score = Double(sentimentData.totalScore) ?? 0.0
+                let sentimentKey = viewModel.sentimentKey(for: score)
+
+                // 1. 儀表盤上方的結果標籤
+                HStack(alignment: .center, spacing: 20) {
+                    VStack {
+                        Text(String(format: "%.0f", score))
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                        Text("marketSentiment.composite.scoreLabel", bundle: .module)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider().frame(height: 35)
+
+                    VStack {
+                        Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                            .font(.system(size: 28, weight: .bold, design: .default))
+                            .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
+                        Text("marketSentiment.composite.sentimentLabel", bundle: .module)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.horizontal)
+                .padding(.top, 5)
+
+                // 2. 儀表盤視圖
                 SemiCircleGaugeView(value: score, viewModel: viewModel)
-                    .frame(height: 250)
+                    .frame(height: 250) // 增加容器高度
                     .offset(y: -60)
+
+                // 3. 最後更新時間
                 HStack {
                     Text("marketSentiment.lastUpdateLabel", bundle: .module)
                     Text(": \(sentimentData.compositeScoreLastUpdate, formatter: Self.dateFormatter)")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .padding(.top, 10)
+                .offset(y: 5) // 向下移動
             }
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage)
@@ -222,7 +253,7 @@ struct SemiCircleGaugeView: View {
     var body: some View {
         GeometryReader { geometry in
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
-            let radius = min(geometry.size.width / 2, geometry.size.height) * 0.85
+            let radius = min(geometry.size.width / 2, geometry.size.height) * 0.9
             let lineWidth = radius * 0.25
 
             let needleRotation = Angle.degrees((value / 100.0) * 180.0 - 90.0)
@@ -261,22 +292,14 @@ struct SemiCircleGaugeView: View {
                     .shadow(radius: 4, y: 2)
                     .position(center)
                     
-                // 5. 中央文字顯示 (採用相對定位)
-                VStack(spacing: 4) {
-                    let sentimentKey = viewModel.sentimentKey(for: value)
-                    Text(String(format: "%.0f", value))
-                        .font(.system(size: radius * 0.4, weight: .bold, design: .rounded))
-                    
-                    Text(LocalizedStringKey(sentimentKey), bundle: .module)
-                        .font(.system(size: radius * 0.14, weight: .bold))
-                        .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(.ultraThinMaterial, in: Capsule())
-                }
-                .position(x: center.x, y: center.y - radius * 0.75)
+                // 5. 中央數值顯示於指針底部
+                Text(String(format: "%.0f", value))
+                    .font(.system(size: radius * 0.45, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(.label))
+                    .position(x: center.x, y: center.y - (lineWidth / 2))
+                    .offset(y: +lineWidth * 0.3) // 向下移動
 
-                // 6. 底部標籤 (採用相對定位)
+                // 6. 底部標籤
                 HStack {
                     Text("sentiment.extremeFear", bundle: .module)
                     Spacer()
@@ -284,8 +307,8 @@ struct SemiCircleGaugeView: View {
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .frame(width: radius * 2.4) // 讓標籤寬度略小於儀表盤
-                .position(x: center.x, y: center.y + 40)
+                .frame(width: radius * 2.1)
+                .position(x: center.x, y: center.y + 35) // 向下移動
             }
         }
     }
