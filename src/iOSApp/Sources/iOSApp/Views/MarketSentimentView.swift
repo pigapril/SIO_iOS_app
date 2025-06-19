@@ -195,29 +195,81 @@ struct IndicatorRowView: View {
     }
 }
 
+// MARK: - 全新設計的儀表盤 (GaugeView)
 struct SemiCircleGaugeView: View {
     let value: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
+
+    // 使用 AppColors 中定義的顏色以保持一致性
+    private let gaugeColors = [
+        AppColors.minus2SD,        // Extreme Fear
+        AppColors.minus1SD,        // Fear
+        AppColors.trend,           // Neutral
+        AppColors.plus1SD,         // Greed
+        AppColors.plus2SD          // Extreme Greed
+    ]
     
-    private var sentimentKey: String { viewModel.sentimentKey(for: value) }
-    private var color: Color { viewModel.sentimentColor(for: sentimentKey) }
+    // 計算指針的旋轉角度，將 0-100 的數值映射到 -90° 至 +90°
+    private var needleRotation: Angle {
+        .degrees((value / 100.0) * 180.0 - 90.0)
+    }
 
     var body: some View {
         ZStack {
-            Circle().trim(from: 0.5, to: 1.0).stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 35, lineCap: .round))
-            Circle().trim(from: 0.5, to: 0.5 + (value / 100.0) / 2.0).stroke(color, style: StrokeStyle(lineWidth: 35, lineCap: .round)).animation(.easeInOut(duration: 1.0), value: value)
-            VStack(spacing: 4) {
-                Text(String(format: "%.0f", value)).font(.system(size: 70, weight: .bold))
-                Text(LocalizedStringKey(sentimentKey), bundle: .module).font(.title2.bold()).foregroundColor(color)
-            }.offset(y: -40)
+            // 1. 繪製五個分段顏色的圓弧背景
+            ForEach(0..<gaugeColors.count, id: \.self) { index in
+                Circle()
+                    .trim(from: 0.5 + (Double(index) * 0.1), to: 0.5 + (Double(index + 1) * 0.1))
+                    .stroke(gaugeColors[index], style: StrokeStyle(lineWidth: 30, lineCap: .butt))
+            }
+            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5) // 增加陰影以提升立體感
+
+            // 2. 繪製指針
+            Rectangle()
+                .frame(width: 3, height: 60) // 指針的形狀與大小
+                .foregroundColor(Color(.label)) // 使用系統標籤顏色以確保對比度
+                .offset(y: -30) // 將指針向上移動，使其底部對齊中心點
+                .rotationEffect(needleRotation)
+                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: value) // 為指針添加彈簧動畫
+
+            // 3. 繪製指針的中心樞軸點
+            Circle()
+                .frame(width: 15, height: 15)
+                .foregroundColor(Color(.label))
+                .overlay(
+                    Circle().stroke(Color(.systemBackground), lineWidth: 3)
+                )
+
+            // 4. 在儀表盤下方顯示中央的數值與文字
+            VStack(spacing: 2) {
+                Text(String(format: "%.0f", value))
+                    .font(.system(size: 50, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(.label))
+                
+                Text(LocalizedStringKey(viewModel.sentimentKey(for: value)), bundle: .module)
+                    .font(.title3.bold())
+                    .foregroundColor(viewModel.sentimentColor(for: viewModel.sentimentKey(for: value)))
+            }
+            .offset(y: 40) // 將文字向下移動，使其位於樞軸點下方
+
+            // 5. 在儀表盤底部兩側顯示標籤
             HStack {
-                Text("sentiment.extremeFear", bundle: .module).font(.callout).foregroundColor(.secondary)
+                Text("sentiment.extremeFear", bundle: .module)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Spacer()
-                Text("sentiment.extremeGreed", bundle: .module).font(.callout).foregroundColor(.secondary)
-            }.offset(y: 40)
-        }.padding(.horizontal, 20)
+                Text("sentiment.extremeGreed", bundle: .module)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(width: 220) // 調整寬度以對齊儀表盤的兩端
+            .offset(y: 100) // 將標籤向下移動到儀表盤下方
+
+        }
+        .frame(height: 250) // 為整個 ZStack 設定一個固定的框架高度
     }
 }
+
 
 struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
