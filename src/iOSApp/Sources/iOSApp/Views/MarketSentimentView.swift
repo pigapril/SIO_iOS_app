@@ -1,3 +1,5 @@
+// pigapril/sio_ios_app/SIO_iOS_app-gauge_update/src/iOSApp/Sources/iOSApp/Views/MarketSentimentView.swift
+
 import SwiftUI
 import Charts
 
@@ -93,7 +95,7 @@ public struct MarketSentimentView: View {
 
                 // 2. 儀表盤視圖
                 SemiCircleGaugeView(value: score, viewModel: viewModel)
-                    .frame(height: 250) // 增加容器高度
+                    .frame(height: 250)
                     .offset(y: -60)
 
                 // 3. 最後更新時間
@@ -233,7 +235,6 @@ struct SemiCircleGaugeView: View {
     let value: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
 
-    // 使用漸層來呈現五種情緒顏色
     private var sentimentGradient: AngularGradient {
         let colors = [
             AppColors.minus2SD,        // Extreme Fear
@@ -245,8 +246,8 @@ struct SemiCircleGaugeView: View {
         return AngularGradient(
             gradient: Gradient(colors: colors),
             center: .center,
-            startAngle: .degrees(180), // 從左側開始
-            endAngle: .degrees(360)    // 到右側結束
+            startAngle: .degrees(180),
+            endAngle: .degrees(360)
         )
     }
 
@@ -255,7 +256,6 @@ struct SemiCircleGaugeView: View {
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
             let radius = min(geometry.size.width / 2, geometry.size.height) * 0.9
             let lineWidth = radius * 0.25
-
             let needleRotation = Angle.degrees((value / 100.0) * 180.0 - 90.0)
             
             ZStack {
@@ -277,29 +277,27 @@ struct SemiCircleGaugeView: View {
                 // 3. 精緻化的指針
                 NeedleShape()
                     .fill(Color(.secondaryLabel))
-                    .frame(width: radius * 0.05, height: radius * 0.75)
-                    .offset(y: -radius * 0.375)
+                    .frame(width: radius * 0.05, height: radius * 0.7) // 微調
+                    .offset(y: -radius * 0.35) // 微調
                     .rotationEffect(needleRotation)
                     .position(center)
                     .shadow(color: .black.opacity(0.3), radius: 3, y: 3)
                     .animation(.interactiveSpring(response: 0.6, dampingFraction: 0.6), value: value)
                 
-                // 4. 指針樞軸點
-                Circle()
-                    .frame(width: lineWidth * 0.5, height: lineWidth * 0.5)
-                    .foregroundColor(Color(.systemGray4))
-                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                    .shadow(radius: 4, y: 2)
-                    .position(center)
+                // 4.  【核心修改】將數值與樞軸點結合
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemGray6))
+                        .shadow(color: .black.opacity(0.2), radius: 5, y: 3)
                     
-                // 5. 中央數值顯示於指針底部
-                Text(String(format: "%.0f", value))
-                    .font(.system(size: radius * 0.45, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(.label))
-                    .position(x: center.x, y: center.y - (lineWidth / 2))
-                    .offset(y: +lineWidth * 0.3) // 向下移動
-
-                // 6. 底部標籤
+                    Text(String(format: "%.0f", value))
+                        .font(.system(size: radius * 0.15, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(.label))
+                }
+                .frame(width: lineWidth * 1.2, height: lineWidth * 1.2)
+                .position(center)
+                    
+                // 5. 底部標籤
                 HStack {
                     Text("sentiment.extremeFear", bundle: .module)
                     Spacer()
@@ -308,11 +306,12 @@ struct SemiCircleGaugeView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .frame(width: radius * 2.1)
-                .position(x: center.x, y: center.y + 35) // 向下移動
+                .position(x: center.x, y: center.y + 35)
             }
         }
     }
 }
+
 
 // 輔助形狀：自定義指針外觀
 struct NeedleShape: Shape {
