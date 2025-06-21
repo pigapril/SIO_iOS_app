@@ -49,3 +49,8 @@ struct SearchResult: Codable, Identifiable, Hashable {
         hasher.combine(id)
     }
 }
+
+
+struct AddStockResponse: Decodable {
+    let item: Stock
+}

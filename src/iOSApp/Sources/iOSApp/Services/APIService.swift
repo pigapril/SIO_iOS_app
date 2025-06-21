@@ -142,13 +142,22 @@ class APIService {
         _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data
     }
 
-    // CORRECTED: Updated addStock function
     func addStock(categoryId: String, symbol: String) async throws -> Stock {
-        let body = try JSONEncoder().encode(["stockSymbol": symbol])
-        // The API returns the Stock object directly, not in a "data" wrapper.
-        // Set expectDataWrapper to false.
-        return try await request(endpoint: "watchlist/categories/\(categoryId)/stocks", method: "POST", body: body, expectDataWrapper: false)
-    }
+    let body = try JSONEncoder().encode(["stockSymbol": symbol])
+    
+    // 1. 呼叫 request，並期望它解碼外層的 {"data": ...} 結構
+    //    所以 expectDataWrapper 應為 true。
+    // 2. request<T> 中的 T 現在是我們新定義的 AddStockResponse
+    let response: AddStockResponse = try await request(
+        endpoint: "watchlist/categories/\(categoryId)/stocks", 
+        method: "POST", 
+        body: body, 
+        expectDataWrapper: true // <<< 設為 true 來處理 {"data": ...}
+    )
+    
+    // 3. 從解碼後的回應中，返回內層的 item (這就是我們需要的 Stock 物件)
+    return response.item
+}
 
     func removeStock(categoryId: String, itemId: String) async throws {
         _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as Data
