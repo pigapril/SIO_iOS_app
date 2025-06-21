@@ -52,13 +52,11 @@ struct IndicatorDetailView: View {
 
     private var summaryView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("indicatorItem.latestDataLabel", bundle: .module)
-                .font(.headline)
-                .foregroundColor(.secondary)
+
 
             HStack(spacing: 20) {
                 MetricView(
-                    labelKey: "indicatorItem.valueLabel",
+                    labelKey: "indicatorItem.latestDataLabel",
                     value: viewModel.latestIndicatorData?.value.formatted(.number.precision(.fractionLength(2))) ?? "N/A"
                 )
                 Divider()

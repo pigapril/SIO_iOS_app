@@ -1,3 +1,5 @@
+// pigapril/sio_ios_app/SIO_iOS_app-watchlist/src/iOSApp/Sources/iOSApp/Services/APIService.swift
+
 import Foundation
 
 // A generic response structure to handle APIs that wrap the main data
@@ -115,14 +117,12 @@ class APIService {
     }
 
     func fetchCompositeHistoricalData() async throws -> [HistoricalDataItem] {
-       let response: APIResponse<[HistoricalDataItem]> = try await request(endpoint: "composite-historical-data", expectDataWrapper: true)
-       return response.data
+       return try await request(endpoint: "composite-historical-data", expectDataWrapper: false)
     }
     
     func fetchIndicatorHistoricalData(indicatorKey: String) async throws -> [IndicatorHistoricalDataItem] {
        let queryItems = [URLQueryItem(name: "indicator", value: indicatorKey)]
-       let response: APIResponse<[IndicatorHistoricalDataItem]> = try await request(endpoint: "indicator-history", queryItems: queryItems, expectDataWrapper: true)
-       return response.data
+       return try await request(endpoint: "indicator-history", queryItems: queryItems, expectDataWrapper: false)
     }
 
     // MARK: - Watchlist Methods
