@@ -176,8 +176,8 @@ class APIService {
 }
 
     func removeStock(categoryId: String, itemId: String) async throws {
-        _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as Data
-    }
+    _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as StatusResponse
+}
 
     func searchStocks(keyword: String) async throws -> [SearchResult] {
         let queryItems = [URLQueryItem(name: "keyword", value: keyword)]
