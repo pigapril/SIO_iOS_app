@@ -41,7 +41,7 @@ struct IndicatorDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 Button(action: { dismiss() }) {
-                        Text("common.done", bundle: .module)
+                                Text(NSLocalizedString("common.done", bundle: .module, comment: "Done button in toolbar"))
                 }
             }
             .onAppear(perform: viewModel.fetchData)

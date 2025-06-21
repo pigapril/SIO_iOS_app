@@ -354,7 +354,7 @@ struct CategoryManagerView: View {
             }
             .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria", bundle: .module))
             .navigationBarItems(leading: EditButton(), trailing: Button(action: { dismiss() }) {
-                Text("common.done", bundle: .module)
+                Text(NSLocalizedString("common.done", bundle: .module, comment: "Done button for category manager"))
             })
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
@@ -396,7 +396,7 @@ struct EditCategoryView: View {
             }
             .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
             .navigationBarItems(trailing: Button(action: { dismiss() }) {
-                Text("common.cancel", bundle: .module)
+                Text(NSLocalizedString("common.cancel", bundle: .module, comment: "Cancel button for edit category"))
             })
         }
     }

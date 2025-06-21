@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		15ECC2CF2DFD564A002F9766 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 15ECC2CE2DFD564A002F9766 /* iOSApp */; };
+		159426C32E070E07001CB8A6 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 159426C22E070E07001CB8A6 /* iOSApp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		155A1A5A2E07021300F2AE26 /* iOSApp */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = iOSApp; path = ../iOSApp; sourceTree = "<group>"; };
 		15ECC2A12DFD52E1002F9766 /* StockApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StockApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		15ECC2AE2DFD52E3002F9766 /* StockAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		15ECC2B82DFD52E3002F9766 /* StockAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -69,7 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				15ECC2CF2DFD564A002F9766 /* iOSApp in Frameworks */,
+				159426C32E070E07001CB8A6 /* iOSApp in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -114,6 +115,7 @@
 		15ECC2CD2DFD55FD002F9766 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				155A1A5A2E07021300F2AE26 /* iOSApp */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -138,7 +140,7 @@
 			);
 			name = StockApp;
 			packageProductDependencies = (
-				15ECC2CE2DFD564A002F9766 /* iOSApp */,
+				159426C22E070E07001CB8A6 /* iOSApp */,
 			);
 			productName = StockApp;
 			productReference = 15ECC2A12DFD52E1002F9766 /* StockApp.app */;
@@ -223,7 +225,7 @@
 			mainGroup = 15ECC2982DFD52E1002F9766;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				15ECC2CC2DFD558C002F9766 /* XCLocalSwiftPackageReference "../iOSApp" */,
+				159426C12E070E07001CB8A6 /* XCLocalSwiftPackageReference "../iOSApp" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 15ECC2A22DFD52E1002F9766 /* Products */;
@@ -586,16 +588,15 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		15ECC2CC2DFD558C002F9766 /* XCLocalSwiftPackageReference "../iOSApp" */ = {
+		159426C12E070E07001CB8A6 /* XCLocalSwiftPackageReference "../iOSApp" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../iOSApp;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		15ECC2CE2DFD564A002F9766 /* iOSApp */ = {
+		159426C22E070E07001CB8A6 /* iOSApp */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 15ECC2CC2DFD558C002F9766 /* XCLocalSwiftPackageReference "../iOSApp" */;
 			productName = iOSApp;
 		};
 /* End XCSwiftPackageProductDependency section */

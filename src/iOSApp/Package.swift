@@ -1,6 +1,4 @@
 // swift-tools-version:5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
 import PackageDescription
 
 let package = Package(
@@ -12,21 +10,29 @@ let package = Package(
     products: [
         .library(
             name: "iOSApp",
-            targets: ["iOSApp"]),
+            targets: ["iOSAppSource"]
+        ),
     ],
     dependencies: [
+        // highlight-start
+        // 重新加回 GoogleSignIn-iOS 套件
         .package(url: "https://github.com/google/GoogleSignIn-iOS.git", from: "7.0.0"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.0.0")
+        // highlight-end
     ],
     targets: [
         .target(
-            name: "iOSApp",
+            name: "iOSAppSource",
             dependencies: [
-                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
                 // highlight-start
-                // 修正點：我們只宣告 FirebaseAuth，讓它自動帶入需要的 FirebaseCore
-                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+                // 明確指定 FirebaseAuth 產品來自 firebase-ios-sdk 套件
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
+                // 明確指定 GoogleSignIn 產品來自 GoogleSignIn-iOS 套件
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")
                 // highlight-end
+            ],
+            resources: [
+                .process("Resources")
             ]
         ),
     ]
