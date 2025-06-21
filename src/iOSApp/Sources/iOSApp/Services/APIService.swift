@@ -14,6 +14,10 @@ struct SearchResultsResponse: Decodable {
     let results: [SearchResult]
 }
 
+struct StatusResponse: Decodable {
+    let status: String
+}
+
 
 class APIService {
     static let shared = APIService()
@@ -151,8 +155,8 @@ class APIService {
 }
     
     func deleteCategory(id: String) async throws {
-        _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data
-    }
+    _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as StatusResponse
+}
 
     func addStock(categoryId: String, symbol: String) async throws -> Stock {
     let body = try JSONEncoder().encode(["stockSymbol": symbol])

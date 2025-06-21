@@ -3,7 +3,7 @@ import Foundation
 struct Category: Codable, Identifiable {
     let id: String
     var name: String
-    var stocks: [Stock]
+    var stocks: [Stock]?
 }
 
 struct Stock: Codable, Identifiable, Hashable {

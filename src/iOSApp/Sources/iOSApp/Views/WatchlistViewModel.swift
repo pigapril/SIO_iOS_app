@@ -54,7 +54,7 @@ class WatchlistViewModel: ObservableObject {
         }
         
         // Prevent adding duplicates on the client-side
-        if let category = categories.first(where: { $0.id == categoryId }), category.stocks.contains(where: { $0.symbol == symbol }) {
+            if let category = categories.first(where: { $0.id == categoryId }), (category.stocks ?? []).contains(where: { $0.symbol == symbol }) {
             self.errorMessage = "\(symbol) is already in this category."
             return
         }
@@ -62,8 +62,12 @@ class WatchlistViewModel: ObservableObject {
         do {
             let newStock = try await APIService.shared.addStock(categoryId: categoryId, symbol: symbol)
             if let index = categories.firstIndex(where: { $0.id == categoryId }) {
-                categories[index].stocks.append(newStock)
-            }
+    if categories[index].stocks != nil {
+        categories[index].stocks?.append(newStock)
+    } else {
+        categories[index].stocks = [newStock]
+    }
+}
         } catch {
             self.errorMessage = error.localizedDescription
             ErrorHandler.handle(error: error, component: "WatchlistViewModel.addStock")
@@ -71,25 +75,25 @@ class WatchlistViewModel: ObservableObject {
     }
     
     func removeStock(from categoryId: String, at offsets: IndexSet) {
-        guard let categoryIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
-        
-        let stocksToDelete = offsets.map { categories[categoryIndex].stocks[$0] }
-        
-        Task {
-            for stock in stocksToDelete {
-                do {
-                    try await APIService.shared.removeStock(categoryId: categoryId, itemId: stock.id)
-                    // On success, remove from local array
-                    if let stockIndex = self.categories[categoryIndex].stocks.firstIndex(where: { $0.id == stock.id }) {
-                        self.categories[categoryIndex].stocks.remove(at: stockIndex)
-                    }
-                } catch {
-                    self.errorMessage = error.localizedDescription
-                    ErrorHandler.handle(error: error, component: "WatchlistViewModel.removeStock")
-                }
+    guard let categoryIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
+
+    // Safely unwrap the stocks array before using it
+    guard let stocks = categories[categoryIndex].stocks else { return }
+    let stocksToDelete = offsets.map { stocks[$0] }
+
+    Task {
+        for stock in stocksToDelete {
+            do {
+                try await APIService.shared.removeStock(categoryId: categoryId, itemId: stock.id)
+                // On success, safely remove from the optional local array
+                self.categories[categoryIndex].stocks?.removeAll(where: { $0.id == stock.id })
+            } catch {
+                self.errorMessage = error.localizedDescription
+                ErrorHandler.handle(error: error, component: "WatchlistViewModel.removeStock")
             }
         }
     }
+}
     
     func searchStocks(keyword: String) {
         searchDebounceTimer?.cancel() // Cancel previous timer
