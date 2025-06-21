@@ -69,7 +69,7 @@ struct WatchlistView: View {
 // MARK: - 股票列表 (StockListView)
 struct StockListView: View {
     let stocks: [Stock]
-    let categoryId: Int
+    let categoryId: String
     @ObservedObject var viewModel: WatchlistViewModel
 
     var body: some View {
@@ -103,9 +103,9 @@ struct StockRow: View {
             }
             Spacer()
             VStack(alignment: .trailing) {
-                Text(String(format: "%.2f", stock.lastPrice))
-                Text(String(format: "%.2f (%.2f%%)", stock.change, stock.changePercent))
-                    .foregroundColor(stock.change >= 0 ? .green : .red)
+                Text(String(format: "%.2f", stock.price))
+                Text(String(format: "%.2f (%.2f%%)", stock.change ?? 0.0, stock.changePercent ?? 0.0))
+                    .foregroundColor((stock.change ?? 0.0) >= 0 ? .green : .red)
             }
         }
     }

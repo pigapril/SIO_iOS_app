@@ -4,7 +4,7 @@ import Combine
 @MainActor
 class WatchlistViewModel: ObservableObject {
     @Published var categories: [Category] = []
-    @Published var selectedCategoryId: Int?
+    @Published var selectedCategoryId: String?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var searchResults: [SearchResult] = []
@@ -54,7 +54,7 @@ class WatchlistViewModel: ObservableObject {
     }
     
     // ✅ **解決方案：新增 removeStock 函式**
-    func removeStock(categoryId: Int, itemId: Int) async {
+    func removeStock(categoryId: String, itemId: String) async {
         do {
             try await APIService.shared.removeStock(categoryId: categoryId, itemId: itemId)
             // 直接從本地端移除，避免重新抓取所有資料，優化體驗

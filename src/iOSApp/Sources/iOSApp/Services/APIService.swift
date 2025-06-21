@@ -5,6 +5,10 @@ struct APIResponse<T: Decodable>: Decodable {
     let data: T
 }
 
+struct CategoriesResponse: Decodable {
+    let categories: [Category]
+}
+
 class APIService {
     static let shared = APIService()
     private let baseURL = URL(string: "http://127.0.0.1:5001/api/")!
@@ -110,7 +114,8 @@ class APIService {
     // MARK: - Watchlist Methods
 
     func fetchCategories() async throws -> [Category] {
-        return try await request(endpoint: "watchlist/categories", expectDataWrapper: false)
+        let response: CategoriesResponse = try await request(endpoint: "watchlist/categories", expectDataWrapper: true)
+        return response.categories
     }
 
     func createCategory(name: String) async throws -> Category {
@@ -118,21 +123,21 @@ class APIService {
         return try await request(endpoint: "watchlist/categories", method: "POST", body: body, expectDataWrapper: false)
     }
     
-    func updateCategory(id: Int, name: String) async throws -> Category {
+    func updateCategory(id: String, name: String) async throws -> Category {
         let body = try JSONEncoder().encode(["name": name])
         return try await request(endpoint: "watchlist/categories/\(id)", method: "PUT", body: body, expectDataWrapper: false)
     }
     
-    func deleteCategory(id: Int) async throws {
+    func deleteCategory(id: String) async throws {
         _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data // Expect empty response
     }
 
-    func addStock(categoryId: Int, symbol: String) async throws -> Stock {
+    func addStock(categoryId: String, symbol: String) async throws -> Stock {
         let body = try JSONEncoder().encode(["stockSymbol": symbol])
         return try await request(endpoint: "watchlist/categories/\(categoryId)/stocks", method: "POST", body: body, expectDataWrapper: false)
     }
 
-    func removeStock(categoryId: Int, itemId: Int) async throws {
+    func removeStock(categoryId: String, itemId: String) async throws {
         _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as Data
     }
 
