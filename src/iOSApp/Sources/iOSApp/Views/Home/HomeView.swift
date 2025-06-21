@@ -1,22 +1,24 @@
 import SwiftUI
 
 struct HomeView: View {
-        @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 // Hero Section
                 VStack {
-                    Text("洞悉市場情緒，掌握投資先機")
+                    // highlight-start
+                    Text("home.hero.title", bundle: .module)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
                     
-                    Text("我們利用獨家的市場情緒分析模型，幫助您在複雜的金融市場中，做出更明智的決策。")
+                    Text("home.hero.subtitle", bundle: .module)
                         .font(.headline)
                         .multilineTextAlignment(.center)
                         .padding(.top, 10)
+                    // highlight-end
                     
                     Image(systemName: "chevron.down")
                         .padding(.top, 20)
@@ -24,31 +26,37 @@ struct HomeView: View {
                 .padding()
 
                 // Feature 1: Price Analysis
+                // highlight-start
                 FeatureView(
                     imageName: "home-feature1",
-                    title: "價格標準差分析",
-                    text: "利用統計學找出股價的異常波動，捕捉潛在的交易機會。",
-                    linkText: "了解更多",
+                    titleKey: "home.feature1.title",
+                    textKey: "home.feature1.text",
+                    linkTextKey: "home.feature.link",
                     destination: AnyView(PriceAnalysisView())
                 )
+                // highlight-end
 
                 // Feature 2: Watchlist
+                // highlight-start
                 FeatureView(
                     imageName: "home-feature2",
-                    title: "個人化追蹤清單",
-                    text: "建立您的個人化股票清單，即時追蹤市場情緒與價格變化。",
-                    linkText: "立即體驗",
+                    titleKey: "home.feature2.title",
+                    textKey: "home.feature2.text",
+                    linkTextKey: "home.feature.link",
                     destination: AnyView(WatchlistView())
                 )
+                // highlight-end
 
                 // Feature 3: Market Sentiment
+                // highlight-start
                 FeatureView(
                     imageName: "home-feature3",
-                    title: "市場情緒指數",
-                    text: "獨家市場情緒指數，幫助您判斷當前市場氛圍，避免追高殺低。",
-                    linkText: "查看指數",
+                    titleKey: "home.feature3.title",
+                    textKey: "home.feature3.text",
+                    linkTextKey: "home.feature.link",
                     destination: AnyView(MarketSentimentView())
                 )
+                // highlight-end
                 
                 // CTA Section - 只有在未登入時顯示
                 if !authViewModel.isAuthenticated {
@@ -57,28 +65,32 @@ struct HomeView: View {
                             await authViewModel.signIn()
                         }
                     }) {
-                        Text("立即註冊，免費體驗")
+                        // highlight-start
+                        Text("home.cta.button", bundle: .module)
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Color.blue)
                             .cornerRadius(10)
+                        // highlight-end
                     }
                     .padding()
                 }
             }
         }
-        .navigationTitle("首頁")
+        // highlight-start
+        .navigationTitle(Text("nav.home", bundle: .module))
+        // highlight-end
     }
 }
 
-// FeatureView 保持不變
+// FeatureView 已修改為接受翻譯鍵
 struct FeatureView: View {
     let imageName: String
-    let title: String
-    let text: String
-    let linkText: String
+    let titleKey: LocalizedStringKey
+    let textKey: LocalizedStringKey
+    let linkTextKey: LocalizedStringKey
     let destination: AnyView
 
     var body: some View {
@@ -90,17 +102,19 @@ struct FeatureView: View {
                 .cornerRadius(10)
 
             VStack(alignment: .leading, spacing: 10) {
-                Text(title)
+                // highlight-start
+                Text(titleKey, bundle: .module)
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text(text)
+                Text(textKey, bundle: .module)
                     .font(.body)
                 
                 NavigationLink(destination: destination) {
-                    Text(linkText)
+                    Text(linkTextKey, bundle: .module)
                         .foregroundColor(.blue)
                 }
+                // highlight-end
             }
         }
         .padding()

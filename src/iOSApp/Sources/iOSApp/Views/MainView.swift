@@ -10,7 +10,10 @@ public struct MainView: View {
             // 登入/個人資料區塊
             if authViewModel.isAuthenticated {
                 NavigationLink(destination: UserProfileView()) {
-                    Label(authViewModel.user?.username ?? "個人資料", systemImage: "person.crop.circle.fill")
+                    // highlight-start
+                    // 這種動態文字的情況，使用 NSLocalizedString 是正確的
+                    Label(authViewModel.user?.username ?? NSLocalizedString("userProfile.title", bundle: .module, comment: ""), systemImage: "person.crop.circle.fill")
+                    // highlight-end
                 }
             } else {
                 Button(action: {
@@ -18,35 +21,79 @@ public struct MainView: View {
                         await authViewModel.signIn()
                     }
                 }) {
-                    Label("使用 Google 登入", systemImage: "person.badge.key.fill")
+                    // highlight-start
+                    // NSLocalizedString 同樣適用於 Button
+                    Label(NSLocalizedString("signInButton.googleAriaLabel", bundle: .module, comment: ""), systemImage: "person.badge.key.fill")
+                    // highlight-end
                 }
             }
 
             Divider()
 
-            // 功能列表
+            // 功能列表 - 全面改用 `Label { Text(...) }` 語法
             NavigationLink(destination: HomeView()) {
-                Label("首頁", systemImage: "house.fill")
+                // highlight-start
+                Label {
+                    Text("nav.home", bundle: .module)
+                } icon: {
+                    Image(systemName: "house.fill")
+                }
+                // highlight-end
             }
             NavigationLink(destination: PriceAnalysisView()) {
-                Label("價格標準差分析", systemImage: "chart.line.uptrend.xyaxis")
+                // highlight-start
+                Label {
+                    Text("nav.priceAnalysis", bundle: .module)
+                } icon: {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                }
+                // highlight-end
             }
             NavigationLink(destination: MarketSentimentView()) {
-                Label("市場情緒指數", systemImage: "heart.fill")
+                // highlight-start
+                Label {
+                    Text("nav.marketSentiment", bundle: .module)
+                } icon: {
+                    Image(systemName: "heart.fill")
+                }
+                // highlight-end
             }
             NavigationLink(destination: WatchlistView()) {
-                Label("觀察清單", systemImage: "list.star")
+                // highlight-start
+                Label {
+                    Text("nav.watchlist", bundle: .module)
+                } icon: {
+                    Image(systemName: "list.star")
+                }
+                // highlight-end
             }
             NavigationLink(destination: ArticlesView()) {
-                Label("文章", systemImage: "newspaper.fill")
+                // highlight-start
+                Label {
+                    Text("nav.articles", bundle: .module)
+                } icon: {
+                    Image(systemName: "newspaper.fill")
+                }
+                // highlight-end
             }
             NavigationLink(destination: AboutView()) {
-                Label("關於", systemImage: "info.circle.fill")
+                // highlight-start
+                Label {
+                    Text("footer.aboutSite", bundle: .module)
+                } icon: {
+                    Image(systemName: "info.circle.fill")
+                }
+                // highlight-end
             }
             NavigationLink(destination: LegalView()) {
-                Label("法律資訊", systemImage: "doc.text.fill")
+                // highlight-start
+                Label {
+                    Text("legal.pageTitle", bundle: .module)
+                } icon: {
+                    Image(systemName: "doc.text.fill")
+                }
+                // highlight-end
             }
         }
-        .navigationTitle("選單")
     }
 }

@@ -315,7 +315,7 @@ struct CategoryManagerView: View {
         NavigationView {
             VStack {
                 List {
-                    Section(header: Text("categoryManager.myCategoriesHeader", bundle: .module)) {
+                    Section{
                         ForEach(viewModel.categories) { category in
                             HStack {
                                 Text(category.name)
