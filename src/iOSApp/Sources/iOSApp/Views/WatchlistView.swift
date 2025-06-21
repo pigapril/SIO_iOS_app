@@ -14,7 +14,9 @@ public struct WatchlistView: View {
         VStack(spacing: 0) {
             if viewModel.isLoading && viewModel.categories.isEmpty {
                 Spacer()
-                ProgressView(LocalizedStringKey("common.loading"))
+                ProgressView { 
+                    Text("common.loading", bundle: .module)
+                }
                 Spacer()
             } else if let errorMessage = viewModel.errorMessage {
                 errorStateView(message: errorMessage)
@@ -78,10 +80,12 @@ public struct WatchlistView: View {
          VStack {
              Spacer()
              Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundColor(.secondary)
-             Text("Error Loading Watchlist").font(.headline).padding(.top)
+             Text("watchlist.error.title", bundle: .module).font(.headline).padding(.top)
              Text(message).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
-             Button("Retry") {
+             Button(action: {
                  viewModel.fetchCategories()
+             }) {
+                Text("errorBoundary.retryButton", bundle: .module)
              }
              .buttonStyle(.bordered)
              Spacer()
@@ -93,10 +97,10 @@ public struct WatchlistView: View {
         VStack(spacing: 15) {
             Spacer()
             Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
-            Text("Create Your First Watchlist").font(.title2)
-            Text("Tap the gear icon to create a new category.").font(.subheadline).foregroundColor(.secondary)
+            Text("watchlist.emptyState.title", bundle: .module).font(.title2)
+            Text("watchlist.emptyState.message", bundle: .module).font(.subheadline).foregroundColor(.secondary)
             Button(action: { showingCategoryManager = true }) {
-                Label("Manage Categories", systemImage: "folder.badge.gearshape")
+                Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
             }
             .buttonStyle(.borderedProminent).padding(.top)
             Spacer()
@@ -116,8 +120,8 @@ private struct StockListView: View {
             if stocks.isEmpty {
                  VStack {
                      Spacer()
-                     Text("No stocks yet.").font(.headline)
-                     Text("Tap '+' to add a stock to this list.").foregroundColor(.secondary)
+                     Text("watchlist.emptyState.noStocksTitle", bundle: .module).font(.headline)
+                     Text("watchlist.emptyState.noStocksMessage", bundle: .module).foregroundColor(.secondary)
                      Spacer()
                  }
                  .frame(maxWidth: .infinity, minHeight: 200)
@@ -163,7 +167,7 @@ private struct StockCardView: View {
                 } else {
                     HStack {
                         ProgressView().scaleEffect(0.7)
-                        Text(LocalizedStringKey("watchlist.stockCard.analysis.loading"))
+                        Text(LocalizedStringKey("watchlist.stockCard.analysis.loading"), bundle: .module)
                             .font(.caption).foregroundColor(.secondary)
                     }
                 }
@@ -292,8 +296,10 @@ struct StockSearchView: View {
             .onChange(of: searchText) { newValue in
                 viewModel.searchStocks(keyword: newValue)
             }
-            .navigationTitle(Text("Add Stock"))
-            .navigationBarItems(trailing: Button("Done") { dismiss() })
+            .navigationTitle(Text("watchlist.addStock.title", bundle: .module))
+            .navigationBarItems(trailing: Button(action: { dismiss() }) {
+                Text("common.done", bundle: .module)
+            })
         }
     }
 }
@@ -309,7 +315,7 @@ struct CategoryManagerView: View {
         NavigationView {
             VStack {
                 List {
-                    Section(header: Text("My Categories")) {
+                    Section(header: Text("categoryManager.myCategoriesHeader", bundle: .module)) {
                         ForEach(viewModel.categories) { category in
                             HStack {
                                 Text(category.name)
@@ -325,8 +331,12 @@ struct CategoryManagerView: View {
                 .listStyle(.insetGrouped)
                 
                 HStack {
-                    TextField(LocalizedStringKey("watchlist.createCategoryDialog.placeholder"), text: $newCategoryName)
-                        .textFieldStyle(.roundedBorder)
+                    // --- FINAL FIX: Use NSLocalizedString for TextField placeholder ---
+                    TextField(
+                        NSLocalizedString("watchlist.createCategoryDialog.placeholder", bundle: .module, comment: ""),
+                        text: $newCategoryName
+                    )
+                    .textFieldStyle(.roundedBorder)
                     
                     Button(action: {
                         Task {
@@ -343,7 +353,9 @@ struct CategoryManagerView: View {
                 .padding()
             }
             .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria", bundle: .module))
-            .navigationBarItems(leading: EditButton(), trailing: Button("Done") { dismiss() })
+            .navigationBarItems(leading: EditButton(), trailing: Button(action: { dismiss() }) {
+                Text("common.done", bundle: .module)
+            })
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
             }
@@ -367,16 +379,25 @@ struct EditCategoryView: View {
     var body: some View {
         NavigationView {
             Form {
-                TextField(LocalizedStringKey("watchlist.editCategoryDialog.placeholder"), text: $newName)
-                Button(LocalizedStringKey("watchlist.editCategoryDialog.confirmButton")) {
+                // --- FINAL FIX: Use NSLocalizedString for TextField placeholder ---
+                TextField(
+                    NSLocalizedString("watchlist.editCategoryDialog.placeholder", bundle: .module, comment: ""),
+                    text: $newName
+                )
+                
+                Button(action: {
                     Task {
                         await viewModel.updateCategory(category: category, newName: newName)
                         dismiss()
                     }
+                }) {
+                    Text("watchlist.editCategoryDialog.confirmButton", bundle: .module)
                 }
             }
             .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
-            .navigationBarItems(trailing: Button("Cancel") { dismiss() })
+            .navigationBarItems(trailing: Button(action: { dismiss() }) {
+                Text("common.cancel", bundle: .module)
+            })
         }
     }
 }
