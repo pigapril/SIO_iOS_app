@@ -1,10 +1,19 @@
+// /Users/tony.h/tony-stock/iOS App/src/iOSApp/Sources/iOSApp/Views/PriceAnalysisView.swift
+
 import SwiftUI
 import Charts
 
 struct PriceAnalysisView: View {
-    @StateObject private var viewModel = PriceAnalysisViewModel()
+    @StateObject private var viewModel: PriceAnalysisViewModel
     @State private var activeChart: ChartType = .standardDeviation
     @State private var isAdvancedQuery: Bool = false
+    
+    init(initialStockCode: String? = nil, initialYears: String? = nil) {
+        _viewModel = StateObject(wrappedValue: PriceAnalysisViewModel(
+            stockCode: initialStockCode ?? "SPY",
+            years: initialYears ?? "3.5"
+        ))
+    }
     
     // 使用翻譯鍵
     enum ChartType: String, CaseIterable {
@@ -130,7 +139,7 @@ struct PriceAnalysisView: View {
                 ProgressView()
                     .frame(height: 350)
             } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)") // Error messages are not typically localized unless defined
+                Text("Error: \(errorMessage)")
                     .foregroundColor(.red)
                     .frame(height: 350)
             } else if let result = viewModel.analysisResult, let chartData = viewModel.chartData {
@@ -194,18 +203,21 @@ struct PriceAnalysisView: View {
     }
 
     private func sentimentColor(sentimentKey: String?) -> Color {
-        guard let sentimentKey = sentimentKey else { return AppColors.trend } // Use neutral color
+        guard let sentimentKey = sentimentKey else { return AppColors.trend }
         switch sentimentKey {
             case "priceAnalysis.sentiment.extremeOptimism": return AppColors.plus2SD
             case "priceAnalysis.sentiment.optimism": return AppColors.plus1SD
             case "priceAnalysis.sentiment.pessimism": return AppColors.minus1SD
             case "priceAnalysis.sentiment.extremePessimism": return AppColors.minus2SD
-            default: return AppColors.trend // neutral
+            default: return AppColors.trend
         }
     }
 }
 
-struct PriceStandardDeviationChart: View {
+
+// MARK: - Sub-charts
+
+private struct PriceStandardDeviationChart: View {
     let chartData: PriceAnalysisData
     @State private var selectedDate: Date?
     @State private var selectedValues: [String: Double]?
@@ -421,7 +433,7 @@ struct PriceStandardDeviationChart: View {
     }
 }
 
-struct ULBandChart: View {
+private struct ULBandChart: View {
     let chartData: PriceAnalysisData
     @State private var selectedDate: Date?
     @State private var selectedValues: [String: Double]?
@@ -598,4 +610,4 @@ struct ULBandChart: View {
         }
         return tidyData
     }
-} 
+}

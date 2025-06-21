@@ -1,73 +1,100 @@
+// /Users/tony.h/tony-stock/iOS App/src/iOSApp/Sources/iOSApp/Views/WatchlistView.swift
 import SwiftUI
+import Charts
 
-// MARK: - 主視圖 (WatchlistView)
-struct WatchlistView: View {
+// MARK: - Main Watchlist View
+public struct WatchlistView: View {
     @StateObject private var viewModel = WatchlistViewModel()
     @State private var showingSearch = false
     @State private var showingCategoryManager = false
 
-    var body: some View {
-        VStack {
-            if viewModel.isLoading {
-                ProgressView()
+    public var body: some View {
+        VStack(spacing: 0) {
+            if viewModel.isLoading && viewModel.categories.isEmpty {
+                Spacer()
+                ProgressView(NSLocalizedString("common.loading", bundle: .module, comment: "Loading..."))
+                Spacer()
             } else if let errorMessage = viewModel.errorMessage {
-                // 錯誤訊息通常來自後端，不進行本地化，或由 ViewModel 處理
-                Text(errorMessage)
+                VStack {
+                    Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundColor(.secondary)
+                    Text("Error Loading Watchlist").font(.headline).padding(.top)
+                    Text(errorMessage).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
+                }
             } else {
-                if #available(iOS 16.0, *) {
-                    TabView(selection: $viewModel.selectedCategoryId) {
-                        ForEach(viewModel.categories) { category in
-                            StockListView(stocks: category.stocks, categoryId: category.id, viewModel: viewModel)
-                                .tabItem {
-                                    Text(category.name)
-                                }
-                                .tag(category.id)
-                        }
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .always))
+                categoryTabs
+                
+                if let selectedCategory = viewModel.categories.first(where: { $0.id == viewModel.selectedCategoryId }) {
+                    StockListView(stocks: selectedCategory.stocks, categoryId: selectedCategory.id, viewModel: viewModel)
+                } else if !viewModel.categories.isEmpty {
+                     Text("Select a category", bundle: .module).foregroundColor(.secondary).frame(maxHeight: .infinity)
                 } else {
-                    // 舊版 iOS 的備用方案
-                    Picker("Category", selection: $viewModel.selectedCategoryId) {
-                        ForEach(viewModel.categories) { category in
-                            Text(category.name).tag(category.id)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    if let selectedCategory = viewModel.categories.first(where: { $0.id == viewModel.selectedCategoryId }) {
-                        StockListView(stocks: selectedCategory.stocks, categoryId: selectedCategory.id, viewModel: viewModel)
-                    }
+                    emptyStateView
                 }
             }
         }
-        // 使用翻譯鍵
         .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showingCategoryManager = true }) {
-                    Image(systemName: "folder.badge.plus")
+                    Image(systemName: "folder.badge.gearshape")
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingSearch = true }) {
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: "plus")
                 }
+                .disabled(viewModel.categories.isEmpty)
             }
         }
-        .sheet(isPresented: $showingSearch) {
-            StockSearchView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $showingCategoryManager) {
-            CategoryManagerView(viewModel: viewModel)
-        }
+        .sheet(isPresented: $showingSearch) { StockSearchView(viewModel: viewModel) }
+        .sheet(isPresented: $showingCategoryManager) { CategoryManagerView(viewModel: viewModel) }
         .onAppear {
-            viewModel.fetchCategories()
+            if viewModel.categories.isEmpty {
+                viewModel.fetchCategories()
+            }
         }
+        .background(Color(.systemGroupedBackground))
+    }
+
+    private var categoryTabs: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(viewModel.categories) { category in
+                    Button(action: { viewModel.selectedCategoryId = category.id }) {
+                        Text(category.name)
+                            .font(.subheadline)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(viewModel.selectedCategoryId == category.id ? Color(.systemGray5) : Color.clear)
+                            .clipShape(Capsule())
+                    }
+                    .foregroundColor(viewModel.selectedCategoryId == category.id ? .primary : .secondary)
+                }
+            }
+            .padding(.horizontal)
+        }
+        .padding(.vertical, 8)
+        .background(Color(.secondarySystemGroupedBackground))
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 15) {
+            Spacer()
+            Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
+            Text("Create Your First Watchlist", bundle: .module).font(.title2)
+            Text("Tap the '+' button to add stocks.", bundle: .module).font(.subheadline).foregroundColor(.secondary)
+            Button(action: { showingCategoryManager = true }) {
+                Text("Create a Category", bundle: .module)
+            }
+            .buttonStyle(.borderedProminent).padding(.top)
+            Spacer()
+        }
+        .padding()
     }
 }
 
-// MARK: - 股票列表 (StockListView)
-struct StockListView: View {
+// MARK: - Stock List View
+private struct StockListView: View {
     let stocks: [Stock]
     let categoryId: String
     @ObservedObject var viewModel: WatchlistViewModel
@@ -75,10 +102,15 @@ struct StockListView: View {
     var body: some View {
         List {
             ForEach(stocks) { stock in
-                StockRow(stock: stock)
+                NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
+                    StockCardView(stock: stock)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
             .onDelete(perform: deleteStock)
         }
+        .listStyle(.plain)
     }
     
     private func deleteStock(at offsets: IndexSet) {
@@ -91,27 +123,95 @@ struct StockListView: View {
     }
 }
 
-// MARK: - 股票行 (StockRow)
-struct StockRow: View {
+// MARK: - Stock Card View
+private struct StockCardView: View {
     let stock: Stock
-    
+
+    var body: some View {
+        HStack(spacing: 12) {
+            StockHeaderView(stock: stock)
+            Spacer()
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack {
+                    Text(String(format: "$%.2f", stock.price))
+                        .font(.headline.weight(.semibold))
+                    Text(String(format: "%.2f%%", stock.changePercent ?? 0.0))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor((stock.changePercent ?? 0) >= 0 ? .green : .red)
+                }
+                
+                // ✅ 錯誤修復：先註解掉需要 analysis 的視圖，待未來資料模型更新後再啟用
+                /*
+                if let analysis = stock.analysis {
+                    PriceSentimentGauge(price: stock.price, support: analysis.tl_minus_2sd, resistance: analysis.tl_plus_2sd)
+                        .frame(height: 10)
+                } else {
+                    Text("Analysis N/A").font(.caption).foregroundColor(.secondary)
+                }
+                */
+            }
+            .frame(width: 120)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Stock Header View
+private struct StockHeaderView: View {
+    let stock: Stock
+
     var body: some View {
         HStack {
+            // ✅ 錯誤修復：暫時移除 stock.logo 的使用
+            Text(String(stock.symbol.prefix(1)))
+                .fontWeight(.bold)
+                .frame(width: 32, height: 32)
+                .background(Color(.systemGray5))
+                .foregroundColor(.secondary)
+                .clipShape(Circle())
+            
             VStack(alignment: .leading) {
                 Text(stock.symbol).font(.headline)
-                Text(stock.name).font(.subheadline)
-            }
-            Spacer()
-            VStack(alignment: .trailing) {
-                Text(String(format: "%.2f", stock.price))
-                Text(String(format: "%.2f (%.2f%%)", stock.change ?? 0.0, stock.changePercent ?? 0.0))
-                    .foregroundColor((stock.change ?? 0.0) >= 0 ? .green : .red)
+                Text(stock.name).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
             }
         }
     }
 }
 
-// MARK: - 股票搜尋視圖 (StockSearchView)
+// MARK: - Price Sentiment Gauge
+private struct PriceSentimentGauge: View {
+    let price: Double
+    let support: Double
+    let resistance: Double
+
+    private var percentage: Double {
+        guard resistance > support else { return 0.5 }
+        let value = (price - support) / (resistance - support)
+        return max(0, min(1, value))
+    }
+    
+    var body: some View {
+        // ✅ 錯誤修復：用自定義的進度條取代 unavailable 的 LinearGaugeStyle
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color(.systemGray5))
+                Capsule()
+                    .fill(sentimentColor(for: percentage))
+                    .frame(width: geometry.size.width * CGFloat(percentage))
+            }
+        }
+    }
+    
+    private func sentimentColor(for percentage: Double) -> Color {
+        if percentage >= 0.75 { return AppColors.plus1SD }
+        if percentage <= 0.25 { return AppColors.minus1SD }
+        return AppColors.trend
+    }
+}
+
+// ✅ 錯誤修復：將這些視圖定義加回到檔案中
+// MARK: - Stock Search View
 struct StockSearchView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var searchText = ""
@@ -119,7 +219,6 @@ struct StockSearchView: View {
     var body: some View {
         NavigationView {
             VStack {
-                // 使用翻譯鍵
                 let placeholder = NSLocalizedString("watchlist.searchBox.placeholder", bundle: .module, comment: "Search stocks...")
                 TextField(placeholder, text: $searchText)
                     .padding()
@@ -138,13 +237,12 @@ struct StockSearchView: View {
                     }
                 }
             }
-            // 使用翻譯鍵
-            .navigationTitle(Text("watchlist.addStockTitle", bundle: .module))
+            .navigationTitle(Text("watchlist.addStockTitle", bundle: .module, comment: "Add Stock"))
         }
     }
 }
 
-// MARK: - 分類管理視圖 (CategoryManagerView)
+// MARK: - Category Manager View
 struct CategoryManagerView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var newCategoryName = ""
@@ -160,14 +258,13 @@ struct CategoryManagerView: View {
                             Spacer()
                             Button(action: { editingCategory = category }) {
                                 Image(systemName: "pencil")
-                            }
+                            }.buttonStyle(BorderlessButtonStyle())
                         }
                     }
                     .onDelete(perform: viewModel.deleteCategory)
                 }
                 
                 HStack {
-                    // 使用翻譯鍵
                     let placeholder = NSLocalizedString("watchlist.newCategoryPlaceholder", bundle: .module, comment: "New category name")
                     TextField(placeholder, text: $newCategoryName)
                         .textFieldStyle(.roundedBorder)
@@ -178,15 +275,13 @@ struct CategoryManagerView: View {
                             newCategoryName = ""
                         }
                     }) {
-                        // 使用翻譯鍵
-                        Text("watchlist.addButton", bundle: .module)
+                        Text("watchlist.addButton", bundle: .module, comment: "Add")
                     }
                     .buttonStyle(.borderedProminent)
                 }
                 .padding()
             }
-            // 使用翻譯鍵
-            .navigationTitle(Text("watchlist.manageCategoriesTitle", bundle: .module))
+            .navigationTitle(Text("watchlist.manageCategoriesTitle", bundle: .module, comment: "Manage Categories"))
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
             }
@@ -194,7 +289,7 @@ struct CategoryManagerView: View {
     }
 }
 
-// MARK: - 編輯分類視圖 (EditCategoryView)
+// MARK: - Edit Category View
 struct EditCategoryView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     let category: Category
@@ -210,7 +305,6 @@ struct EditCategoryView: View {
     var body: some View {
         NavigationView {
             Form {
-                // 使用翻譯鍵
                 TextField(LocalizedStringKey("watchlist.categoryNameLabel"), text: $newName)
                 Button(LocalizedStringKey("watchlist.saveButton")) {
                     Task {
@@ -219,7 +313,6 @@ struct EditCategoryView: View {
                     }
                 }
             }
-            // 使用翻譯鍵
             .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
         }
     }

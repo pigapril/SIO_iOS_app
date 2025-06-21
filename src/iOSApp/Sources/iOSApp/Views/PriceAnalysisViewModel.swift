@@ -1,10 +1,12 @@
+// In file: pigapril/sio_ios_app/SIO_iOS_app-watchlist/src/iOSApp/Sources/iOSApp/Views/PriceAnalysisViewModel.swift
+
 import SwiftUI
 import Combine
 
 @MainActor
 class PriceAnalysisViewModel: ObservableObject {
-    @Published var stockCode: String = "SPY"
-    @Published var years: String = "3.5"
+    @Published var stockCode: String
+    @Published var years: String
     @Published var backTestDate: Date? = nil
     
     @Published var chartData: PriceAnalysisData?
@@ -12,9 +14,10 @@ class PriceAnalysisViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var analysisResult: (price: Double, sentimentKey: String)?
     
-    @Published var analysisPeriod: AnalysisPeriod = .long {
+    @Published var analysisPeriod: AnalysisPeriod {
         didSet {
-            years = analysisPeriod.rawValue
+            // 當簡易模式的選項改變時，同步更新 years 的值
+            self.years = analysisPeriod.rawValue
         }
     }
 
@@ -25,6 +28,22 @@ class PriceAnalysisViewModel: ObservableObject {
     }
 
     private var cancellables = Set<AnyCancellable>()
+    
+    // ✅ 新增點：自定義初始化方法
+    init(stockCode: String = "SPY", years: String = "3.5", backTestDate: Date? = nil) {
+        self.stockCode = stockCode
+        self.years = years
+        self.backTestDate = backTestDate
+        
+        // 根據傳入的 years 初始化 analysisPeriod
+        if let period = AnalysisPeriod(rawValue: years) {
+            self.analysisPeriod = period
+        } else {
+            // 如果 years 不是預設值之一，則預設為長期
+            self.analysisPeriod = .long
+        }
+    }
+
 
     func fetchStockData() {
         isLoading = true

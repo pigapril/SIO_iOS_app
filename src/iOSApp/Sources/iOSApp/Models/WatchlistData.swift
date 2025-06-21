@@ -13,7 +13,13 @@ struct Stock: Codable, Identifiable {
     let price: Double
     let change: Double?
     let changePercent: Double?
+    let analysis: StockAnalysisData?
     // Add other properties as needed from the API response
+}
+
+struct StockAnalysisData: Codable {
+    let tl_plus_2sd: Double
+    let tl_minus_2sd: Double
 }
 
 struct SearchResult: Codable, Identifiable {
