@@ -59,6 +59,28 @@ class APIService {
         }
     }
 
+    // MARK: - New Authentication Methods
+    
+    struct AuthResponse: Decodable {
+        let user: User
+    }
+    
+    // 與 web_app/src/components/Auth/auth.service.js 的 verifyGoogleToken 對應
+    func verifyGoogleToken(idToken: String) async throws -> User {
+        let body = try JSONEncoder().encode(["credential": idToken])
+        let response: AuthResponse = try await request(endpoint: "auth/google/verify", method: "POST", body: body, expectDataWrapper: true)
+        return response.user
+    }
+
+    func logout() async throws {
+        _ = try await request(endpoint: "auth/logout", method: "POST", expectDataWrapper: false) as Data // Expect empty response
+    }
+    
+    func checkAuthStatus() async throws -> User {
+        let response: AuthResponse = try await request(endpoint: "auth/status", method: "GET", expectDataWrapper: true)
+        return response.user
+    }
+
     // MARK: - Refactored Methods
 
     func fetchPriceAnalysis(stockCode: String, years: String, backTestDate: String?) async throws -> PriceAnalysisData {
@@ -118,4 +140,4 @@ class APIService {
         let queryItems = [URLQueryItem(name: "keyword", value: keyword)]
         return try await request(endpoint: "watchlist/search", queryItems: queryItems, expectDataWrapper: false)
     }
-} 
+}

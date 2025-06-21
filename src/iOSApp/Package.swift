@@ -14,12 +14,20 @@ let package = Package(
             name: "iOSApp",
             targets: ["iOSApp"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/google/GoogleSignIn-iOS.git", from: "7.0.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.0.0")
+    ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "iOSApp",
-            dependencies: []
+            dependencies: [
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+                // highlight-start
+                // 修正點：我們只宣告 FirebaseAuth，讓它自動帶入需要的 FirebaseCore
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
+                // highlight-end
+            ]
         ),
     ]
 )

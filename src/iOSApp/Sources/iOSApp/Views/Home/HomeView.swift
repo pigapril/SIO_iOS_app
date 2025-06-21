@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct HomeView: View {
+        @EnvironmentObject var authViewModel: AuthenticationViewModel
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -48,25 +50,30 @@ struct HomeView: View {
                     destination: AnyView(MarketSentimentView())
                 )
                 
-                // CTA Section
-                Button(action: {
-                    // Handle login action
-                }) {
-                    Text("立即註冊，免費體驗")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(10)
+                // CTA Section - 只有在未登入時顯示
+                if !authViewModel.isAuthenticated {
+                    Button(action: {
+                        Task {
+                            await authViewModel.signIn()
+                        }
+                    }) {
+                        Text("立即註冊，免費體驗")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    .padding()
                 }
-                .padding()
             }
         }
         .navigationTitle("首頁")
     }
 }
 
+// FeatureView 保持不變
 struct FeatureView: View {
     let imageName: String
     let title: String
@@ -98,4 +105,4 @@ struct FeatureView: View {
         }
         .padding()
     }
-} 
+}

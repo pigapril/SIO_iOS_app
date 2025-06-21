@@ -1,12 +1,19 @@
 import SwiftUI
-import iOSApp // 這行很重要，確保能讀取到我們套件中的 View
+import iOSApp // 只需要導入我們自己的套件
 
 @main
 struct StockAppApp: App {
+    @StateObject private var authViewModel = AuthenticationViewModel()
+
     var body: some Scene {
         WindowGroup {
             NavigationView {
                 MainView()
+            }
+            .environmentObject(authViewModel)
+            .onAppear {
+                // 在 App 視圖出現時，執行一次性的設定
+                AppSetupService.configure()
             }
         }
     }

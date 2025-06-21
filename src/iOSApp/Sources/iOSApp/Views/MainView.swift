@@ -1,10 +1,30 @@
 import SwiftUI
 
 public struct MainView: View {
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+
     public init() {}
 
     public var body: some View {
         List {
+            // 登入/個人資料區塊
+            if authViewModel.isAuthenticated {
+                NavigationLink(destination: UserProfileView()) {
+                    Label(authViewModel.user?.username ?? "個人資料", systemImage: "person.crop.circle.fill")
+                }
+            } else {
+                Button(action: {
+                    Task {
+                        await authViewModel.signIn()
+                    }
+                }) {
+                    Label("使用 Google 登入", systemImage: "person.badge.key.fill")
+                }
+            }
+
+            Divider()
+
+            // 功能列表
             NavigationLink(destination: HomeView()) {
                 Label("首頁", systemImage: "house.fill")
             }
@@ -29,4 +49,4 @@ public struct MainView: View {
         }
         .navigationTitle("選單")
     }
-} 
+}
