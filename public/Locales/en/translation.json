@@ -148,9 +148,9 @@
     "notAvailable": "N/A",
     "invalidParams": "Invalid operation parameters",
     "close": "Close",
-    "done":"Done",
-    "cancel":"Cancel",
-    "dataLoadError":"Data Load Error"
+    "done": "Done",
+    "cancel": "Cancel",
+    "dataLoadError": "Data Load Error"
   },
   "googleTrendsMarket": {
     "invalidData": "Invalid data format",

@@ -7,7 +7,7 @@
     "articles": "Insights & Analysis",
     "sponsor": "Sponsor Us",
     "facebook": "Facebook",
-    "facebookLong": "Facebook Page"
+    "facebookLong": "Facebook Page",
   },
   
   "userActions": {
@@ -66,10 +66,12 @@
     "loading": "Loading..."
   },
   "userProfile": {
+    "title":"Profile",
     "openMenuAria": "Open user menu",
     "avatarAlt": "{{username}}'s avatar",
     "menuAria": "User menu",
-    "logout": "Logout"
+    "logout": "Logout",
+    "notLoggedIn":"Not Logged In"
   },
   "chatWidget": {
     "loginRequired": "Login required to use customer service",
@@ -132,7 +134,8 @@
     "year3": "Last 3 Years",
     "year5": "Last 5 Years",
     "year10": "Last 10 Years",
-    "year20": "Last 20 Years"
+    "year20": "Last 20 Years",
+    "all":"All"
   },
   "common": {
     "learnMore": "Learn More",
@@ -144,7 +147,10 @@
     "noData": "No data to display",
     "notAvailable": "N/A",
     "invalidParams": "Invalid operation parameters",
-    "close": "Close"
+    "close": "Close",
+    "done": "Done",
+    "cancel": "Cancel",
+    "dataLoadError": "Data Load Error"
   },
   "googleTrendsMarket": {
     "invalidData": "Invalid data format",
@@ -264,8 +270,14 @@
       "compositeIndexLabel": "SIO Fear & Greed Index",
       "spyPriceLabel": "SPY Price",
       "compositeIndexAxisLabel": "SIO Fear & Greed Index",
-      "spyPriceAxisLabel": "SPY Price"
+      "spyPriceAxisLabel": "SPY Price",
+      "tooltipScore":"Sentiment Score",
+      "tooltipSPY":"SPY Price"
     },
+    "indicatorDetail": {
+      "valueLabel":"Indicator Value",
+      "sentimentScoreLabel":"Sentiment Score"
+    },  
     "viewMode": {
       "overview": "Current Sentiment",
       "timeline": "Historical Trend",
