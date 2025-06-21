@@ -5,12 +5,19 @@ struct APIResponse<T: Decodable>: Decodable {
     let data: T
 }
 
+// Specific response structures
 struct CategoriesResponse: Decodable {
     let categories: [Category]
 }
 
+struct SearchResultsResponse: Decodable {
+    let results: [SearchResult]
+}
+
+
 class APIService {
     static let shared = APIService()
+    // Make sure this points to your local server's address and port
     private let baseURL = URL(string: "http://127.0.0.1:5001/api/")!
     private var csrfToken: String?
 
@@ -42,18 +49,20 @@ class APIService {
         }
 
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            // Create a custom error and handle it
             let dataString = String(data: data, encoding: .utf8) ?? "No data"
             print("HTTP Error: \(response) with data: \(dataString)")
-            throw AppError.networkError // Placeholder
+            throw AppError.networkError 
         }
-        
-        print("Raw JSON response for \(endpoint): \(String(data: data, encoding: .utf8) ?? "Unable to decode data")")
         
         let decoder = JSONDecoder()
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         decoder.dateDecodingStrategy = .formatted(dateFormatter)
+
+        // Handle cases where the response body might be empty
+        guard !data.isEmpty else {
+             throw AppError.unknownError // Or a more specific "emptyData" error
+        }
 
         if expectDataWrapper {
             let wrappedResponse = try decoder.decode(APIResponse<T>.self, from: data)
@@ -63,13 +72,12 @@ class APIService {
         }
     }
 
-    // MARK: - New Authentication Methods
+    // MARK: - Authentication Methods
     
     struct AuthResponse: Decodable {
         let user: User
     }
     
-    // 與 web_app/src/components/Auth/auth.service.js 的 verifyGoogleToken 對應
     func verifyGoogleToken(idToken: String) async throws -> User {
         let body = try JSONEncoder().encode(["credential": idToken])
         let response: AuthResponse = try await request(endpoint: "auth/google/verify", method: "POST", body: body, expectDataWrapper: true)
@@ -77,7 +85,7 @@ class APIService {
     }
 
     func logout() async throws {
-        _ = try await request(endpoint: "auth/logout", method: "POST", expectDataWrapper: false) as Data // Expect empty response
+        _ = try await request(endpoint: "auth/logout", method: "POST", expectDataWrapper: false) as Data
     }
     
     func checkAuthStatus() async throws -> User {
@@ -85,14 +93,14 @@ class APIService {
         return response.user
     }
 
-    // MARK: - Refactored Methods
+    // MARK: - App Data Methods
 
     func fetchPriceAnalysis(stockCode: String, years: String, backTestDate: String?) async throws -> PriceAnalysisData {
         var queryItems = [
             URLQueryItem(name: "stockCode", value: stockCode),
             URLQueryItem(name: "years", value: years)
         ]
-        if let date = backTestDate {
+        if let date = backTestDate, !date.isEmpty {
             queryItems.append(URLQueryItem(name: "backTestDate", value: date))
         }
         return try await request(endpoint: "integrated-analysis", queryItems: queryItems, expectDataWrapper: true)
@@ -102,13 +110,15 @@ class APIService {
         return try await request(endpoint: "market-sentiment", expectDataWrapper: false)
     }
 
-    func fetchCompositeHistoricalData() async throws -> CompositeHistoricalDataResponse {
-        return try await request(endpoint: "composite-historical-data", expectDataWrapper: false)
+    func fetchCompositeHistoricalData() async throws -> [HistoricalDataItem] {
+       let response: APIResponse<[HistoricalDataItem]> = try await request(endpoint: "composite-historical-data", expectDataWrapper: true)
+       return response.data
     }
-
+    
     func fetchIndicatorHistoricalData(indicatorKey: String) async throws -> [IndicatorHistoricalDataItem] {
-        let queryItems = [URLQueryItem(name: "indicator", value: indicatorKey)]
-        return try await request(endpoint: "indicator-history", queryItems: queryItems, expectDataWrapper: false)
+       let queryItems = [URLQueryItem(name: "indicator", value: indicatorKey)]
+       let response: APIResponse<[IndicatorHistoricalDataItem]> = try await request(endpoint: "indicator-history", queryItems: queryItems, expectDataWrapper: true)
+       return response.data
     }
 
     // MARK: - Watchlist Methods
@@ -129,11 +139,14 @@ class APIService {
     }
     
     func deleteCategory(id: String) async throws {
-        _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data // Expect empty response
+        _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data
     }
 
+    // CORRECTED: Updated addStock function
     func addStock(categoryId: String, symbol: String) async throws -> Stock {
         let body = try JSONEncoder().encode(["stockSymbol": symbol])
+        // The API returns the Stock object directly, not in a "data" wrapper.
+        // Set expectDataWrapper to false.
         return try await request(endpoint: "watchlist/categories/\(categoryId)/stocks", method: "POST", body: body, expectDataWrapper: false)
     }
 
@@ -143,6 +156,7 @@ class APIService {
 
     func searchStocks(keyword: String) async throws -> [SearchResult] {
         let queryItems = [URLQueryItem(name: "keyword", value: keyword)]
-        return try await request(endpoint: "watchlist/search", queryItems: queryItems, expectDataWrapper: false)
+        let response: SearchResultsResponse = try await request(endpoint: "watchlist/search", queryItems: queryItems, expectDataWrapper: true)
+        return response.results
     }
 }
