@@ -40,8 +40,8 @@ struct IndicatorDetailView: View {
             .navigationTitle(Text(LocalizedStringKey(indicatorTitleKey), bundle: .module))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") { dismiss() }
+                Button(action: { dismiss() }) {
+                        Text("common.done", bundle: .module)
                 }
             }
             .onAppear(perform: viewModel.fetchData)
@@ -72,7 +72,7 @@ struct IndicatorDetailView: View {
     private var chartView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("歷史走勢", bundle: .module)
+                Text("marketSentiment.viewMode.timeline", bundle: .module)
                     .font(.title3.bold())
                 Spacer()
                 Menu {
@@ -120,7 +120,7 @@ struct IndicatorDetailView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.red)
-            Text("資料載入錯誤")
+            Text("common.dataLoadError", bundle: .module)
                 .font(.headline)
                 .padding(.top, 4)
             Text(message)
@@ -317,8 +317,8 @@ struct IndicatorHistoricalChart: View {
             
             // 自定義圖例
             HStack(spacing: 20) {
-                legendItem(color: .orange, label: "指標數值")
-                legendItem(color: .blue, label: "情緒分數 (0-100)")
+                legendItem(color: .orange, label: "indicatorDetail.valueLabel")
+                legendItem(color: .blue, label: "indicatorDetail.sentimentScoreLabel")
             }
             .padding(.top, 5)
         }

@@ -1,3 +1,5 @@
+// pigapril/sio_ios_app/SIO_iOS_app-marketsentiment_fix/src/iOSApp/Sources/iOSApp/Views/UserProfileView.swift
+
 import SwiftUI
 
 struct UserProfileView: View {
@@ -28,17 +30,17 @@ struct UserProfileView: View {
                         await authViewModel.signOut()
                     }
                 }) {
-                    Text("登出")
+                    Text("userProfile.logout", bundle: .module)
                         .foregroundColor(.red)
                 }
                 .padding(.top, 20)
                 
             } else {
-                Text("未登入")
+                Text("userProfile.notLoggedIn", bundle: .module)
             }
             Spacer()
         }
         .padding()
-        .navigationTitle("個人資料")
+        .navigationTitle(Text("userProfile.title", bundle: .module))
     }
 }
