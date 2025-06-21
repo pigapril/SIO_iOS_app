@@ -8,28 +8,25 @@ public struct WatchlistView: View {
     @State private var showingSearch = false
     @State private var showingCategoryManager = false
 
+    public init() {}
+
     public var body: some View {
         VStack(spacing: 0) {
             if viewModel.isLoading && viewModel.categories.isEmpty {
                 Spacer()
-                ProgressView(NSLocalizedString("common.loading", bundle: .module, comment: "Loading..."))
+                ProgressView(LocalizedStringKey("common.loading"))
                 Spacer()
             } else if let errorMessage = viewModel.errorMessage {
-                VStack {
-                    Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundColor(.secondary)
-                    Text("Error Loading Watchlist").font(.headline).padding(.top)
-                    Text(errorMessage).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
-                }
+                errorStateView(message: errorMessage)
+            } else if viewModel.categories.isEmpty {
+                emptyStateView
             } else {
                 categoryTabs
-                
-                if let selectedCategory = viewModel.categories.first(where: { $0.id == viewModel.selectedCategoryId }) {
-                    StockListView(stocks: selectedCategory.stocks, categoryId: selectedCategory.id, viewModel: viewModel)
-                } else if !viewModel.categories.isEmpty {
-                     Text("Select a category", bundle: .module).foregroundColor(.secondary).frame(maxHeight: .infinity)
-                } else {
-                    emptyStateView
-                }
+                StockListView(
+                    stocks: viewModel.categories.first { $0.id == viewModel.selectedCategoryId }?.stocks ?? [],
+                    categoryId: viewModel.selectedCategoryId,
+                    viewModel: viewModel
+                )
             }
         }
         .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
@@ -58,17 +55,17 @@ public struct WatchlistView: View {
 
     private var categoryTabs: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
+            HStack(spacing: 4) {
                 ForEach(viewModel.categories) { category in
                     Button(action: { viewModel.selectedCategoryId = category.id }) {
                         Text(category.name)
                             .font(.subheadline)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 16)
-                            .background(viewModel.selectedCategoryId == category.id ? Color(.systemGray5) : Color.clear)
+                            .background(viewModel.selectedCategoryId == category.id ? Color.blue.opacity(0.15) : Color.clear)
                             .clipShape(Capsule())
                     }
-                    .foregroundColor(viewModel.selectedCategoryId == category.id ? .primary : .secondary)
+                    .foregroundColor(viewModel.selectedCategoryId == category.id ? .blue : .primary)
                 }
             }
             .padding(.horizontal)
@@ -77,14 +74,29 @@ public struct WatchlistView: View {
         .background(Color(.secondarySystemGroupedBackground))
     }
     
+    private func errorStateView(message: String) -> some View {
+         VStack {
+             Spacer()
+             Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundColor(.secondary)
+             Text("Error Loading Watchlist").font(.headline).padding(.top)
+             Text(message).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
+             Button("Retry") {
+                 viewModel.fetchCategories()
+             }
+             .buttonStyle(.bordered)
+             Spacer()
+         }
+         .padding()
+     }
+    
     private var emptyStateView: some View {
         VStack(spacing: 15) {
             Spacer()
             Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
-            Text("Create Your First Watchlist", bundle: .module).font(.title2)
-            Text("Tap the '+' button to add stocks.", bundle: .module).font(.subheadline).foregroundColor(.secondary)
+            Text("Create Your First Watchlist").font(.title2)
+            Text("Tap the gear icon to create a new category.").font(.subheadline).foregroundColor(.secondary)
             Button(action: { showingCategoryManager = true }) {
-                Text("Create a Category", bundle: .module)
+                Label("Manage Categories", systemImage: "folder.badge.gearshape")
             }
             .buttonStyle(.borderedProminent).padding(.top)
             Spacer()
@@ -96,30 +108,40 @@ public struct WatchlistView: View {
 // MARK: - Stock List View
 private struct StockListView: View {
     let stocks: [Stock]
-    let categoryId: String
+    let categoryId: String?
     @ObservedObject var viewModel: WatchlistViewModel
 
     var body: some View {
         List {
-            ForEach(stocks) { stock in
-                NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
-                    StockCardView(stock: stock)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            if stocks.isEmpty {
+                 VStack {
+                     Spacer()
+                     Text("No stocks yet.").font(.headline)
+                     Text("Tap '+' to add a stock to this list.").foregroundColor(.secondary)
+                     Spacer()
+                 }
+                 .frame(maxWidth: .infinity, minHeight: 200)
+                 .listRowSeparator(.hidden)
+            } else {
+                 ForEach(stocks) { stock in
+                     NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
+                         StockCardView(stock: stock)
+                     }
+                     .buttonStyle(PlainButtonStyle())
+                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                 }
+                 .onDelete(perform: deleteStock)
             }
-            .onDelete(perform: deleteStock)
         }
         .listStyle(.plain)
+        .refreshable {
+            viewModel.fetchCategories()
+        }
     }
     
     private func deleteStock(at offsets: IndexSet) {
-        let stocksToDelete = offsets.map { stocks[$0] }
-        Task {
-            for stock in stocksToDelete {
-                await viewModel.removeStock(categoryId: categoryId, itemId: stock.id)
-            }
-        }
+        guard let categoryId = categoryId else { return }
+        viewModel.removeStock(from: categoryId, at: offsets)
     }
 }
 
@@ -131,24 +153,20 @@ private struct StockCardView: View {
         HStack(spacing: 12) {
             StockHeaderView(stock: stock)
             Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
-                HStack {
-                    Text(String(format: "$%.2f", stock.price))
-                        .font(.headline.weight(.semibold))
-                    Text(String(format: "%.2f%%", stock.changePercent ?? 0.0))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor((stock.changePercent ?? 0) >= 0 ? .green : .red)
-                }
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(String(format: "$%.2f", stock.price))
+                    .font(.headline.weight(.semibold))
                 
-                // ✅ 錯誤修復：先註解掉需要 analysis 的視圖，待未來資料模型更新後再啟用
-                /*
-                if let analysis = stock.analysis {
-                    PriceSentimentGauge(price: stock.price, support: analysis.tl_minus_2sd, resistance: analysis.tl_plus_2sd)
-                        .frame(height: 10)
+                if stock.analysis != nil {
+                    PriceSentimentGauge(stock: stock)
+                        .frame(height: 20)
                 } else {
-                    Text("Analysis N/A").font(.caption).foregroundColor(.secondary)
+                    HStack {
+                        ProgressView().scaleEffect(0.7)
+                        Text(LocalizedStringKey("watchlist.stockCard.analysis.loading"))
+                            .font(.caption).foregroundColor(.secondary)
+                    }
                 }
-                */
             }
             .frame(width: 120)
         }
@@ -162,13 +180,16 @@ private struct StockHeaderView: View {
 
     var body: some View {
         HStack {
-            // ✅ 錯誤修復：暫時移除 stock.logo 的使用
-            Text(String(stock.symbol.prefix(1)))
-                .fontWeight(.bold)
-                .frame(width: 32, height: 32)
-                .background(Color(.systemGray5))
-                .foregroundColor(.secondary)
-                .clipShape(Circle())
+            AsyncImage(url: URL(string: stock.logo ?? "")) { image in
+                 image.resizable().aspectRatio(contentMode: .fit)
+             } placeholder: {
+                 Text(String(stock.symbol.prefix(1)))
+                     .fontWeight(.bold)
+                     .foregroundColor(.secondary)
+             }
+            .frame(width: 40, height: 40)
+            .background(Color(.systemGray6))
+            .clipShape(Circle())
             
             VStack(alignment: .leading) {
                 Text(stock.symbol).font(.headline)
@@ -178,66 +199,101 @@ private struct StockHeaderView: View {
     }
 }
 
-// MARK: - Price Sentiment Gauge
+// MARK: - Price Sentiment Gauge and Label (CORRECTED)
 private struct PriceSentimentGauge: View {
-    let price: Double
-    let support: Double
-    let resistance: Double
+    let stock: Stock
 
+    // Calculate percentage position of price between support and resistance
     private var percentage: Double {
+        guard let analysis = stock.analysis else { return 0.5 }
+        let support = analysis.tl_minus_2sd
+        let resistance = analysis.tl_plus_2sd
         guard resistance > support else { return 0.5 }
-        let value = (price - support) / (resistance - support)
-        return max(0, min(1, value))
+        let value = (stock.price - support) / (resistance - support)
+        return max(0, min(1, value)) // Clamp between 0 and 1
     }
     
+    // Determine sentiment key based on position
+    private var sentimentKey: String {
+        guard let analysis = stock.analysis else { return "priceAnalysis.sentiment.neutral" }
+        if stock.price >= analysis.tl_plus_2sd { return "priceAnalysis.sentiment.extremeOptimism" }
+        if stock.price > analysis.tl_plus_sd { return "priceAnalysis.sentiment.optimism" }
+        if stock.price <= analysis.tl_minus_2sd { return "priceAnalysis.sentiment.extremePessimism" }
+        if stock.price < analysis.tl_minus_sd { return "priceAnalysis.sentiment.pessimism" }
+        return "priceAnalysis.sentiment.neutral"
+    }
+
     var body: some View {
-        // ✅ 錯誤修復：用自定義的進度條取代 unavailable 的 LinearGaugeStyle
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color(.systemGray5))
-                Capsule()
-                    .fill(sentimentColor(for: percentage))
-                    .frame(width: geometry.size.width * CGFloat(percentage))
+        VStack(spacing: 2) {
+            Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(sentimentColor)
+            
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color(.systemGray5))
+                    Capsule()
+                        .fill(sentimentColor.opacity(0.7))
+                        .frame(width: geometry.size.width * CGFloat(percentage))
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 8, height: 8)
+                        .shadow(radius: 1)
+                        .offset(x: geometry.size.width * CGFloat(percentage) - 4)
+                }
             }
+            .frame(height: 8)
         }
     }
     
-    private func sentimentColor(for percentage: Double) -> Color {
-        if percentage >= 0.75 { return AppColors.plus1SD }
-        if percentage <= 0.25 { return AppColors.minus1SD }
-        return AppColors.trend
+    // Determine color based on sentiment key
+    private var sentimentColor: Color {
+        switch sentimentKey {
+            case "priceAnalysis.sentiment.extremeOptimism": return AppColors.plus2SD
+            case "priceAnalysis.sentiment.optimism": return AppColors.plus1SD
+            case "priceAnalysis.sentiment.pessimism": return AppColors.minus1SD
+            case "priceAnalysis.sentiment.extremePessimism": return AppColors.minus2SD
+            default: return AppColors.trend
+        }
     }
 }
 
-// ✅ 錯誤修復：將這些視圖定義加回到檔案中
 // MARK: - Stock Search View
 struct StockSearchView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var searchText = ""
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationView {
             VStack {
-                let placeholder = NSLocalizedString("watchlist.searchBox.placeholder", bundle: .module, comment: "Search stocks...")
-                TextField(placeholder, text: $searchText)
-                    .padding()
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: searchText) { newValue in
-                        viewModel.searchStocks(keyword: newValue)
-                    }
-                
                 List(viewModel.searchResults) { result in
                     Button(action: {
                         Task {
                             await viewModel.addStock(symbol: result.symbol)
+                            dismiss()
                         }
                     }) {
-                        Text("\(result.symbol) - \(result.name)")
+                        VStack(alignment: .leading) {
+                            Text(result.symbol).font(.headline)
+                            Text(result.name).font(.subheadline).foregroundColor(.secondary)
+                        }
+                    }
+                    .foregroundColor(.primary)
+                }
+                .overlay {
+                    if viewModel.isSearching && viewModel.searchResults.isEmpty {
+                        ProgressView()
                     }
                 }
             }
-            .navigationTitle(Text("watchlist.addStockTitle", bundle: .module, comment: "Add Stock"))
+            .searchable(text: $searchText, prompt: Text("watchlist.searchBox.placeholder", bundle: .module))
+            .onChange(of: searchText) { newValue in
+                viewModel.searchStocks(keyword: newValue)
+            }
+            .navigationTitle(Text("Add Stock"))
+            .navigationBarItems(trailing: Button("Done") { dismiss() })
         }
     }
 }
@@ -247,26 +303,29 @@ struct CategoryManagerView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     @State private var newCategoryName = ""
     @State private var editingCategory: Category?
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationView {
             VStack {
                 List {
-                    ForEach(viewModel.categories) { category in
-                        HStack {
-                            Text(category.name)
-                            Spacer()
-                            Button(action: { editingCategory = category }) {
-                                Image(systemName: "pencil")
-                            }.buttonStyle(BorderlessButtonStyle())
+                    Section(header: Text("My Categories")) {
+                        ForEach(viewModel.categories) { category in
+                            HStack {
+                                Text(category.name)
+                                Spacer()
+                                Button(action: { editingCategory = category }) {
+                                    Image(systemName: "pencil.line")
+                                }.buttonStyle(BorderlessButtonStyle())
+                            }
                         }
+                        .onDelete(perform: viewModel.deleteCategory)
                     }
-                    .onDelete(perform: viewModel.deleteCategory)
                 }
+                .listStyle(.insetGrouped)
                 
                 HStack {
-                    let placeholder = NSLocalizedString("watchlist.newCategoryPlaceholder", bundle: .module, comment: "New category name")
-                    TextField(placeholder, text: $newCategoryName)
+                    TextField(LocalizedStringKey("watchlist.createCategoryDialog.placeholder"), text: $newCategoryName)
                         .textFieldStyle(.roundedBorder)
                     
                     Button(action: {
@@ -275,13 +334,16 @@ struct CategoryManagerView: View {
                             newCategoryName = ""
                         }
                     }) {
-                        Text("watchlist.addButton", bundle: .module, comment: "Add")
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderless)
+                    .disabled(newCategoryName.isEmpty)
                 }
                 .padding()
             }
-            .navigationTitle(Text("watchlist.manageCategoriesTitle", bundle: .module, comment: "Manage Categories"))
+            .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria", bundle: .module))
+            .navigationBarItems(leading: EditButton(), trailing: Button("Done") { dismiss() })
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
             }
@@ -294,7 +356,7 @@ struct EditCategoryView: View {
     @ObservedObject var viewModel: WatchlistViewModel
     let category: Category
     @State private var newName: String
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
 
     init(viewModel: WatchlistViewModel, category: Category) {
         self.viewModel = viewModel
@@ -305,15 +367,16 @@ struct EditCategoryView: View {
     var body: some View {
         NavigationView {
             Form {
-                TextField(LocalizedStringKey("watchlist.categoryNameLabel"), text: $newName)
-                Button(LocalizedStringKey("watchlist.saveButton")) {
+                TextField(LocalizedStringKey("watchlist.editCategoryDialog.placeholder"), text: $newName)
+                Button(LocalizedStringKey("watchlist.editCategoryDialog.confirmButton")) {
                     Task {
                         await viewModel.updateCategory(category: category, newName: newName)
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
             }
             .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
+            .navigationBarItems(trailing: Button("Cancel") { dismiss() })
         }
     }
 }
