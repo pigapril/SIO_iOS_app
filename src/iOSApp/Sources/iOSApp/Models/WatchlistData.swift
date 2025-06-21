@@ -54,3 +54,11 @@ struct SearchResult: Codable, Identifiable, Hashable {
 struct AddStockResponse: Decodable {
     let item: Stock
 }
+
+struct CreateCategoryResponse: Decodable {
+    let category: Category
+}
+
+struct UpdateCategoryResponse: Decodable {
+    let category: Category
+}

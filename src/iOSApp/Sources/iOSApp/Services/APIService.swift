@@ -129,14 +129,26 @@ class APIService {
     }
 
     func createCategory(name: String) async throws -> Category {
-        let body = try JSONEncoder().encode(["name": name])
-        return try await request(endpoint: "watchlist/categories", method: "POST", body: body, expectDataWrapper: false)
-    }
+    let body = try JSONEncoder().encode(["name": name])
+    let response: CreateCategoryResponse = try await request(
+        endpoint: "watchlist/categories", 
+        method: "POST", 
+        body: body, 
+        expectDataWrapper: true
+    )
+    return response.category
+}
     
     func updateCategory(id: String, name: String) async throws -> Category {
-        let body = try JSONEncoder().encode(["name": name])
-        return try await request(endpoint: "watchlist/categories/\(id)", method: "PUT", body: body, expectDataWrapper: false)
-    }
+    let body = try JSONEncoder().encode(["name": name])
+    let response: UpdateCategoryResponse = try await request(
+        endpoint: "watchlist/categories/\(id)", 
+        method: "PUT", 
+        body: body, 
+        expectDataWrapper: true
+    )
+    return response.category
+}
     
     func deleteCategory(id: String) async throws {
         _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as Data
