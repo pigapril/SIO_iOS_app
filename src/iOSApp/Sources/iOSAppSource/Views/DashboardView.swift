@@ -130,7 +130,7 @@ struct DashboardView: View {
                     ProgressView().frame(height: 100)
                 }
             }
-            .cardStyle()
+            .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
         }
     }
 
@@ -174,7 +174,7 @@ struct DashboardView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .cardStyle()
+        .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
     }
 
     /// 樂活五線譜快速分析卡片
@@ -205,7 +205,7 @@ struct DashboardView: View {
                 isActive: $isAnalysisLinkActive
             ) { EmptyView() }
         }
-        .cardStyle()
+        .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
     }
 
     // MARK: - Helper Functions & Sub-components
@@ -236,24 +236,8 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Reusable View Modifiers and Components
 
-/// 卡片樣式修飾符
-struct DashboardCardModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .padding()
-            .background(Color(.secondarySystemGroupedBackground))
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
-
-extension View {
-    func cardStyle() -> some View {
-        self.modifier(DashboardCardModifier())
-    }
-}
+// MARK: - Reusable Components (Private to DashboardView)
 
 /// 儀表板專用的儀表盤視圖 (簡化版)
 private struct DashboardGaugeView: View {
@@ -261,7 +245,6 @@ private struct DashboardGaugeView: View {
     let sentimentKey: String
     
     private var sentimentGradient: AngularGradient {
-        // ... (與 MarketSentimentView 中相同的漸層色邏輯)
         let colors = [
             Color(hex: 0x0000FF), // Extreme Fear
             Color(hex: 0x5B9BD5), // Fear

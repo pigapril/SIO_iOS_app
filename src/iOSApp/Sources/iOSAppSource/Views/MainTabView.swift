@@ -1,3 +1,4 @@
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/MainTabView.swift
 import SwiftUI
 import iOSAppSource
 
@@ -12,10 +13,8 @@ public struct MainTabView: View {
     // 用於追蹤當前選擇的 Tab，方便進行程式化切換。
     @State private var selectedTab: Int = 0
 
-    // highlight-start
     /// 公開的初始化方法，允許從其他模組（例如主 App Target）創建此視圖。
     public init() {}
-    // highlight-end
 
     public var body: some View {
         // ZStack 用於將 Toast 訊息浮動在所有視圖之上。
@@ -25,9 +24,8 @@ public struct MainTabView: View {
                 // 儀表板 Tab (新的首頁)
                 // 每個 Tab 都包裹在 NavigationView 中，以提供獨立的導航堆疊。
                 NavigationView {
-                    // DashboardView 是我們計劃中新建的儀表板視圖。
-                    // 目前先使用 HomeView 作為佔位符。
-                    HomeView()
+                    // *** FIX: 將 HomeView() 更換為新的 DashboardView() ***
+                    DashboardView()
                 }
                 .tabItem {
                     // 設定 Tab 的圖示和標籤文字，使用本地化字串。
