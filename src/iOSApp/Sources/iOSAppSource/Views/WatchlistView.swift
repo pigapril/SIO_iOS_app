@@ -8,75 +8,123 @@ public struct WatchlistView: View {
     @State private var showingSearch = false
     @State private var showingCategoryManager = false
     @EnvironmentObject private var toastManager: ToastManager
+    @EnvironmentObject private var authViewModel: AuthenticationViewModel
 
 
     public init() {}
 
     public var body: some View {
-        VStack(spacing: 0) {
-            if viewModel.isLoading && viewModel.categories.isEmpty {
-                Spacer()
-                ProgressView { 
-                    Text("common.loading", bundle: .module)
+        // --- MODIFICATION START ---
+        // Check authentication status first.
+        if !authViewModel.isAuthenticated {
+            loginPromptView
+        } else {
+            // Original content for authenticated users.
+            VStack(spacing: 0) {
+                if viewModel.isLoading && viewModel.categories.isEmpty {
+                    Spacer()
+                    ProgressView {
+                        Text("common.loading", bundle: .module)
+                    }
+                    Spacer()
+                } else if let errorMessage = viewModel.errorMessage {
+                    errorStateView(message: errorMessage)
+                } else if viewModel.categories.isEmpty {
+                    emptyStateView
+                } else {
+                    categoryTabs
+                    StockListView(
+                        stocks: viewModel.categories.first { $0.id == viewModel.selectedCategoryId }?.stocks ?? [],
+                        categoryId: viewModel.selectedCategoryId,
+                        viewModel: viewModel,
+                        showingSearch: $showingSearch
+                    )
                 }
-                Spacer()
-            } else if let errorMessage = viewModel.errorMessage {
-                errorStateView(message: errorMessage)
-            } else if viewModel.categories.isEmpty {
-                emptyStateView
-            } else {
-                categoryTabs
-                StockListView(
-                    stocks: viewModel.categories.first { $0.id == viewModel.selectedCategoryId }?.stocks ?? [],
-                    categoryId: viewModel.selectedCategoryId,
-                    viewModel: viewModel,
-                    showingSearch: $showingSearch
+            }
+            .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { showingCategoryManager = true }) {
+                        Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingSearch = true }) {
+                        Label(LocalizedStringKey("watchlist.stock.addTitle"), systemImage: "plus")
+                    }
+                    .disabled(viewModel.categories.isEmpty)
+                }
+            }
+            .sheet(isPresented: $showingSearch) {
+                 StockSearchView(viewModel: viewModel)
+                    .toast(toast: $toastManager.toast)
+                    .environmentObject(toastManager)
+            }
+            .sheet(isPresented: $showingCategoryManager) {
+                 CategoryManagerView(viewModel: viewModel)
+                    .toast(toast: $toastManager.toast)
+                    .environmentObject(toastManager)
+            }
+            .onAppear {
+                if authViewModel.isAuthenticated && viewModel.categories.isEmpty {
+                    viewModel.fetchCategories()
+                }
+            }
+            .background(Color(.systemGroupedBackground))
+            .alert(isPresented: $viewModel.showAlert) {
+                Alert(
+                    title: Text("錯誤"),
+                    message: Text(viewModel.alertMessage ?? "發生未知錯誤"),
+                    dismissButton: .default(Text("確定")) {
+                        viewModel.alertMessage = nil
+                    }
                 )
             }
         }
-        .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { showingCategoryManager = true }) {
-                    Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingSearch = true }) {
-                    Label(LocalizedStringKey("watchlist.stock.addTitle"), systemImage: "plus")
-                }
-                .disabled(viewModel.categories.isEmpty)
-            }
-        }
-        .sheet(isPresented: $showingSearch) {
-             StockSearchView(viewModel: viewModel)
-                // ✅ 也為這個 sheet 加上 toast 修飾符
-                .toast(toast: $toastManager.toast)
-                .environmentObject(toastManager) // 確保子視圖也能存取
-        }
-        .sheet(isPresented: $showingCategoryManager) {
-             CategoryManagerView(viewModel: viewModel)
-                // ✅ 在 sheet 的內容視圖上加上 toast 修飾符
-                .toast(toast: $toastManager.toast)
-                .environmentObject(toastManager) // 確保子視圖也能存取
-        }
-        .onAppear {
-            if viewModel.categories.isEmpty {
-                viewModel.fetchCategories()
-            }
-        }
-        .background(Color(.systemGroupedBackground))
-        .alert(isPresented: $viewModel.showAlert) {
-            Alert(
-                title: Text("錯誤"),
-                message: Text(viewModel.alertMessage ?? "發生未知錯誤"),
-                dismissButton: .default(Text("確定")) {
-                    viewModel.alertMessage = nil // Clear the message when dismissed
-                }
-            )
-        }
+        // --- MODIFICATION END ---
     }
-
+    
+    // --- NEW SUBVIEW ---
+    /// A view to prompt the user to log in to use the watchlist feature.
+    private var loginPromptView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Image(systemName: "person.fill.questionmark")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+            
+            Text("watchlist.loginRequiredMessage", bundle: .module)
+                .font(.title2)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+            
+            Text("watchlist.loginPrompt.message", bundle: .module)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button(action: {
+                Task {
+                    await authViewModel.signIn()
+                }
+            }) {
+                Text("userActions.login", bundle: .module)
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top)
+            
+            Spacer()
+            Spacer()
+        }
+        .padding()
+        .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
+    }
+    // --- END NEW SUBVIEW ---
+    
     private var categoryTabs: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 4) {

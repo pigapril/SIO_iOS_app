@@ -112,9 +112,7 @@ struct PriceAnalysisView: View {
             
             hotSearchesSection
         }
-        // *** MODIFICATION START: Apply the CardViewModifier for consistency ***
         .cardStyle()
-        // *** MODIFICATION END ***
     }
     
     // MARK: - Hot Searches
@@ -166,9 +164,7 @@ struct PriceAnalysisView: View {
                     .frame(height: 350)
             }
         }
-        // *** MODIFICATION START: Apply the CardViewModifier for consistency ***
         .cardStyle()
-        // *** MODIFICATION END ***
     }
     
     // MARK: - Analysis Result Header

@@ -130,8 +130,9 @@ struct DashboardView: View {
                     ProgressView().frame(height: 100)
                 }
             }
-            .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
+            .cardStyle()
         }
+        .buttonStyle(PlainButtonStyle()) // 讓 NavigationLink 的點擊效果更自然
     }
 
     /// 追蹤清單預覽卡片
@@ -146,15 +147,24 @@ struct DashboardView: View {
                     Image(systemName: "chevron.right")
                 }
                 .font(.subheadline)
-                .foregroundColor(.secondary)
             }
             
             // 根據登入狀態和追蹤清單內容顯示不同視圖
             if !authViewModel.isAuthenticated {
-                Text("dashboard.watchlistCard.loginPrompt", bundle: .module)
-                    .frame(maxWidth: .infinity, minHeight: 100)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
+                VStack {
+                    Text("dashboard.watchlistCard.loginPrompt", bundle: .module)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    Button(action: {
+                        Task { await authViewModel.signIn() }
+                    }) {
+                        Text("userActions.login", bundle: .module)
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 5)
+                }
+                .frame(maxWidth: .infinity, minHeight: 100)
+                
             } else if let firstCategory = viewModel.categories.first, let stocks = firstCategory.stocks, !stocks.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -163,6 +173,7 @@ struct DashboardView: View {
                             NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
                                 WatchlistPreviewItem(stock: stock)
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.vertical, 4)
@@ -174,7 +185,7 @@ struct DashboardView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
+        .cardStyle()
     }
 
     /// 樂活五線譜快速分析卡片
@@ -205,7 +216,7 @@ struct DashboardView: View {
                 isActive: $isAnalysisLinkActive
             ) { EmptyView() }
         }
-        .modifier(CardViewModifier()) // *** FIX: Use the existing modifier directly ***
+        .cardStyle()
     }
 
     // MARK: - Helper Functions & Sub-components
@@ -226,11 +237,11 @@ struct DashboardView: View {
     /// 根據情緒鍵返回對應的顏色
     private func sentimentColor(for sentimentKey: String) -> Color {
         switch sentimentKey {
-        case "sentiment.extremeFear": return Color(hex: 0x0000FF)
-        case "sentiment.fear": return Color(hex: 0x5B9BD5)
-        case "sentiment.neutral": return Color(hex: 0x708090)
-        case "sentiment.greed": return Color(hex: 0xF0B8CE)
-        case "sentiment.extremeGreed": return Color(hex: 0xD24A93)
+        case "sentiment.extremeFear": return AppColors.minus2SD
+        case "sentiment.fear": return AppColors.minus1SD
+        case "sentiment.neutral": return AppColors.trend
+        case "sentiment.greed": return AppColors.plus1SD
+        case "sentiment.extremeGreed": return AppColors.plus2SD
         default: return Color.gray
         }
     }
@@ -246,11 +257,11 @@ private struct DashboardGaugeView: View {
     
     private var sentimentGradient: AngularGradient {
         let colors = [
-            Color(hex: 0x0000FF), // Extreme Fear
-            Color(hex: 0x5B9BD5), // Fear
-            Color(hex: 0x708090), // Neutral
-            Color(hex: 0xF0B8CE), // Greed
-            Color(hex: 0xD24A93)  // Extreme Greed
+            AppColors.minus2SD,   // Extreme Fear
+            AppColors.minus1SD,   // Fear
+            AppColors.trend,      // Neutral
+            AppColors.plus1SD,    // Greed
+            AppColors.plus2SD     // Extreme Greed
         ]
         return AngularGradient(
             gradient: Gradient(colors: colors),
@@ -264,17 +275,21 @@ private struct DashboardGaugeView: View {
         ZStack {
             Circle()
                 .trim(from: 0.5, to: 1.0)
-                .stroke(Color(.systemGray5), lineWidth: 12)
+                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 12, lineCap: .round))
                 
             Circle()
                 .trim(from: 0.5, to: 0.5 + (value / 100.0) / 2.0)
-                .stroke(sentimentGradient, lineWidth: 12)
+                .stroke(sentimentGradient, style: StrokeStyle(lineWidth: 12, lineCap: .round))
 
             Circle()
-                .fill(Color(hex: 0x708090))
+                .fill(Color.white)
                 .frame(width: 8, height: 8)
+                .shadow(radius: 2)
                 .offset(y: -6)
                 .rotationEffect(.degrees(-90 + (value / 100.0) * 180.0))
+                .offset(y: -60)
+
+
         }
         .animation(.spring(), value: value)
     }
@@ -286,13 +301,21 @@ private struct WatchlistPreviewItem: View {
 
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
+            AsyncImage(url: URL(string: stock.logo ?? "")) { image in
+                image.resizable().scaledToFit()
+            } placeholder: {
+                ProgressView()
+            }
+            .frame(width: 32, height: 32)
+            .clipShape(Circle())
+            
             Text(stock.symbol)
                 .font(.headline)
                 .foregroundColor(.primary)
             
             // 重用 PriceSentimentGauge 邏輯來顯示情緒
             if stock.analysis != nil {
-                PriceSentimentGauge(stock: stock)
+                DashboardPriceSentimentGauge(stock: stock)
                     .frame(height: 18)
             } else {
                  Text("...")
@@ -300,16 +323,17 @@ private struct WatchlistPreviewItem: View {
                     .foregroundColor(.secondary)
             }
         }
-        .frame(width: 100, height: 70)
+        .frame(width: 100, height: 100)
         .padding(8)
-        .background(Color(.systemGray6))
+        .background(Color(.secondarySystemGroupedBackground))
         .cornerRadius(10)
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 }
 
 
-/// 從 WatchlistView 複製過來的價格情緒儀表
-private struct PriceSentimentGauge: View {
+/// 從 WatchlistView 複製過來的價格情緒儀表 (Dashboard 版本)
+private struct DashboardPriceSentimentGauge: View {
     let stock: Stock
 
     private var percentage: Double {

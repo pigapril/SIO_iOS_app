@@ -9,6 +9,16 @@
 "nav.facebook" = "Facebook";
 "nav.facebookLong" = "Facebook 粉絲專頁";
 "userActions.login" = "登入";
+"dashboard.welcome" = "歡迎！";
+"dashboard.greeting" = "你好，%@！";
+"dashboard.subtitle" = "這是您的市場快照。";
+"dashboard.marketSentimentCard.title" = "市場情緒";
+"dashboard.watchlistCard.title" = "我的追蹤清單";
+"dashboard.watchlistCard.loginPrompt" = "登入以查看您的個人化追蹤清單。";
+"dashboard.watchlistCard.empty" = "您的追蹤清單是空的，新增一些股票吧！";
+"dashboard.quickAnalysisCard.title" = "快速分析";
+"dashboard.quickAnalysisCard.placeholder" = "輸入股票代碼";
+"dashboard.quickAnalysisCard.button" = "分析";
 "language.change" = "更改語言";
 "language.zhTW" = "繁體中文";
 "language.en" = "English";
@@ -379,6 +389,7 @@
 "priceAnalysis.prompt.enterSymbol" = "請輸入條件並點擊「開始分析」。";
 "priceAnalysis.hotSearches.title" = "熱門分析 🔥";
 "priceAnalysis.hotSearches.noData" = "暫無資料";
+"watchlist.loginPrompt.message" = "登入以建立並管理您的個人股票追蹤清單。";
 "watchlist.pageTitle" = "我的追蹤清單";
 "watchlist.pageDescription" = "追蹤您感興趣的股票，快速掌握多個標的價格情緒。";
 "watchlist.keywords" = "我的追蹤清單,自選股,股票監控,市場情緒,價格分析";
