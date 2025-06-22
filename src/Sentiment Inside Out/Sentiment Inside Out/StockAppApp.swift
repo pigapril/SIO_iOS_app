@@ -3,28 +3,18 @@ import iOSAppSource
 
 @main
 struct StockAppApp: App {
+    // 根據計畫，由 App 層級持有 StateObject，作為唯一的資料來源。
     @StateObject private var authViewModel = AuthenticationViewModel()
-    // Add the shared ToastManager as a StateObject
     @StateObject private var toastManager = ToastManager.shared
 
     var body: some Scene {
         WindowGroup {
-            // 1. 用 ZStack 包裹整個畫面
-            ZStack {
-                // 2. NavigationView 作為 ZStack 的底層
-                NavigationView {
-                    MainView()
-                }
+            // 將 MainTabView 設為新的根視圖。
+            // MainTabView 內部已包含 Tab、Navigation、ZStack 和 Toast 功能。
+            MainTabView()
+                // 將 ViewModel 注入環境，供 MainTabView 及其所有子視圖使用。
                 .environmentObject(authViewModel)
                 .environmentObject(toastManager)
-
-                .onAppear {
-                    AppSetupService.configure()
-                }
-            }
-            // 3. 將 .toast 修飾符應用於 ZStack
-            // 如此一來，Toast 的 overlay 就會處於最高層級
-            .toast(toast: $toastManager.toast)
         }
     }
 }
