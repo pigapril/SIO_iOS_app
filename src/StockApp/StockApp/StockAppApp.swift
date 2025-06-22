@@ -1,9 +1,11 @@
 import SwiftUI
-import iOSAppSource // 導入我們自己的套件
+import iOSAppSource
 
 @main
 struct StockAppApp: App {
     @StateObject private var authViewModel = AuthenticationViewModel()
+    // Add the shared ToastManager as a StateObject
+    @StateObject private var toastManager = ToastManager.shared
 
     var body: some Scene {
         WindowGroup {
@@ -11,8 +13,9 @@ struct StockAppApp: App {
                 MainView()
             }
             .environmentObject(authViewModel)
+            // Apply the toast modifier to the root view
+            .toast(toast: $toastManager.toast)
             .onAppear {
-                // 在 App 視圖出現時，執行一次性的設定
                 AppSetupService.configure()
             }
         }

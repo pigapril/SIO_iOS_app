@@ -1,3 +1,5 @@
+// pigapril/sio_ios_app/SIO_iOS_app-error_handle/src/iOSApp/Sources/iOSAppSource/Views/WatchlistViewModel.swift
+
 import SwiftUI
 import Combine
 
@@ -58,7 +60,7 @@ class WatchlistViewModel: ObservableObject {
         }
         
         // Prevent adding duplicates on the client-side
-            if let category = categories.first(where: { $0.id == categoryId }), (category.stocks ?? []).contains(where: { $0.symbol == symbol }) {
+        if let category = categories.first(where: { $0.id == categoryId }), (category.stocks ?? []).contains(where: { $0.symbol == symbol }) {
             self.errorMessage = "\(symbol) is already in this category."
             return
         }
@@ -66,12 +68,12 @@ class WatchlistViewModel: ObservableObject {
         do {
             let newStock = try await APIService.shared.addStock(categoryId: categoryId, symbol: symbol)
             if let index = categories.firstIndex(where: { $0.id == categoryId }) {
-    if categories[index].stocks != nil {
-        categories[index].stocks?.append(newStock)
-    } else {
-        categories[index].stocks = [newStock]
-    }
-}
+                if categories[index].stocks != nil {
+                    categories[index].stocks?.append(newStock)
+                } else {
+                    categories[index].stocks = [newStock]
+                }
+            }
         } catch {
             self.errorMessage = error.localizedDescription
             ErrorHandler.handle(error: error, component: "WatchlistViewModel.addStock")
@@ -79,25 +81,25 @@ class WatchlistViewModel: ObservableObject {
     }
     
     func removeStock(from categoryId: String, at offsets: IndexSet) {
-    guard let categoryIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
+        guard let categoryIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
 
-    // Safely unwrap the stocks array before using it
-    guard let stocks = categories[categoryIndex].stocks else { return }
-    let stocksToDelete = offsets.map { stocks[$0] }
+        // Safely unwrap the stocks array before using it
+        guard let stocks = categories[categoryIndex].stocks else { return }
+        let stocksToDelete = offsets.map { stocks[$0] }
 
-    Task {
-        for stock in stocksToDelete {
-            do {
-                try await APIService.shared.removeStock(categoryId: categoryId, itemId: stock.id)
-                // On success, safely remove from the optional local array
-                self.categories[categoryIndex].stocks?.removeAll(where: { $0.id == stock.id })
-            } catch {
-                self.errorMessage = error.localizedDescription
-                ErrorHandler.handle(error: error, component: "WatchlistViewModel.removeStock")
+        Task {
+            for stock in stocksToDelete {
+                do {
+                    try await APIService.shared.removeStock(categoryId: categoryId, itemId: stock.id)
+                    // On success, safely remove from the optional local array
+                    self.categories[categoryIndex].stocks?.removeAll(where: { $0.id == stock.id })
+                } catch {
+                    self.errorMessage = error.localizedDescription
+                    ErrorHandler.handle(error: error, component: "WatchlistViewModel.removeStock")
+                }
             }
         }
     }
-}
     
     func searchStocks(keyword: String) {
         searchDebounceTimer?.cancel() // Cancel previous timer
@@ -133,22 +135,45 @@ class WatchlistViewModel: ObservableObject {
                 do {
                     try await APIService.shared.deleteCategory(id: category.id)
                     categories.removeAll { $0.id == category.id }
-                    // If the deleted category was the selected one, select another one
+                    // 如果刪除的是當前選中的分類，則選擇另一個
                     if selectedCategoryId == category.id {
                         selectedCategoryId = categories.first?.id
                     }
+                    // 顯示成功 Toast
+                    ToastManager.shared.show(
+                        type: .success,
+                        title: NSLocalizedString("watchlist.category.deleteSuccess", bundle: .module, comment: "")
+                    )
+
                 } catch {
-                    // Check if the error is a backend error with a specific code
+                    // --- START OF CORRECTION ---
+
+                    // 1. 取得本地化的錯誤訊息
+                    let localizedMessage: String
                     if let appError = error as? AppError,
-                       case .backendError(let code, let message) = appError,
-                       code == "CANNOT_DELETE_LAST_CATEGORY" {
-                        self.alertMessage = NSLocalizedString("watchlist.error.CANNOT_DELETE_LAST", bundle: .module, comment: "Cannot delete the last category")
+                       case .backendError(_, let message) = appError {
+                        // 如果是後端來的特定錯誤，直接使用它的訊息
+                        localizedMessage = message
                     } else {
-                        // Fallback to general error message
-                        self.alertMessage = error.localizedDescription
+                        // 否則，使用通用的本地化錯誤描述
+                        localizedMessage = error.localizedDescription
                     }
-                    self.showAlert = true // Always show alert for errors in deleteCategory
+
+                    // 2. 移除舊的 Alert 觸發程式碼 (這兩行是造成問題的關鍵)
+                    // self.alertMessage = ... (REMOVE THIS LINE)
+                    // self.showAlert = true (REMOVE THIS LINE)
+                    
+                    // 3. 改為呼叫 ToastManager 來顯示錯誤
+                    ToastManager.shared.show(
+                        type: .error,
+                        title: NSLocalizedString("errors.DELETE_CATEGORY_FAILED", bundle: .module, comment: "Delete category failed title"), // 使用翻譯鍵
+                        message: localizedMessage
+                    )
+                    
+                    // 4. 錯誤日誌記錄保持不變
                     ErrorHandler.handle(error: error, component: "WatchlistViewModel.deleteCategory")
+                    
+                    // --- END OF CORRECTION ---
                 }
             }
         }

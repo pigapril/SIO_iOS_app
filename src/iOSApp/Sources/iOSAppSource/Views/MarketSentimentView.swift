@@ -3,10 +3,17 @@
 import SwiftUI
 import Charts
 
+// MARK: - Identifiable Wrapper for Sheet
+// 1. NEW: Create a simple wrapper struct for the sheet item.
+struct IndicatorKey: Identifiable {
+    let id: String
+}
+
 // MARK: - 主視圖
 public struct MarketSentimentView: View {
     @StateObject private var viewModel = MarketSentimentViewModel()
-    @State private var selectedIndicatorKey: String?
+    // 2. MODIFIED: Change the state variable to use the new Identifiable struct.
+    @State private var selectedIndicatorKey: IndicatorKey?
     
     enum SentimentViewType: String, CaseIterable, Identifiable {
         case overview = "marketSentiment.viewMode.overview"
@@ -46,8 +53,9 @@ public struct MarketSentimentView: View {
         }
         .navigationTitle(Text("nav.marketSentiment", bundle: .module))
         .background(Color(.systemGroupedBackground))
+        // 3. MODIFIED: The 'item' parameter in the sheet closure is now an IndicatorKey object.
         .sheet(item: $selectedIndicatorKey) { key in
-            IndicatorDetailView(indicatorName: key)
+            IndicatorDetailView(indicatorName: key.id)
         }
         .onAppear {
             if viewModel.sentimentData == nil {
@@ -175,7 +183,8 @@ public struct MarketSentimentView: View {
                             percentileRank: indicator.percentileRank,
                             viewModel: viewModel
                         )
-                        .onTapGesture { self.selectedIndicatorKey = key }
+                        // 4. MODIFIED: Wrap the key string in our new struct before assigning it.
+                        .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
                     }
                 }
             }
@@ -484,8 +493,4 @@ extension View {
     func cardStyle() -> some View {
         self.modifier(CardViewModifier())
     }
-}
-
-extension String: Identifiable {
-    public var id: String { self }
 }
