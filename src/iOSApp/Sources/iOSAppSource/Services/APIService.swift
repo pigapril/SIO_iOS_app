@@ -20,6 +20,18 @@ struct StatusResponse: Decodable {
     let status: String
 }
 
+// New structures for decoding backend error responses
+struct BackendErrorData: Decodable {
+    let errorCode: String
+    let message: String
+    // Add other fields if present and relevant, e.g., stack
+    let stack: String? // Assuming stack might be optional
+}
+
+struct BackendErrorResponse: Decodable {
+    let status: String
+    let data: BackendErrorData
+}
 
 class APIService {
     static let shared = APIService()
@@ -57,7 +69,17 @@ class APIService {
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             let dataString = String(data: data, encoding: .utf8) ?? "No data"
             print("HTTP Error: \(response) with data: \(dataString)")
-            throw AppError.networkError 
+
+            // Attempt to decode backend specific error
+            if let backendErrorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
+                // If successful, throw the specific backend error
+                throw AppError.backendError(code: backendErrorResponse.data.errorCode, message: backendErrorResponse.data.message)
+            } else {
+                // If decoding fails (for any reason, DecodingError or otherwise),
+                // fall back to unknownError, but include the raw data for debugging.
+                print("Failed to decode backend error response from raw data: \(dataString)")
+                throw AppError.unknownError
+            }
         }
         
         let decoder = JSONDecoder()

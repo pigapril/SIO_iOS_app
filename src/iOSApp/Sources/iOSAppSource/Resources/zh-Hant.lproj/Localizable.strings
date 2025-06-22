@@ -413,8 +413,9 @@
 "watchlist.category.deleteSuccess" = "分類已刪除";
 "watchlist.category.noCategory" = "目前沒有任何分類";
 "watchlist.category.noCategoryMessage" = "新增一個分類並開始追蹤你的股票吧！";
-"watchlist.category.emptytitle" = "這個分類是空的喔";
-"watchlist.category.emptymessage" = "點擊「新增股票」按鈕，開始追蹤標的吧！";
+"watchlist.category.emptyTitle" = "這個分類是空的喔";
+"watchlist.category.emptyMessage" = "點擊「新增股票」按鈕，開始追蹤標的吧！";
+"watchlist.stock.addTitle" = "新增股票";
 "watchlist.stock.addSuccess" = "已添加 {{symbol}} 到追蹤清單";
 "watchlist.stockCard.removeButton.ariaLabel" = "取消追蹤 {{symbol}}";
 "watchlist.stockCard.removeButton.title" = "取消追蹤";

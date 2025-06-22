@@ -27,7 +27,8 @@ public struct WatchlistView: View {
                 StockListView(
                     stocks: viewModel.categories.first { $0.id == viewModel.selectedCategoryId }?.stocks ?? [],
                     categoryId: viewModel.selectedCategoryId,
-                    viewModel: viewModel
+                    viewModel: viewModel,
+                    showingSearch: $showingSearch
                 )
             }
         }
@@ -53,6 +54,15 @@ public struct WatchlistView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .alert(isPresented: $viewModel.showAlert) {
+            Alert(
+                title: Text("錯誤"),
+                message: Text(viewModel.alertMessage ?? "發生未知錯誤"),
+                dismissButton: .default(Text("確定")) {
+                    viewModel.alertMessage = nil // Clear the message when dismissed
+                }
+            )
+        }
     }
 
     private var categoryTabs: some View {
@@ -97,8 +107,8 @@ public struct WatchlistView: View {
         VStack(spacing: 15) {
             Spacer()
             Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
-            Text("watchlist.category.emptytitle", bundle: .module).font(.title2)
-            Text("watchlist.category.emptymessage", bundle: .module).font(.subheadline).foregroundColor(.secondary)
+            Text("watchlist.category.noCategory", bundle: .module).font(.title2)
+            Text("watchlist.category.noCategoryMessage", bundle: .module).font(.subheadline).foregroundColor(.secondary)
             Button(action: { showingCategoryManager = true }) {
                 Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
             }
@@ -114,14 +124,24 @@ private struct StockListView: View {
     let stocks: [Stock]
     let categoryId: String?
     @ObservedObject var viewModel: WatchlistViewModel
+    @Binding var showingSearch: Bool
 
     var body: some View {
         List {
             if stocks.isEmpty {
-                 VStack {
+                 VStack(spacing: 15) {
                      Spacer()
-                     Text("watchlist.category.emptytitle", bundle: .module).font(.headline)
-                     Text("watchlist.category.emptymessage", bundle: .module).foregroundColor(.secondary)
+                     Image(systemName: "chart.bar.fill").font(.system(size: 50)).foregroundColor(.secondary)
+                     Text("watchlist.category.emptyTitle", bundle: .module).font(.title2)
+                     Text("watchlist.category.emptyMessage", bundle: .module).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
+                     Button(action: { showingSearch = true }) {
+                         HStack {
+                             Image(systemName: "plus.circle.fill")
+                             Text(NSLocalizedString("watchlist.stock.addTitle", bundle: .module, comment: "用於在股票列表中添加股票按鈕的標題"))
+                         }
+                         .frame(maxWidth: .infinity, alignment: .center)
+                     }
+                     .buttonStyle(.borderedProminent).padding(.top)
                      Spacer()
                  }
                  .frame(maxWidth: .infinity, minHeight: 200)
@@ -296,7 +316,7 @@ struct StockSearchView: View {
             .onChange(of: searchText) { newValue in
                 viewModel.searchStocks(keyword: newValue)
             }
-            .navigationTitle(Text("watchlist.addStock.title", bundle: .module))
+            .navigationTitle(Text("watchlist.stock.addTitle", bundle: .module))
             .navigationBarItems(trailing: Button(action: { dismiss() }) {
                 Text("common.done", bundle: .module)
             })
@@ -324,6 +344,7 @@ struct CategoryManagerView: View {
                                     Image(systemName: "pencil.line")
                                 }.buttonStyle(BorderlessButtonStyle())
                             }
+
                         }
                         .onDelete(perform: viewModel.deleteCategory)
                     }

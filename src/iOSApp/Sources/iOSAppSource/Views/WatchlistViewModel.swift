@@ -9,6 +9,10 @@ class WatchlistViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var searchResults: [SearchResult] = []
     @Published var isSearching = false
+    
+    // New properties for showing alerts
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String? = nil
 
     private var cancellables = Set<AnyCancellable>()
     private var searchDebounceTimer: AnyCancellable?
@@ -134,7 +138,16 @@ class WatchlistViewModel: ObservableObject {
                         selectedCategoryId = categories.first?.id
                     }
                 } catch {
-                    self.errorMessage = error.localizedDescription
+                    // Check if the error is a backend error with a specific code
+                    if let appError = error as? AppError,
+                       case .backendError(let code, let message) = appError,
+                       code == "CANNOT_DELETE_LAST_CATEGORY" {
+                        self.alertMessage = NSLocalizedString("watchlist.error.CANNOT_DELETE_LAST", bundle: .module, comment: "Cannot delete the last category")
+                    } else {
+                        // Fallback to general error message
+                        self.alertMessage = error.localizedDescription
+                    }
+                    self.showAlert = true // Always show alert for errors in deleteCategory
                     ErrorHandler.handle(error: error, component: "WatchlistViewModel.deleteCategory")
                 }
             }
@@ -153,7 +166,8 @@ class WatchlistViewModel: ObservableObject {
                 categories[index].name = updatedCategory.name
             }
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.alertMessage = error.localizedDescription // Set alert message for other errors
+            self.showAlert = true // Show alert for other errors
             ErrorHandler.handle(error: error, component: "WatchlistViewModel.updateCategory")
         }
     }
