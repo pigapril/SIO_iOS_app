@@ -1,4 +1,4 @@
-// /Users/tony.h/tony-stock/iOS App/src/iOSApp/Sources/iOSApp/Views/PriceAnalysisView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisView.swift
 
 import SwiftUI
 import Charts
@@ -112,10 +112,9 @@ struct PriceAnalysisView: View {
             
             hotSearchesSection
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(radius: 5)
+        // *** MODIFICATION START: Apply the CardViewModifier for consistency ***
+        .cardStyle()
+        // *** MODIFICATION END ***
     }
     
     // MARK: - Hot Searches
@@ -167,10 +166,9 @@ struct PriceAnalysisView: View {
                     .frame(height: 350)
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(radius: 5)
+        // *** MODIFICATION START: Apply the CardViewModifier for consistency ***
+        .cardStyle()
+        // *** MODIFICATION END ***
     }
     
     // MARK: - Analysis Result Header
@@ -213,7 +211,6 @@ struct PriceAnalysisView: View {
         }
     }
 }
-
 
 // MARK: - Sub-charts
 

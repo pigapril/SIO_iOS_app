@@ -31,7 +31,7 @@ public struct MarketSentimentView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 0) {
                 Picker("View Mode", selection: $selectedView) {
                     ForEach(SentimentViewType.allCases) { viewType in
                         Text(viewType.localized, bundle: .module).tag(viewType)
@@ -39,12 +39,15 @@ public struct MarketSentimentView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
+                .padding(.top)
 
                 switch selectedView {
                 case .overview:
-                    Group { gaugeView }.cardStyle()
+                    gaugeView.cardStyle() 
                 case .timeline:
-                    Group { historicalChartView.frame(minHeight: 400) }.cardStyle()
+                    historicalChartView
+                        .frame(minHeight: 400)
+                        .cardStyle()                
                 case .composition:
                     compositionListView
                 }
@@ -175,26 +178,25 @@ public struct MarketSentimentView: View {
             ProgressView()
         } else if let indicators = viewModel.sentimentData?.indicators {
             let displayableIndicatorKeys = indicators.keys.sorted().filter { $0 != "Investment Grade Bond Yield" && $0 != "Junk Bond Yield" }
-            List {
-                ForEach(displayableIndicatorKeys, id: \.self) { key in
-                    if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
-                        IndicatorRowView(
-                            indicatorName: NSLocalizedString("indicators.\(detailKey)", bundle: .module, comment: ""),
-                            percentileRank: indicator.percentileRank,
-                            viewModel: viewModel
-                        )
-                        // 4. MODIFIED: Wrap the key string in our new struct before assigning it.
-                        .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
+            VStack {
+                List {
+                    ForEach(displayableIndicatorKeys, id: \.self) { key in
+                        if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
+                            IndicatorRowView(
+                                indicatorName: NSLocalizedString("indicators.\(detailKey)", bundle: .module, comment: ""),
+                                percentileRank: indicator.percentileRank,
+                                viewModel: viewModel
+                            )
+                            .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
+                        }
                     }
                 }
+                .listStyle(.insetGrouped)
+                // Adjust frame height based on content
+                .frame(height: CGFloat(displayableIndicatorKeys.count) * 55 + 40) 
             }
-            .listStyle(.insetGrouped)
-            .frame(minHeight: CGFloat(displayableIndicatorKeys.count) * 55)
-            .overlay {
-                if displayableIndicatorKeys.isEmpty && !viewModel.isLoading {
-                    Text("marketSentiment.composition.noIndicators", bundle: .module).foregroundColor(.secondary)
-                }
-            }
+            .cardStyle() // Apply card style to the list container
+            
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage).padding()
         }
@@ -485,7 +487,9 @@ struct CardViewModifier: ViewModifier {
             .background(Color(.secondarySystemGroupedBackground))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            .padding([.horizontal, .bottom])
+            // *** MODIFICATION: Move horizontal and bottom padding inside the modifier for consistency ***
+            .padding(.horizontal)
+            .padding(.bottom)
     }
 }
 

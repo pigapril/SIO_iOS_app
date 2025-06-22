@@ -38,12 +38,12 @@ public struct WatchlistView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { showingCategoryManager = true }) {
-                    Image(systemName: "folder.badge.gearshape")
+                    Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingSearch = true }) {
-                    Image(systemName: "plus")
+                    Label(LocalizedStringKey("watchlist.stock.addTitle"), systemImage: "plus")
                 }
                 .disabled(viewModel.categories.isEmpty)
             }
