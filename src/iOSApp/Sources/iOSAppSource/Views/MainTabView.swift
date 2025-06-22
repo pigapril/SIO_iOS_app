@@ -12,6 +12,11 @@ public struct MainTabView: View {
     // 用於追蹤當前選擇的 Tab，方便進行程式化切換。
     @State private var selectedTab: Int = 0
 
+    // highlight-start
+    /// 公開的初始化方法，允許從其他模組（例如主 App Target）創建此視圖。
+    public init() {}
+    // highlight-end
+
     public var body: some View {
         // ZStack 用於將 Toast 訊息浮動在所有視圖之上。
         ZStack {
