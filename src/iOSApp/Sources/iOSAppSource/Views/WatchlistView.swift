@@ -7,6 +7,8 @@ public struct WatchlistView: View {
     @StateObject private var viewModel = WatchlistViewModel()
     @State private var showingSearch = false
     @State private var showingCategoryManager = false
+    @EnvironmentObject private var toastManager: ToastManager
+
 
     public init() {}
 
@@ -46,8 +48,18 @@ public struct WatchlistView: View {
                 .disabled(viewModel.categories.isEmpty)
             }
         }
-        .sheet(isPresented: $showingSearch) { StockSearchView(viewModel: viewModel) }
-        .sheet(isPresented: $showingCategoryManager) { CategoryManagerView(viewModel: viewModel) }
+        .sheet(isPresented: $showingSearch) {
+             StockSearchView(viewModel: viewModel)
+                // ✅ 也為這個 sheet 加上 toast 修飾符
+                .toast(toast: $toastManager.toast)
+                .environmentObject(toastManager) // 確保子視圖也能存取
+        }
+        .sheet(isPresented: $showingCategoryManager) {
+             CategoryManagerView(viewModel: viewModel)
+                // ✅ 在 sheet 的內容視圖上加上 toast 修飾符
+                .toast(toast: $toastManager.toast)
+                .environmentObject(toastManager) // 確保子視圖也能存取
+        }
         .onAppear {
             if viewModel.categories.isEmpty {
                 viewModel.fetchCategories()
@@ -330,6 +342,8 @@ struct CategoryManagerView: View {
     @State private var newCategoryName = ""
     @State private var editingCategory: Category?
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject private var toastManager: ToastManager
+
 
     var body: some View {
         NavigationView {
