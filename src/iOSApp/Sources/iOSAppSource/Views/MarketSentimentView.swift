@@ -1,10 +1,9 @@
-// pigapril/sio_ios_app/SIO_iOS_app-gauge_update/src/iOSApp/Sources/iOSApp/Views/MarketSentimentView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
 
 import SwiftUI
 import Charts
 
 // MARK: - Identifiable Wrapper for Sheet
-// 1. NEW: Create a simple wrapper struct for the sheet item.
 struct IndicatorKey: Identifiable {
     let id: String
 }
@@ -12,7 +11,6 @@ struct IndicatorKey: Identifiable {
 // MARK: - 主視圖
 public struct MarketSentimentView: View {
     @StateObject private var viewModel = MarketSentimentViewModel()
-    // 2. MODIFIED: Change the state variable to use the new Identifiable struct.
     @State private var selectedIndicatorKey: IndicatorKey?
     
     enum SentimentViewType: String, CaseIterable, Identifiable {
@@ -29,6 +27,8 @@ public struct MarketSentimentView: View {
     
     @State private var selectedView: SentimentViewType = .overview
 
+    public init() {}
+
     public var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -43,11 +43,11 @@ public struct MarketSentimentView: View {
 
                 switch selectedView {
                 case .overview:
-                    gaugeView.cardStyle() 
+                    gaugeView.cardStyle()
                 case .timeline:
                     historicalChartView
                         .frame(minHeight: 400)
-                        .cardStyle()                
+                        .cardStyle()
                 case .composition:
                     compositionListView
                 }
@@ -56,7 +56,6 @@ public struct MarketSentimentView: View {
         }
         .navigationTitle(Text("nav.marketSentiment", bundle: .module))
         .background(Color(.systemGroupedBackground))
-        // 3. MODIFIED: The 'item' parameter in the sheet closure is now an IndicatorKey object.
         .sheet(item: $selectedIndicatorKey) { key in
             IndicatorDetailView(indicatorName: key.id)
         }
@@ -105,7 +104,8 @@ public struct MarketSentimentView: View {
                 .padding(.top, 5)
 
                 // 2. 儀表盤視圖
-                SemiCircleGaugeView(value: score, viewModel: viewModel)
+                // *** MODIFICATION: Removed unnecessary viewModel parameter ***
+                SemiCircleGaugeView(value: score)
                     .frame(height: 250)
                     .offset(y: -60)
 
@@ -116,7 +116,7 @@ public struct MarketSentimentView: View {
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .offset(y: 5) // 向下移動
+                .offset(y: 5)
             }
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage)
@@ -192,10 +192,9 @@ public struct MarketSentimentView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
-                // Adjust frame height based on content
-                .frame(height: CGFloat(displayableIndicatorKeys.count) * 55 + 40) 
+                .frame(height: CGFloat(displayableIndicatorKeys.count) * 55 + 40)
             }
-            .cardStyle() // Apply card style to the list container
+            .cardStyle()
             
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage).padding()
@@ -240,19 +239,18 @@ struct IndicatorRowView: View {
     }
 }
 
-
 // MARK: - 優化後的儀表盤 (GaugeView)
 struct SemiCircleGaugeView: View {
     let value: Double
-    @ObservedObject var viewModel: MarketSentimentViewModel
+    // *** MODIFICATION: Removed viewModel dependency ***
 
     private var sentimentGradient: AngularGradient {
         let colors = [
-            AppColors.minus2SD,        // Extreme Fear
-            AppColors.minus1SD,        // Fear
-            AppColors.trend,           // Neutral
-            AppColors.plus1SD,         // Greed
-            AppColors.plus2SD          // Extreme Greed
+            AppColors.minus2SD,
+            AppColors.minus1SD,
+            AppColors.trend,
+            AppColors.plus1SD,
+            AppColors.plus2SD
         ]
         return AngularGradient(
             gradient: Gradient(colors: colors),
@@ -288,14 +286,14 @@ struct SemiCircleGaugeView: View {
                 // 3. 精緻化的指針
                 NeedleShape()
                     .fill(Color(.secondaryLabel))
-                    .frame(width: radius * 0.05, height: radius * 0.7) // 微調
-                    .offset(y: -radius * 0.35) // 微調
+                    .frame(width: radius * 0.05, height: radius * 0.7)
+                    .offset(y: -radius * 0.35)
                     .rotationEffect(needleRotation)
                     .position(center)
                     .shadow(color: .black.opacity(0.3), radius: 3, y: 3)
                     .animation(.interactiveSpring(response: 0.6, dampingFraction: 0.6), value: value)
                 
-                // 4.  【核心修改】將數值與樞軸點結合
+                // 4. 將數值與樞軸點結合
                 ZStack {
                     Circle()
                         .fill(Color(.systemGray6))

@@ -95,10 +95,11 @@ struct DashboardView: View {
         }
     }
 
-    /// 市場情緒卡片
+    /// 市場情緒卡片 (*** MODIFIED ***)
     private var marketSentimentCard: some View {
         NavigationLink(destination: MarketSentimentView()) {
-            VStack {
+            VStack(alignment: .leading) {
+                // Card Header
                 HStack {
                     Text("dashboard.marketSentimentCard.title", bundle: .module)
                         .font(.headline)
@@ -107,32 +108,38 @@ struct DashboardView: View {
                         .foregroundColor(.secondary)
                 }
                 
+                // Card Body
                 if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
                     let sentimentKey = sentimentKey(for: score)
-                    HStack(alignment: .center, spacing: 10) {
-                        // 重用 SemiCircleGaugeView 邏輯
-                        DashboardGaugeView(value: score, sentimentKey: sentimentKey)
-                             .frame(width: 120, height: 100)
+                    HStack(alignment: .center, spacing: 20) {
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                             Text(String(format: "%.0f", score))
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                            Text(LocalizedStringKey(sentimentKey), bundle: .module)
-                                .font(.title2)
-                                .fontWeight(.medium)
+                        // Use the reusable, detailed gauge
+                        SemiCircleGaugeView(value: score)
+                            .frame(width: 130, height: 90)
+                            .offset(y: 15)
+
+                        // Sentiment status text
+                        VStack(alignment: .leading, spacing: 4) {
+                             Text("marketSentiment.composite.sentimentLabel", bundle: .module)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                             Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                                .font(.system(size: 26, weight: .bold, design: .default))
                                 .foregroundColor(sentimentColor(for: sentimentKey))
                         }
+                        
                         Spacer()
                     }
-                    .padding(.top, 5)
+                    .padding(.top, 10)
                 } else {
-                    // 載入中的佔位符
-                    ProgressView().frame(height: 100)
+                    // Loading placeholder
+                    ProgressView().frame(height: 120, alignment: .center)
                 }
             }
             .cardStyle()
         }
-        .buttonStyle(PlainButtonStyle()) // 讓 NavigationLink 的點擊效果更自然
+        .buttonStyle(PlainButtonStyle())
     }
 
     /// 追蹤清單預覽卡片
@@ -149,7 +156,6 @@ struct DashboardView: View {
                 .font(.subheadline)
             }
             
-            // 根據登入狀態和追蹤清單內容顯示不同視圖
             if !authViewModel.isAuthenticated {
                 VStack {
                     Text("dashboard.watchlistCard.loginPrompt", bundle: .module)
@@ -168,7 +174,6 @@ struct DashboardView: View {
             } else if let firstCategory = viewModel.categories.first, let stocks = firstCategory.stocks, !stocks.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        // 只顯示前 5 支股票作為預覽
                         ForEach(stocks.prefix(5)) { stock in
                             NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
                                 WatchlistPreviewItem(stock: stock)
@@ -198,7 +203,6 @@ struct DashboardView: View {
                     .textFieldStyle(.roundedBorder)
                     .autocapitalization(.allCharacters)
                 
-                // 使用 isAnalysisLinkActive 狀態來觸發導航
                 Button(action: {
                     if !quickSearchSymbol.isEmpty {
                         isAnalysisLinkActive = true
@@ -210,7 +214,6 @@ struct DashboardView: View {
                 .disabled(quickSearchSymbol.isEmpty)
             }
             
-            // 這個 NavigationLink 是隱藏的，由按鈕的狀態來啟動
             NavigationLink(
                 destination: PriceAnalysisView(initialStockCode: quickSearchSymbol, initialYears: "3.5"),
                 isActive: $isAnalysisLinkActive
@@ -249,51 +252,7 @@ struct DashboardView: View {
 
 
 // MARK: - Reusable Components (Private to DashboardView)
-
-/// 儀表板專用的儀表盤視圖 (簡化版)
-private struct DashboardGaugeView: View {
-    let value: Double
-    let sentimentKey: String
-    
-    private var sentimentGradient: AngularGradient {
-        let colors = [
-            AppColors.minus2SD,   // Extreme Fear
-            AppColors.minus1SD,   // Fear
-            AppColors.trend,      // Neutral
-            AppColors.plus1SD,    // Greed
-            AppColors.plus2SD     // Extreme Greed
-        ]
-        return AngularGradient(
-            gradient: Gradient(colors: colors),
-            center: .bottom,
-            startAngle: .degrees(180),
-            endAngle: .degrees(360)
-        )
-    }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .trim(from: 0.5, to: 1.0)
-                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                
-            Circle()
-                .trim(from: 0.5, to: 0.5 + (value / 100.0) / 2.0)
-                .stroke(sentimentGradient, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-
-            Circle()
-                .fill(Color.white)
-                .frame(width: 8, height: 8)
-                .shadow(radius: 2)
-                .offset(y: -6)
-                .rotationEffect(.degrees(-90 + (value / 100.0) * 180.0))
-                .offset(y: -60)
-
-
-        }
-        .animation(.spring(), value: value)
-    }
-}
+// *** NOTE: DashboardGaugeView was removed. ***
 
 /// 追蹤清單預覽中的單個股票項目
 private struct WatchlistPreviewItem: View {
@@ -313,7 +272,6 @@ private struct WatchlistPreviewItem: View {
                 .font(.headline)
                 .foregroundColor(.primary)
             
-            // 重用 PriceSentimentGauge 邏輯來顯示情緒
             if stock.analysis != nil {
                 DashboardPriceSentimentGauge(stock: stock)
                     .frame(height: 18)
