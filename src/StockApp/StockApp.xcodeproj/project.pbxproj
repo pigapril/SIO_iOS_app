@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		159426C32E070E07001CB8A6 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 159426C22E070E07001CB8A6 /* iOSApp */; };
+		151906992E0786EB001C35E0 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 151906982E0786EB001C35E0 /* iOSApp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +29,87 @@
 
 /* Begin PBXFileReference section */
 		155A1A5A2E07021300F2AE26 /* iOSApp */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = iOSApp; path = ../iOSApp; sourceTree = "<group>"; };
+		15AAE3982E0710310082BD29 /* MarketSentimentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentData.swift; sourceTree = "<group>"; };
+		15AAE3992E0710310082BD29 /* PriceAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisData.swift; sourceTree = "<group>"; };
+		15AAE39A2E0710310082BD29 /* UserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
+		15AAE39B2E0710310082BD29 /* WatchlistData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistData.swift; sourceTree = "<group>"; };
+		15AAE39D2E0710310082BD29 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		15AAE39E2E0710310082BD29 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		15AAE3A12E0710310082BD29 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		15AAE3A22E0710310082BD29 /* AppSetupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSetupService.swift; sourceTree = "<group>"; };
+		15AAE3A32E0710310082BD29 /* GoogleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInService.swift; sourceTree = "<group>"; };
+		15AAE3A52E0710310082BD29 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		15AAE3A62E0710310082BD29 /* Color+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extension.swift"; sourceTree = "<group>"; };
+		15AAE3A72E0710310082BD29 /* ErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
+		15AAE3A92E0710310082BD29 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		15AAE3AB2E0710310082BD29 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		15AAE3AC2E0710310082BD29 /* ArticlesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticlesView.swift; sourceTree = "<group>"; };
+		15AAE3AD2E0710310082BD29 /* AuthenticationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationViewModel.swift; sourceTree = "<group>"; };
+		15AAE3AE2E0710310082BD29 /* IndicatorDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailView.swift; sourceTree = "<group>"; };
+		15AAE3AF2E0710310082BD29 /* IndicatorDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailViewModel.swift; sourceTree = "<group>"; };
+		15AAE3B02E0710310082BD29 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
+		15AAE3B12E0710310082BD29 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		15AAE3B22E0710310082BD29 /* MarketSentimentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentView.swift; sourceTree = "<group>"; };
+		15AAE3B32E0710310082BD29 /* MarketSentimentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentViewModel.swift; sourceTree = "<group>"; };
+		15AAE3B42E0710310082BD29 /* PriceAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisView.swift; sourceTree = "<group>"; };
+		15AAE3B52E0710310082BD29 /* PriceAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisViewModel.swift; sourceTree = "<group>"; };
+		15AAE3B62E0710310082BD29 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
+		15AAE3B72E0710310082BD29 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
+		15AAE3B82E0710310082BD29 /* WatchlistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistViewModel.swift; sourceTree = "<group>"; };
+		15AAE3BB2E0710650082BD29 /* MarketSentimentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentData.swift; sourceTree = "<group>"; };
+		15AAE3BC2E0710650082BD29 /* PriceAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisData.swift; sourceTree = "<group>"; };
+		15AAE3BD2E0710650082BD29 /* UserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
+		15AAE3BE2E0710650082BD29 /* WatchlistData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistData.swift; sourceTree = "<group>"; };
+		15AAE3C02E0710650082BD29 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		15AAE3C12E0710650082BD29 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		15AAE3C42E0710650082BD29 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		15AAE3C52E0710650082BD29 /* AppSetupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSetupService.swift; sourceTree = "<group>"; };
+		15AAE3C62E0710650082BD29 /* GoogleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInService.swift; sourceTree = "<group>"; };
+		15AAE3C82E0710650082BD29 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		15AAE3C92E0710650082BD29 /* Color+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extension.swift"; sourceTree = "<group>"; };
+		15AAE3CA2E0710650082BD29 /* ErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
+		15AAE3CC2E0710650082BD29 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		15AAE3CE2E0710650082BD29 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		15AAE3CF2E0710650082BD29 /* ArticlesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticlesView.swift; sourceTree = "<group>"; };
+		15AAE3D02E0710650082BD29 /* AuthenticationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationViewModel.swift; sourceTree = "<group>"; };
+		15AAE3D12E0710650082BD29 /* IndicatorDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailView.swift; sourceTree = "<group>"; };
+		15AAE3D22E0710650082BD29 /* IndicatorDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailViewModel.swift; sourceTree = "<group>"; };
+		15AAE3D32E0710650082BD29 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
+		15AAE3D42E0710650082BD29 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		15AAE3D52E0710650082BD29 /* MarketSentimentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentView.swift; sourceTree = "<group>"; };
+		15AAE3D62E0710650082BD29 /* MarketSentimentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentViewModel.swift; sourceTree = "<group>"; };
+		15AAE3D72E0710650082BD29 /* PriceAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisView.swift; sourceTree = "<group>"; };
+		15AAE3D82E0710650082BD29 /* PriceAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisViewModel.swift; sourceTree = "<group>"; };
+		15AAE3D92E0710650082BD29 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
+		15AAE3DA2E0710650082BD29 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
+		15AAE3DB2E0710650082BD29 /* WatchlistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistViewModel.swift; sourceTree = "<group>"; };
+		15AAE3DE2E0710EA0082BD29 /* MarketSentimentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentData.swift; sourceTree = "<group>"; };
+		15AAE3DF2E0710EA0082BD29 /* PriceAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisData.swift; sourceTree = "<group>"; };
+		15AAE3E02E0710EA0082BD29 /* UserData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserData.swift; sourceTree = "<group>"; };
+		15AAE3E12E0710EA0082BD29 /* WatchlistData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistData.swift; sourceTree = "<group>"; };
+		15AAE3E32E0710EA0082BD29 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		15AAE3E42E0710EA0082BD29 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		15AAE3E72E0710EA0082BD29 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		15AAE3E82E0710EA0082BD29 /* AppSetupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSetupService.swift; sourceTree = "<group>"; };
+		15AAE3E92E0710EA0082BD29 /* GoogleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInService.swift; sourceTree = "<group>"; };
+		15AAE3EB2E0710EA0082BD29 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		15AAE3EC2E0710EA0082BD29 /* Color+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Extension.swift"; sourceTree = "<group>"; };
+		15AAE3ED2E0710EA0082BD29 /* ErrorHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHandler.swift; sourceTree = "<group>"; };
+		15AAE3EF2E0710EA0082BD29 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		15AAE3F12E0710EA0082BD29 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		15AAE3F22E0710EA0082BD29 /* ArticlesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticlesView.swift; sourceTree = "<group>"; };
+		15AAE3F32E0710EA0082BD29 /* AuthenticationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationViewModel.swift; sourceTree = "<group>"; };
+		15AAE3F42E0710EA0082BD29 /* IndicatorDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailView.swift; sourceTree = "<group>"; };
+		15AAE3F52E0710EA0082BD29 /* IndicatorDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorDetailViewModel.swift; sourceTree = "<group>"; };
+		15AAE3F62E0710EA0082BD29 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
+		15AAE3F72E0710EA0082BD29 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		15AAE3F82E0710EA0082BD29 /* MarketSentimentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentView.swift; sourceTree = "<group>"; };
+		15AAE3F92E0710EA0082BD29 /* MarketSentimentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentViewModel.swift; sourceTree = "<group>"; };
+		15AAE3FA2E0710EA0082BD29 /* PriceAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisView.swift; sourceTree = "<group>"; };
+		15AAE3FB2E0710EA0082BD29 /* PriceAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisViewModel.swift; sourceTree = "<group>"; };
+		15AAE3FC2E0710EA0082BD29 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
+		15AAE3FD2E0710EA0082BD29 /* WatchlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistView.swift; sourceTree = "<group>"; };
+		15AAE3FE2E0710EA0082BD29 /* WatchlistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistViewModel.swift; sourceTree = "<group>"; };
 		15ECC2A12DFD52E1002F9766 /* StockApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StockApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		15ECC2AE2DFD52E3002F9766 /* StockAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		15ECC2B82DFD52E3002F9766 /* StockAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,7 +151,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				159426C32E070E07001CB8A6 /* iOSApp in Frameworks */,
+				151906992E0786EB001C35E0 /* iOSApp in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,6 +172,252 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		15AAE39C2E0710310082BD29 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3982E0710310082BD29 /* MarketSentimentData.swift */,
+				15AAE3992E0710310082BD29 /* PriceAnalysisData.swift */,
+				15AAE39A2E0710310082BD29 /* UserData.swift */,
+				15AAE39B2E0710310082BD29 /* WatchlistData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		15AAE3A02E0710310082BD29 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE39F2E0710310082BD29 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		15AAE3A42E0710310082BD29 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3A12E0710310082BD29 /* APIService.swift */,
+				15AAE3A22E0710310082BD29 /* AppSetupService.swift */,
+				15AAE3A32E0710310082BD29 /* GoogleSignInService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		15AAE3A82E0710310082BD29 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3A52E0710310082BD29 /* Analytics.swift */,
+				15AAE3A62E0710310082BD29 /* Color+Extension.swift */,
+				15AAE3A72E0710310082BD29 /* ErrorHandler.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		15AAE3AA2E0710310082BD29 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3A92E0710310082BD29 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		15AAE3B92E0710310082BD29 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3AA2E0710310082BD29 /* Home */,
+				15AAE3AB2E0710310082BD29 /* AboutView.swift */,
+				15AAE3AC2E0710310082BD29 /* ArticlesView.swift */,
+				15AAE3AD2E0710310082BD29 /* AuthenticationViewModel.swift */,
+				15AAE3AE2E0710310082BD29 /* IndicatorDetailView.swift */,
+				15AAE3AF2E0710310082BD29 /* IndicatorDetailViewModel.swift */,
+				15AAE3B02E0710310082BD29 /* LegalView.swift */,
+				15AAE3B12E0710310082BD29 /* MainView.swift */,
+				15AAE3B22E0710310082BD29 /* MarketSentimentView.swift */,
+				15AAE3B32E0710310082BD29 /* MarketSentimentViewModel.swift */,
+				15AAE3B42E0710310082BD29 /* PriceAnalysisView.swift */,
+				15AAE3B52E0710310082BD29 /* PriceAnalysisViewModel.swift */,
+				15AAE3B62E0710310082BD29 /* UserProfileView.swift */,
+				15AAE3B72E0710310082BD29 /* WatchlistView.swift */,
+				15AAE3B82E0710310082BD29 /* WatchlistViewModel.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		15AAE3BA2E0710310082BD29 /* iOSAppSource */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE39C2E0710310082BD29 /* Models */,
+				15AAE3A02E0710310082BD29 /* Resources */,
+				15AAE3A42E0710310082BD29 /* Services */,
+				15AAE3A82E0710310082BD29 /* Utils */,
+				15AAE3B92E0710310082BD29 /* Views */,
+			);
+			name = iOSAppSource;
+			path = ../iOSApp/Sources/iOSAppSource;
+			sourceTree = "<group>";
+		};
+		15AAE3BF2E0710650082BD29 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3BB2E0710650082BD29 /* MarketSentimentData.swift */,
+				15AAE3BC2E0710650082BD29 /* PriceAnalysisData.swift */,
+				15AAE3BD2E0710650082BD29 /* UserData.swift */,
+				15AAE3BE2E0710650082BD29 /* WatchlistData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		15AAE3C32E0710650082BD29 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3C22E0710650082BD29 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		15AAE3C72E0710650082BD29 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3C42E0710650082BD29 /* APIService.swift */,
+				15AAE3C52E0710650082BD29 /* AppSetupService.swift */,
+				15AAE3C62E0710650082BD29 /* GoogleSignInService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		15AAE3CB2E0710650082BD29 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3C82E0710650082BD29 /* Analytics.swift */,
+				15AAE3C92E0710650082BD29 /* Color+Extension.swift */,
+				15AAE3CA2E0710650082BD29 /* ErrorHandler.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		15AAE3CD2E0710650082BD29 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3CC2E0710650082BD29 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		15AAE3DC2E0710650082BD29 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3CD2E0710650082BD29 /* Home */,
+				15AAE3CE2E0710650082BD29 /* AboutView.swift */,
+				15AAE3CF2E0710650082BD29 /* ArticlesView.swift */,
+				15AAE3D02E0710650082BD29 /* AuthenticationViewModel.swift */,
+				15AAE3D12E0710650082BD29 /* IndicatorDetailView.swift */,
+				15AAE3D22E0710650082BD29 /* IndicatorDetailViewModel.swift */,
+				15AAE3D32E0710650082BD29 /* LegalView.swift */,
+				15AAE3D42E0710650082BD29 /* MainView.swift */,
+				15AAE3D52E0710650082BD29 /* MarketSentimentView.swift */,
+				15AAE3D62E0710650082BD29 /* MarketSentimentViewModel.swift */,
+				15AAE3D72E0710650082BD29 /* PriceAnalysisView.swift */,
+				15AAE3D82E0710650082BD29 /* PriceAnalysisViewModel.swift */,
+				15AAE3D92E0710650082BD29 /* UserProfileView.swift */,
+				15AAE3DA2E0710650082BD29 /* WatchlistView.swift */,
+				15AAE3DB2E0710650082BD29 /* WatchlistViewModel.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		15AAE3DD2E0710650082BD29 /* iOSAppSource */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3BF2E0710650082BD29 /* Models */,
+				15AAE3C32E0710650082BD29 /* Resources */,
+				15AAE3C72E0710650082BD29 /* Services */,
+				15AAE3CB2E0710650082BD29 /* Utils */,
+				15AAE3DC2E0710650082BD29 /* Views */,
+			);
+			name = iOSAppSource;
+			path = ../iOSApp/Sources/iOSAppSource;
+			sourceTree = "<group>";
+		};
+		15AAE3E22E0710EA0082BD29 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3DE2E0710EA0082BD29 /* MarketSentimentData.swift */,
+				15AAE3DF2E0710EA0082BD29 /* PriceAnalysisData.swift */,
+				15AAE3E02E0710EA0082BD29 /* UserData.swift */,
+				15AAE3E12E0710EA0082BD29 /* WatchlistData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		15AAE3E62E0710EA0082BD29 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3E52E0710EA0082BD29 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		15AAE3EA2E0710EA0082BD29 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3E72E0710EA0082BD29 /* APIService.swift */,
+				15AAE3E82E0710EA0082BD29 /* AppSetupService.swift */,
+				15AAE3E92E0710EA0082BD29 /* GoogleSignInService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		15AAE3EE2E0710EA0082BD29 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3EB2E0710EA0082BD29 /* Analytics.swift */,
+				15AAE3EC2E0710EA0082BD29 /* Color+Extension.swift */,
+				15AAE3ED2E0710EA0082BD29 /* ErrorHandler.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		15AAE3F02E0710EA0082BD29 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3EF2E0710EA0082BD29 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		15AAE3FF2E0710EA0082BD29 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3F02E0710EA0082BD29 /* Home */,
+				15AAE3F12E0710EA0082BD29 /* AboutView.swift */,
+				15AAE3F22E0710EA0082BD29 /* ArticlesView.swift */,
+				15AAE3F32E0710EA0082BD29 /* AuthenticationViewModel.swift */,
+				15AAE3F42E0710EA0082BD29 /* IndicatorDetailView.swift */,
+				15AAE3F52E0710EA0082BD29 /* IndicatorDetailViewModel.swift */,
+				15AAE3F62E0710EA0082BD29 /* LegalView.swift */,
+				15AAE3F72E0710EA0082BD29 /* MainView.swift */,
+				15AAE3F82E0710EA0082BD29 /* MarketSentimentView.swift */,
+				15AAE3F92E0710EA0082BD29 /* MarketSentimentViewModel.swift */,
+				15AAE3FA2E0710EA0082BD29 /* PriceAnalysisView.swift */,
+				15AAE3FB2E0710EA0082BD29 /* PriceAnalysisViewModel.swift */,
+				15AAE3FC2E0710EA0082BD29 /* UserProfileView.swift */,
+				15AAE3FD2E0710EA0082BD29 /* WatchlistView.swift */,
+				15AAE3FE2E0710EA0082BD29 /* WatchlistViewModel.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		15AAE4002E0710EA0082BD29 /* iOSAppSource */ = {
+			isa = PBXGroup;
+			children = (
+				15AAE3E22E0710EA0082BD29 /* Models */,
+				15AAE3E62E0710EA0082BD29 /* Resources */,
+				15AAE3EA2E0710EA0082BD29 /* Services */,
+				15AAE3EE2E0710EA0082BD29 /* Utils */,
+				15AAE3FF2E0710EA0082BD29 /* Views */,
+			);
+			name = iOSAppSource;
+			path = ../iOSApp/Sources/iOSAppSource;
+			sourceTree = "<group>";
+		};
 		15ECC2982DFD52E1002F9766 = {
 			isa = PBXGroup;
 			children = (
@@ -115,6 +442,9 @@
 		15ECC2CD2DFD55FD002F9766 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				15AAE3BA2E0710310082BD29 /* iOSAppSource */,
+				15AAE3DD2E0710650082BD29 /* iOSAppSource */,
+				15AAE4002E0710EA0082BD29 /* iOSAppSource */,
 				155A1A5A2E07021300F2AE26 /* iOSApp */,
 			);
 			name = Frameworks;
@@ -140,7 +470,7 @@
 			);
 			name = StockApp;
 			packageProductDependencies = (
-				159426C22E070E07001CB8A6 /* iOSApp */,
+				151906982E0786EB001C35E0 /* iOSApp */,
 			);
 			productName = StockApp;
 			productReference = 15ECC2A12DFD52E1002F9766 /* StockApp.app */;
@@ -221,11 +551,12 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hant",
 			);
 			mainGroup = 15ECC2982DFD52E1002F9766;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				159426C12E070E07001CB8A6 /* XCLocalSwiftPackageReference "../iOSApp" */,
+				151906912E078599001C35E0 /* XCLocalSwiftPackageReference "../iOSApp" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 15ECC2A22DFD52E1002F9766 /* Products */;
@@ -299,6 +630,36 @@
 			targetProxy = 15ECC2B92DFD52E3002F9766 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		15AAE39F2E0710310082BD29 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				15AAE39D2E0710310082BD29 /* en */,
+				15AAE39E2E0710310082BD29 /* zh-Hant */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		15AAE3C22E0710650082BD29 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				15AAE3C02E0710650082BD29 /* en */,
+				15AAE3C12E0710650082BD29 /* zh-Hant */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		15AAE3E52E0710EA0082BD29 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				15AAE3E32E0710EA0082BD29 /* en */,
+				15AAE3E42E0710EA0082BD29 /* zh-Hant */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		15ECC2C02DFD52E3002F9766 /* Debug */ = {
@@ -429,6 +790,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5DYGT685B5;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = StockApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -440,6 +802,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/**";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tony.SentimentInsideOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -458,6 +821,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5DYGT685B5;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				"FRAMEWORK_SEARCH_PATHS[arch=*]" = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = StockApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -469,6 +834,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/**";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tony.SentimentInsideOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -588,15 +954,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		159426C12E070E07001CB8A6 /* XCLocalSwiftPackageReference "../iOSApp" */ = {
+		151906912E078599001C35E0 /* XCLocalSwiftPackageReference "../iOSApp" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../iOSApp;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		159426C22E070E07001CB8A6 /* iOSApp */ = {
+		151906982E0786EB001C35E0 /* iOSApp */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 151906912E078599001C35E0 /* XCLocalSwiftPackageReference "../iOSApp" */;
 			productName = iOSApp;
 		};
 /* End XCSwiftPackageProductDependency section */

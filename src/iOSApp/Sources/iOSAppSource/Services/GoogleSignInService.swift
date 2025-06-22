@@ -8,7 +8,8 @@ class GoogleSignInService {
     private init() {}
 
     func signIn() async throws -> GIDGoogleUser {
-        guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
+        guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene }) as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
             // 在真實的 App 中，你可能需要一個更優雅的方式來獲取 root view controller
             throw AppError.unknownError
         }

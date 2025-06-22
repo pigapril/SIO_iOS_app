@@ -1,5 +1,5 @@
 import SwiftUI
-import iOSApp // 只需要導入我們自己的套件
+import iOSAppSource // 導入我們自己的套件
 
 @main
 struct StockAppApp: App {

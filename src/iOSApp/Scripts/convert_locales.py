@@ -38,8 +38,8 @@ def main():
     web_locales_path_en = os.path.join(stock_app_dir, 'Locales', 'en', 'translation.json')
 
     # Define correct output paths for the .strings files based on the new structure
-    ios_en_lproj_dir = os.path.join(ios_app_root, 'Sources', 'iOSApp', 'Resources', 'en.lproj')
-    ios_zh_hant_lproj_dir = os.path.join(ios_app_root, 'Sources', 'iOSApp', 'Resources', 'zh-Hant.lproj')
+    ios_en_lproj_dir = os.path.join(ios_app_root, 'Sources', 'iOSAppSource', 'Resources', 'en.lproj')
+    ios_zh_hant_lproj_dir = os.path.join(ios_app_root, 'Sources', 'iOSAppSource', 'Resources', 'zh-Hant.lproj')
     
     ios_strings_path_en = os.path.join(ios_en_lproj_dir, 'Localizable.strings')
     ios_strings_path_zh_hant = os.path.join(ios_zh_hant_lproj_dir, 'Localizable.strings')

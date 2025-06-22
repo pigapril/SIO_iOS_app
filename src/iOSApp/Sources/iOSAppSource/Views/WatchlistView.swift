@@ -97,8 +97,8 @@ public struct WatchlistView: View {
         VStack(spacing: 15) {
             Spacer()
             Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
-            Text("watchlist.emptyState.title", bundle: .module).font(.title2)
-            Text("watchlist.emptyState.message", bundle: .module).font(.subheadline).foregroundColor(.secondary)
+            Text("watchlist.category.emptytitle", bundle: .module).font(.title2)
+            Text("watchlist.category.emptymessage", bundle: .module).font(.subheadline).foregroundColor(.secondary)
             Button(action: { showingCategoryManager = true }) {
                 Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
             }
@@ -120,8 +120,8 @@ private struct StockListView: View {
             if stocks.isEmpty {
                  VStack {
                      Spacer()
-                     Text("watchlist.emptyState.noStocksTitle", bundle: .module).font(.headline)
-                     Text("watchlist.emptyState.noStocksMessage", bundle: .module).foregroundColor(.secondary)
+                     Text("watchlist.category.emptytitle", bundle: .module).font(.headline)
+                     Text("watchlist.category.emptymessage", bundle: .module).foregroundColor(.secondary)
                      Spacer()
                  }
                  .frame(maxWidth: .infinity, minHeight: 200)

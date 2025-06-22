@@ -317,8 +317,8 @@ struct IndicatorHistoricalChart: View {
             
             // 自定義圖例
             HStack(spacing: 20) {
-                legendItem(color: .orange, label: "indicatorDetail.valueLabel")
-                legendItem(color: .blue, label: "indicatorDetail.sentimentScoreLabel")
+                legendItem(color: .orange, label: "marketSentiment.indicatorDetail.valueLabel")
+                legendItem(color: .blue, label: "marketSentiment.indicatorDetail.sentimentScoreLabel")
             }
             .padding(.top, 5)
         }

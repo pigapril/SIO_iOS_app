@@ -51,10 +51,12 @@
 "authDialog.feature3" = "💬 由AI客服回答問題";
 "authDialog.title" = "🚀 登入就能使用完整功能！";
 "authDialog.loading" = "載入中...";
+"userProfile.title" = "個人資料";
 "userProfile.openMenuAria" = "開啟使用者選單";
 "userProfile.avatarAlt" = "{{username}} 的頭像";
 "userProfile.menuAria" = "使用者選單";
 "userProfile.logout" = "登出";
+"userProfile.notLoggedIn" = "未登入";
 "chatWidget.loginRequired" = "需要登入才能使用客服功能";
 "chatWidget.headerTitle" = "小豬客服";
 "chatWidget.closeButton" = "✖";
@@ -100,6 +102,7 @@
 "timeRangeSelector.year5" = "最近5年";
 "timeRangeSelector.year10" = "最近10年";
 "timeRangeSelector.year20" = "最近20年";
+"timeRangeSelector.all" = "全部";
 "common.learnMore" = "了解更多";
 "common.collapse" = "收合";
 "common.loading" = "載入中...";
@@ -110,6 +113,9 @@
 "common.notAvailable" = "N/A";
 "common.invalidParams" = "無效的操作參數";
 "common.close" = "關閉";
+"common.done" = "完成";
+"common.cancel" = "取消";
+"common.dataLoadError" = "資料載入發生錯誤";
 "googleTrendsMarket.invalidData" = "無效的數據格式";
 "googleTrendsMarket.fetchError" = "獲取數據時發生錯誤";
 "googleTrendsMarket.chartDescription" = "本圖表比較了多個市場關鍵字的 Google 搜尋熱度與 S&P500 (SPY) 股價走勢。";
@@ -195,6 +201,10 @@
 "marketSentiment.chart.spyPriceLabel" = "SPY 價格";
 "marketSentiment.chart.compositeIndexAxisLabel" = "SIO恐懼貪婪指標";
 "marketSentiment.chart.spyPriceAxisLabel" = "SPY 價格";
+"marketSentiment.chart.tooltipScore" = "情緒分數";
+"marketSentiment.chart.tooltipSPY" = "SPY 價格";
+"marketSentiment.indicatorDetail.valueLabel" = "指標數值";
+"marketSentiment.indicatorDetail.sentimentScoreLabel" = "情緒分數";
 "marketSentiment.viewMode.overview" = "最新情緒指數";
 "marketSentiment.viewMode.timeline" = "歷史走勢";
 "marketSentiment.viewMode.overviewAria" = "切換至最新情緒視圖";
@@ -401,6 +411,10 @@
 "watchlist.category.updateSuccess" = "分類已更新";
 "watchlist.category.deleteConfirm" = "確定要刪除此分類嗎？此操作無法復原。";
 "watchlist.category.deleteSuccess" = "分類已刪除";
+"watchlist.category.noCategory" = "目前沒有任何分類";
+"watchlist.category.noCategoryMessage" = "新增一個分類並開始追蹤你的股票吧！";
+"watchlist.category.emptytitle" = "這個分類是空的喔";
+"watchlist.category.emptymessage" = "點擊「新增股票」按鈕，開始追蹤標的吧！";
 "watchlist.stock.addSuccess" = "已添加 {{symbol}} 到追蹤清單";
 "watchlist.stockCard.removeButton.ariaLabel" = "取消追蹤 {{symbol}}";
 "watchlist.stockCard.removeButton.title" = "取消追蹤";
