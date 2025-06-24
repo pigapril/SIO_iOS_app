@@ -1,74 +1,83 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/MainTabView.swift
+// 檔案路徑: /Users/tony.h/tony-stock/iOS App/src/iOSApp/Sources/iOSAppSource/Views/MainTabView.swift
+
 import SwiftUI
 import iOSAppSource
 
-// MainTabView 將作為 App 的新根視圖，取代舊的 MainView。
-// 它使用 TabView 來建立一個現代化的、符合 iOS 設計標準的主導航介面。
 public struct MainTabView: View {
-    // 透過 @StateObject 管理 AuthenticationViewModel，確保其生命週期與視圖一致。
     @StateObject private var authViewModel = AuthenticationViewModel()
-    // 透過 @StateObject 管理 ToastManager，使其在整個 App 中共享。
     @StateObject private var toastManager = ToastManager.shared
-
-    // 用於追蹤當前選擇的 Tab，方便進行程式化切換。
     @State private var selectedTab: Int = 0
 
-    /// 公開的初始化方法，允許從其他模組（例如主 App Target）創建此視圖。
+    // --- START: 最終修正 ---
+    // 替換為這個新的、更可靠的 packageBundle 屬性
+    private var packageBundle: Bundle {
+        let bundleName = "iOSApp_iOSAppSource"
+        
+        // 這是尋找靜態連結 Swift Package 資源包的標準方法
+        if let bundleURL = Bundle.main.url(forResource: bundleName, withExtension: "bundle") {
+            if let bundle = Bundle(url: bundleURL) {
+                return bundle
+            }
+        }
+        
+        // 如果上述方法失敗，則回退到先前的方法
+        return Bundle(for: AuthenticationViewModel.self)
+    }
+    // --- END: 最終修正 ---
+    
     public init() {}
 
     public var body: some View {
-        // ZStack 用於將 Toast 訊息浮動在所有視圖之上。
+        // ZStack 和 onAppear 的部分保持原樣，不需要修改
         ZStack {
-            // TabView 是 App 的核心導航結構。
             TabView(selection: $selectedTab) {
-                // 儀表板 Tab (新的首頁)
-                // 每個 Tab 都包裹在 NavigationView 中，以提供獨立的導航堆疊。
+                // Tab 的內容完全不需要修改，因為它們已經在使用 packageBundle
+                // Dashboard Tab
                 NavigationView {
-                    // *** FIX: 將 HomeView() 更換為新的 DashboardView() ***
                     DashboardView()
                 }
                 .tabItem {
-                    // 設定 Tab 的圖示和標籤文字，使用本地化字串。
-                    Label(LocalizedStringKey("nav.home"), systemImage: "house.fill")
+                    Image(systemName: "house.fill")
+                    Text(NSLocalizedString("nav.home", bundle: packageBundle, comment: "Home tab title"))
                 }
                 .tag(0)
 
-                // 價格分析 Tab
+                // Price Analysis Tab
                 NavigationView {
                     PriceAnalysisView()
                 }
                 .tabItem {
-                    Label(LocalizedStringKey("nav.priceAnalysis"), systemImage: "chart.line.uptrend.xyaxis")
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                    Text(NSLocalizedString("nav.priceAnalysis", bundle: packageBundle, comment: "Price Analysis tab title"))
                 }
                 .tag(1)
 
-                // 市場情緒 Tab
+                // Market Sentiment Tab
                 NavigationView {
                     MarketSentimentView()
                 }
                 .tabItem {
-                    Label(LocalizedStringKey("nav.marketSentiment"), systemImage: "heart.fill")
+                    Image(systemName: "heart.fill")
+                    Text(NSLocalizedString("nav.marketSentiment", bundle: packageBundle, comment: "Market Sentiment tab title"))
                 }
                 .tag(2)
 
-                // 追蹤清單 Tab
+                // Watchlist Tab
                 NavigationView {
                     WatchlistView()
                 }
                 .tabItem {
-                    Label(LocalizedStringKey("nav.watchlist"), systemImage: "list.star")
+                    Image(systemName: "list.star")
+                    Text(NSLocalizedString("nav.watchlist", bundle: packageBundle, comment: "Watchlist tab title"))
                 }
                 .tag(3)
             }
-            // 將 ViewModel 和 ToastManager 注入到環境中，讓所有子視圖都能存取。
             .environmentObject(authViewModel)
             .environmentObject(toastManager)
             .onAppear {
-                // 在 App 啟動時執行必要的設定。
                 AppSetupService.configure()
             }
         }
-        // 將 Toast 修飾符應用於最外層的 ZStack，確保 Toast 能覆蓋在 TabView 之上。
         .toast(toast: $toastManager.toast)
     }
 }

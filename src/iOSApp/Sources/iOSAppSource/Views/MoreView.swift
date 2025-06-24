@@ -1,51 +1,62 @@
-import SwiftUI
+// 檔案路徑: pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/MoreView.swift
 
-/// 一個整合次要導覽連結和使用者操作的視圖。
-///
-/// 此視圖被設計為從其他視圖（例如 `DashboardView` 的工具欄）中呈現。
-/// 它提供了進入使用者個人資料、資訊頁面和登出操作的入口，遵循 iOS 重建計畫中的規劃。
+import SwiftUI
+// 導入 iOSAppSource 以便訪問其中的類別
+import iOSAppSource
+
 struct MoreView: View {
-    // 從環境中讀取驗證視圖模型，以管理登入狀態和操作。
     @EnvironmentObject var authViewModel: AuthenticationViewModel
 
+    // 複製過來的、可靠的 Bundle 尋找器
+    private var packageBundle: Bundle {
+        let bundleName = "iOSApp_iOSAppSource"
+        if let bundleURL = Bundle.main.url(forResource: bundleName, withExtension: "bundle") {
+            if let bundle = Bundle(url: bundleURL) {
+                return bundle
+            }
+        }
+        return Bundle(for: AuthenticationViewModel.self)
+    }
+
     var body: some View {
-        // 使用 Form 來獲取標準的 iOS 分組列表外觀，適合設定頁面。
+        // 使用 Form 來獲取標準的 iOS 分組列表外觀
         Form {
-            // 此區塊包含到其他資訊頁面的主要導覽連結。
             Section {
-                // 連結到使用者的個人資料頁面。
+                // 修正1：使用 NSLocalizedString 從正確的 packageBundle 讀取字串
                 NavigationLink(destination: UserProfileView()) {
-                    // 標籤使用本地化字串鍵和相關的 SF Symbol 圖示。
-                    Label(LocalizedStringKey("userProfile.title"), systemImage: "person.crop.circle")
+                    Label(NSLocalizedString("userProfile.title", bundle: packageBundle, comment: "Profile link"), 
+                          systemImage: "person.crop.circle")
                 }
                 
-                // 連結到「關於我們」頁面。
+                // 修正2：處理 "關於我們"
                 NavigationLink(destination: AboutView()) {
-                    Label(LocalizedStringKey("about.pageTitle"), systemImage: "info.circle")
+                    Label(NSLocalizedString("about.pageTitle", bundle: packageBundle, comment: "About Us link"), 
+                          systemImage: "info.circle")
                 }
                 
-                // 連結到「法律聲明」頁面。
+                // 修正3：處理 "法律聲明"
                 NavigationLink(destination: LegalView()) {
-                    Label(LocalizedStringKey("legal.pageTitle"), systemImage: "doc.text")
+                    Label(NSLocalizedString("legal.pageTitle", bundle: packageBundle, comment: "Legal link"), 
+                          systemImage: "doc.text")
                 }
             }
             
-            // 此區塊包含操作，特別是登出按鈕。
             Section {
-                // 登出按鈕僅在使用者通過驗證後顯示。
                 if authViewModel.isAuthenticated {
                     Button(role: .destructive) {
-                        // 登出流程由 AuthenticationViewModel 非同步處理。
                         Task {
                             await authViewModel.signOut()
                         }
                     } label: {
-                        Label(LocalizedStringKey("userProfile.logout"), systemImage: "arrow.backward.square")
+                        // 修正4：處理 "登出" 按鈕
+                        Label(NSLocalizedString("userProfile.logout", bundle: packageBundle, comment: "Logout button"), 
+                              systemImage: "arrow.backward.square")
                     }
                 }
             }
         }
-        // 根據開發計畫的明確指示設定導覽標題。
-        .navigationTitle("更多")
+        // 修正5：將硬編碼的標題改為本地化字串
+        // "footer.otherResources" 在您的翻譯檔中對應 "其他資源" / "Other Resources"
+        .navigationTitle(Text(NSLocalizedString("footer.otherResources", bundle: packageBundle, comment: "Title for the More view")))
     }
 }
