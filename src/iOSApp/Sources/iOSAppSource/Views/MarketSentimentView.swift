@@ -49,7 +49,7 @@ public struct MarketSentimentView: View {
                         .frame(minHeight: 400)
                         .cardStyle()
                 case .composition:
-                    compositionListView
+                    compositionListView.cardStyle()
                 }
             }
             .padding(.vertical)
@@ -104,8 +104,7 @@ public struct MarketSentimentView: View {
                 .padding(.top, 5)
 
                 // 2. 儀表盤視圖
-                // *** MODIFICATION: Removed unnecessary viewModel parameter ***
-                SemiCircleGaugeView(value: score)
+                SemiCircleGaugeView(value: score, showLabels: true)
                     .frame(height: 250)
                     .offset(y: -60)
 
@@ -179,23 +178,23 @@ public struct MarketSentimentView: View {
         } else if let indicators = viewModel.sentimentData?.indicators {
             let displayableIndicatorKeys = indicators.keys.sorted().filter { $0 != "Investment Grade Bond Yield" && $0 != "Junk Bond Yield" }
             VStack {
-                List {
-                    ForEach(displayableIndicatorKeys, id: \.self) { key in
-                        if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
-                            IndicatorRowView(
-                                indicatorName: NSLocalizedString("indicators.\(detailKey)", bundle: .module, comment: ""),
-                                percentileRank: indicator.percentileRank,
-                                viewModel: viewModel
-                            )
-                            .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
+                // *** FIX: Use a non-List container to apply cardStyle correctly ***
+                ForEach(displayableIndicatorKeys, id: \.self) { key in
+                    if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
+                        IndicatorRowView(
+                            indicatorName: NSLocalizedString("indicators.\(detailKey)", bundle: .module, comment: ""),
+                            percentileRank: indicator.percentileRank,
+                            viewModel: viewModel
+                        )
+                        .padding(.horizontal) // Add padding for content inside the card
+                        .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
+                        
+                        if key != displayableIndicatorKeys.last {
+                             Divider().padding(.leading)
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
-                .frame(height: CGFloat(displayableIndicatorKeys.count) * 55 + 40)
             }
-            .cardStyle()
-            
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage).padding()
         }
@@ -214,9 +213,9 @@ public struct MarketSentimentView: View {
     }()
 }
 
-// MARK: - 子元件
+// MARK: - Helper Components (Moved to File Scope)
 
-struct IndicatorRowView: View {
+private struct IndicatorRowView: View {
     let indicatorName: String
     let percentileRank: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
@@ -235,15 +234,21 @@ struct IndicatorRowView: View {
                     .frame(width: 80)
             }
             Image(systemName: "chevron.right").font(.caption).foregroundColor(.secondary)
-        }.contentShape(Rectangle())
+        }
+        .contentShape(Rectangle())
+        .padding(.vertical, 8)
     }
 }
 
-// MARK: - 優化後的儀表盤 (GaugeView)
 struct SemiCircleGaugeView: View {
     let value: Double
-    // *** MODIFICATION: Removed viewModel dependency ***
+    let showLabels: Bool
 
+    init(value: Double, showLabels: Bool = true) {
+        self.value = value
+        self.showLabels = showLabels
+    }
+    
     private var sentimentGradient: AngularGradient {
         let colors = [
             AppColors.minus2SD,
@@ -268,14 +273,12 @@ struct SemiCircleGaugeView: View {
             let needleRotation = Angle.degrees((value / 100.0) * 180.0 - 90.0)
             
             ZStack {
-                // 1. 灰色背景弧形
                 Circle()
                     .trim(from: 0.5, to: 1.0)
                     .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .frame(width: radius * 2, height: radius * 2)
                     .position(center)
                     
-                // 2. 漸層情緒色環
                 Circle()
                     .trim(from: 0.5, to: 1.0)
                     .stroke(sentimentGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
@@ -283,7 +286,6 @@ struct SemiCircleGaugeView: View {
                     .position(center)
                     .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 5)
 
-                // 3. 精緻化的指針
                 NeedleShape()
                     .fill(Color(.secondaryLabel))
                     .frame(width: radius * 0.05, height: radius * 0.7)
@@ -293,7 +295,6 @@ struct SemiCircleGaugeView: View {
                     .shadow(color: .black.opacity(0.3), radius: 3, y: 3)
                     .animation(.interactiveSpring(response: 0.6, dampingFraction: 0.6), value: value)
                 
-                // 4. 將數值與樞軸點結合
                 ZStack {
                     Circle()
                         .fill(Color(.systemGray6))
@@ -306,24 +307,23 @@ struct SemiCircleGaugeView: View {
                 .frame(width: lineWidth * 1.2, height: lineWidth * 1.2)
                 .position(center)
                     
-                // 5. 底部標籤
-                HStack {
-                    Text("sentiment.extremeFear", bundle: .module)
-                    Spacer()
-                    Text("sentiment.extremeGreed", bundle: .module)
+                if showLabels {
+                    HStack {
+                        Text("sentiment.extremeFear", bundle: .module)
+                        Spacer()
+                        Text("sentiment.extremeGreed", bundle: .module)
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: radius * 2.1)
+                    .position(x: center.x, y: center.y + 35)
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(width: radius * 2.1)
-                .position(x: center.x, y: center.y + 35)
             }
         }
     }
 }
 
-
-// 輔助形狀：自定義指針外觀
-struct NeedleShape: Shape {
+private struct NeedleShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.midX, y: rect.minY))
@@ -341,8 +341,7 @@ struct NeedleShape: Shape {
     }
 }
 
-
-struct HistoricalSentimentChart: View {
+private struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
     
     @State private var selectedDate: Date?
@@ -411,7 +410,6 @@ struct HistoricalSentimentChart: View {
             }
         }
         
-        // Custom Legend
         HStack(spacing: 20) {
             HStack(spacing: 5) {
                 Rectangle().fill(Color(hex: 0x9D00FF)).frame(width: 15, height: 3)
@@ -477,9 +475,10 @@ struct HistoricalSentimentChart: View {
 }
 
 
-// MARK: - View Modifiers
-struct CardViewModifier: ViewModifier {
-    func body(content: Content) -> some View {
+// MARK: - View Modifiers (Moved to File Scope)
+// *** FIX: Changed access modifier to be explicitly public to ensure visibility across the module ***
+public struct CardViewModifier: ViewModifier {
+    public func body(content: Content) -> some View {
         content
             .padding()
             .background(Color(.secondarySystemGroupedBackground))
@@ -487,9 +486,11 @@ struct CardViewModifier: ViewModifier {
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
             .padding([.horizontal, .bottom])
     }
+    
+    public init() {}
 }
 
-extension View {
+public extension View {
     func cardStyle() -> some View {
         self.modifier(CardViewModifier())
     }

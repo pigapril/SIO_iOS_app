@@ -111,16 +111,19 @@ struct DashboardView: View {
                 // Card Body
                 if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
                     let sentimentKey = sentimentKey(for: score)
-                    HStack(alignment: .center, spacing: 20) {
+                    HStack(alignment: .center,) {
                         
                         // Use the reusable, detailed gauge
-                        SemiCircleGaugeView(value: score)
+                        SemiCircleGaugeView(value: score, showLabels: false)
                             .frame(width: 130, height: 90)
-                            .offset(y: 15)
+                            .offset(y: -10)
+                        
+                        Spacer()
+
 
                         // Sentiment status text
                         VStack(alignment: .leading, spacing: 4) {
-                             Text("marketSentiment.composite.sentimentLabel", bundle: .module)
+                             Text("dashboard.marketSentimentCard.currentSentiment", bundle: .module)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
@@ -128,8 +131,9 @@ struct DashboardView: View {
                                 .font(.system(size: 26, weight: .bold, design: .default))
                                 .foregroundColor(sentimentColor(for: sentimentKey))
                         }
+                        .padding(.trailing, 20)
+
                         
-                        Spacer()
                     }
                     .padding(.top, 10)
                 } else {

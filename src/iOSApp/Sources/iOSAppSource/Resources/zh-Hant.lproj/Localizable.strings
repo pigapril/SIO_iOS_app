@@ -13,6 +13,7 @@
 "dashboard.greeting" = "你好，%@！";
 "dashboard.subtitle" = "這是您的市場快照。";
 "dashboard.marketSentimentCard.title" = "市場情緒";
+"dashboard.marketSentimentCard.currentSentiment" = "當前的情緒是";
 "dashboard.watchlistCard.title" = "我的追蹤清單";
 "dashboard.watchlistCard.loginPrompt" = "登入以查看您的個人化追蹤清單。";
 "dashboard.watchlistCard.empty" = "您的追蹤清單是空的，新增一些股票吧！";

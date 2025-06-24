@@ -13,6 +13,7 @@
 "dashboard.greeting" = "Hello, %@!";
 "dashboard.subtitle" = "Here's your market snapshot.";
 "dashboard.marketSentimentCard.title" = "Market Sentiment";
+"dashboard.marketSentimentCard.currentSentiment" = "The mood is now";
 "dashboard.watchlistCard.title" = "My Watchlist";
 "dashboard.watchlistCard.loginPrompt" = "Log in to see your personalized watchlist.";
 "dashboard.watchlistCard.empty" = "Your watchlist is empty. Add some stocks to get started!";
