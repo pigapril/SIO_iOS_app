@@ -52,7 +52,9 @@ struct PriceAnalysisView: View {
                 .font(.headline)
             
             HStack {
-                Text("priceAnalysis.form.stockCodeLabel", bundle: .module).frame(width: 100, alignment: .leading)
+                // --- MODIFICATION START ---
+                Text("priceAnalysis.form.stockCodeLabel", bundle: .module).frame(width: 140, alignment: .leading)
+                // --- MODIFICATION END ---
                 TextField(stockCodePlaceholder, text: $viewModel.stockCode)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .autocapitalization(.allCharacters)
@@ -60,19 +62,23 @@ struct PriceAnalysisView: View {
             
             if !isAdvancedQuery {
                 HStack {
-                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 100, alignment: .leading)
+                    // --- MODIFICATION START ---
+                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
+                    // --- MODIFICATION END ---
                     Picker(selection: $viewModel.analysisPeriod, label: Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module)) {
                         Text("priceAnalysis.form.periodShort", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.short)
                         Text("priceAnalysis.form.periodMedium", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.medium)
                         Text("priceAnalysis.form.periodLong", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.long)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
+                    .pickerStyle(.menu)
                 }
             }
             
             if isAdvancedQuery {
                 HStack {
-                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 100, alignment: .leading)
+                    // --- MODIFICATION START ---
+                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
+                    // --- MODIFICATION END ---
                     TextField(yearsPlaceholder, text: $viewModel.years)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.decimalPad)

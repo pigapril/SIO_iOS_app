@@ -263,6 +263,15 @@ private struct StockCardView: View {
 private struct StockHeaderView: View {
     let stock: Stock
 
+    private var stockDisplayName: String {
+        // Use English name if available and the locale is English, otherwise use the default name.
+        let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
+        if languageCode.starts(with: "en"), let enName = stock.nameEn, !enName.isEmpty {
+            return enName
+        }
+        return stock.name
+    }
+
     var body: some View {
         HStack {
             AsyncImage(url: URL(string: stock.logo ?? "")) { image in
@@ -278,7 +287,7 @@ private struct StockHeaderView: View {
             
             VStack(alignment: .leading) {
                 Text(stock.symbol).font(.headline)
-                Text(stock.name).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
+                Text(stockDisplayName).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
             }
         }
     }
