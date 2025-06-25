@@ -26,6 +26,7 @@ public struct WatchlistView: View {
                     ProgressView {
                         Text("common.loading", bundle: .module)
                     }
+                    .frame(maxWidth: .infinity)
                     Spacer()
                 } else if let errorMessage = viewModel.errorMessage {
                     errorStateView(message: errorMessage)

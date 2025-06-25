@@ -1,4 +1,4 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
+// 檔案路徑: pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
 
 import SwiftUI
 import Charts
@@ -12,7 +12,7 @@ struct IndicatorKey: Identifiable {
 public struct MarketSentimentView: View {
     @StateObject private var viewModel = MarketSentimentViewModel()
     @State private var selectedIndicatorKey: IndicatorKey?
-    
+
     enum SentimentViewType: String, CaseIterable, Identifiable {
         case overview = "marketSentiment.viewMode.overview"
         case timeline = "marketSentiment.viewMode.timeline"
@@ -45,9 +45,7 @@ public struct MarketSentimentView: View {
                 case .overview:
                     gaugeView.cardStyle()
                 case .timeline:
-                    historicalChartView
-                        .frame(minHeight: 400)
-                        .cardStyle()
+                    historicalChartView.cardStyle()
                 case .composition:
                     compositionListView.cardStyle()
                 }
@@ -71,13 +69,14 @@ public struct MarketSentimentView: View {
     @ViewBuilder
     private var gaugeView: some View {
         if viewModel.isLoading {
-            ProgressView().frame(minHeight: 300)
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 300)
         } else if let sentimentData = viewModel.sentimentData {
             VStack(spacing: 15) {
                 let score = Double(sentimentData.totalScore) ?? 0.0
                 let sentimentKey = viewModel.sentimentKey(for: score)
 
-                // 1. 儀表盤上方的結果標籤
                 HStack(alignment: .center, spacing: 20) {
                     VStack {
                         Text(String(format: "%.0f", score))
@@ -103,12 +102,10 @@ public struct MarketSentimentView: View {
                 .padding(.horizontal)
                 .padding(.top, 5)
 
-                // 2. 儀表盤視圖
                 SemiCircleGaugeView(value: score, showLabels: true)
                     .frame(height: 250)
                     .offset(y: -60)
 
-                // 3. 最後更新時間
                 HStack {
                     Text("marketSentiment.lastUpdateLabel", bundle: .module)
                     Text(": \(sentimentData.compositeScoreLastUpdate, formatter: Self.dateFormatter)")
@@ -125,7 +122,9 @@ public struct MarketSentimentView: View {
     @ViewBuilder
     private var historicalChartView: some View {
         if viewModel.isLoading && viewModel.historicalData.isEmpty {
-            ProgressView().frame(minHeight: 400)
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 400)
         } else if let errorMessage = viewModel.errorMessage, viewModel.historicalData.isEmpty {
             errorView(message: errorMessage)
         } else {
@@ -175,10 +174,11 @@ public struct MarketSentimentView: View {
     private var compositionListView: some View {
         if viewModel.isLoading {
             ProgressView()
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 200)
         } else if let indicators = viewModel.sentimentData?.indicators {
             let displayableIndicatorKeys = indicators.keys.sorted().filter { $0 != "Investment Grade Bond Yield" && $0 != "Junk Bond Yield" }
             VStack {
-                // *** FIX: Use a non-List container to apply cardStyle correctly ***
                 ForEach(displayableIndicatorKeys, id: \.self) { key in
                     if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
                         IndicatorRowView(
@@ -186,7 +186,7 @@ public struct MarketSentimentView: View {
                             percentileRank: indicator.percentileRank,
                             viewModel: viewModel
                         )
-                        .padding(.horizontal) // Add padding for content inside the card
+                        .padding(.horizontal)
                         .onTapGesture { self.selectedIndicatorKey = IndicatorKey(id: key) }
                         
                         if key != displayableIndicatorKeys.last {
@@ -213,7 +213,7 @@ public struct MarketSentimentView: View {
     }()
 }
 
-// MARK: - Helper Components (Moved to File Scope)
+// MARK: - Helper Components (Re-added)
 
 private struct IndicatorRowView: View {
     let indicatorName: String
@@ -240,106 +240,8 @@ private struct IndicatorRowView: View {
     }
 }
 
-struct SemiCircleGaugeView: View {
-    let value: Double
-    let showLabels: Bool
 
-    init(value: Double, showLabels: Bool = true) {
-        self.value = value
-        self.showLabels = showLabels
-    }
-    
-    private var sentimentGradient: AngularGradient {
-        let colors = [
-            AppColors.minus2SD,
-            AppColors.minus1SD,
-            AppColors.trend,
-            AppColors.plus1SD,
-            AppColors.plus2SD
-        ]
-        return AngularGradient(
-            gradient: Gradient(colors: colors),
-            center: .center,
-            startAngle: .degrees(180),
-            endAngle: .degrees(360)
-        )
-    }
 
-    var body: some View {
-        GeometryReader { geometry in
-            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
-            let radius = min(geometry.size.width / 2, geometry.size.height) * 0.9
-            let lineWidth = radius * 0.25
-            let needleRotation = Angle.degrees((value / 100.0) * 180.0 - 90.0)
-            
-            ZStack {
-                Circle()
-                    .trim(from: 0.5, to: 1.0)
-                    .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .frame(width: radius * 2, height: radius * 2)
-                    .position(center)
-                    
-                Circle()
-                    .trim(from: 0.5, to: 1.0)
-                    .stroke(sentimentGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .frame(width: radius * 2, height: radius * 2)
-                    .position(center)
-                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 5)
-
-                NeedleShape()
-                    .fill(Color(.secondaryLabel))
-                    .frame(width: radius * 0.05, height: radius * 0.7)
-                    .offset(y: -radius * 0.35)
-                    .rotationEffect(needleRotation)
-                    .position(center)
-                    .shadow(color: .black.opacity(0.3), radius: 3, y: 3)
-                    .animation(.interactiveSpring(response: 0.6, dampingFraction: 0.6), value: value)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color(.systemGray6))
-                        .shadow(color: .black.opacity(0.2), radius: 5, y: 3)
-                    
-                    Text(String(format: "%.0f", value))
-                        .font(.system(size: radius * 0.15, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(.label))
-                }
-                .frame(width: lineWidth * 1.2, height: lineWidth * 1.2)
-                .position(center)
-                    
-                if showLabels {
-                    HStack {
-                        Text("sentiment.extremeFear", bundle: .module)
-                        Spacer()
-                        Text("sentiment.extremeGreed", bundle: .module)
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(width: radius * 2.1)
-                    .position(x: center.x, y: center.y + 35)
-                }
-            }
-        }
-    }
-}
-
-private struct NeedleShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX, y: rect.maxY),
-            control: CGPoint(x: rect.minX, y: rect.midY)
-        )
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.midX, y: rect.minY),
-            control: CGPoint(x: rect.maxX, y: rect.midY)
-        )
-        path.closeSubpath()
-        return path
-    }
-}
 
 private struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]
@@ -474,24 +376,3 @@ private struct HistoricalSentimentChart: View {
     }
 }
 
-
-// MARK: - View Modifiers (Moved to File Scope)
-// *** FIX: Changed access modifier to be explicitly public to ensure visibility across the module ***
-public struct CardViewModifier: ViewModifier {
-    public func body(content: Content) -> some View {
-        content
-            .padding()
-            .background(Color(.secondarySystemGroupedBackground))
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-            .padding([.horizontal, .bottom])
-    }
-    
-    public init() {}
-}
-
-public extension View {
-    func cardStyle() -> some View {
-        self.modifier(CardViewModifier())
-    }
-}

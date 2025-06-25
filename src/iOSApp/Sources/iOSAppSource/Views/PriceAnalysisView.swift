@@ -134,10 +134,12 @@ struct PriceAnalysisView: View {
         VStack {
             if viewModel.isLoading {
                 ProgressView()
-                    .frame(height: 350)
+                .frame(maxWidth: .infinity)
+                .frame(height: 350)            
             } else if let errorMessage = viewModel.errorMessage {
                 Text("Error: \(errorMessage)")
                     .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
                     .frame(height: 350)
             } else if let result = viewModel.analysisResult, let chartData = viewModel.chartData {
                 analysisResultHeader(result: result)
