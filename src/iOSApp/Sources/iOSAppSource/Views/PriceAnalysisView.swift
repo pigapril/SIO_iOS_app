@@ -31,7 +31,7 @@ struct PriceAnalysisView: View {
                 queryCard
                 chartContainer
             }
-            .padding()
+            .padding(.vertical) // <<< 修正點：從 .padding() 改為 .padding(.vertical)
         }
         .navigationTitle(Text("priceAnalysis.pageTitle", bundle: .module))
         .background(Color(.systemGroupedBackground))

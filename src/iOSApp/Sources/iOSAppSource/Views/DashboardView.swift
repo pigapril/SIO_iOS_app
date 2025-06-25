@@ -42,7 +42,7 @@ struct DashboardView: View {
                     watchlistPreviewCard
                     quickAnalysisCard
                 }
-                .padding()
+                .padding(.vertical) // <<< 修正點：從 .padding() 改為 .padding(.vertical)
                 // --- MODIFICATION END ---
             }
         }
