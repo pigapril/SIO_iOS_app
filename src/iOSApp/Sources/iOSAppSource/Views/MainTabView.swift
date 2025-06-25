@@ -8,30 +8,23 @@ public struct MainTabView: View {
     @StateObject private var toastManager = ToastManager.shared
     @State private var selectedTab: Int = 0
 
-    // --- START: 最終修正 ---
-    // 替換為這個新的、更可靠的 packageBundle 屬性
     private var packageBundle: Bundle {
         let bundleName = "iOSApp_iOSAppSource"
         
-        // 這是尋找靜態連結 Swift Package 資源包的標準方法
         if let bundleURL = Bundle.main.url(forResource: bundleName, withExtension: "bundle") {
             if let bundle = Bundle(url: bundleURL) {
                 return bundle
             }
         }
         
-        // 如果上述方法失敗，則回退到先前的方法
         return Bundle(for: AuthenticationViewModel.self)
     }
-    // --- END: 最終修正 ---
     
     public init() {}
 
     public var body: some View {
-        // ZStack 和 onAppear 的部分保持原樣，不需要修改
         ZStack {
             TabView(selection: $selectedTab) {
-                // Tab 的內容完全不需要修改，因為它們已經在使用 packageBundle
                 // Dashboard Tab
                 NavigationView {
                     DashboardView()
@@ -74,9 +67,14 @@ public struct MainTabView: View {
             }
             .environmentObject(authViewModel)
             .environmentObject(toastManager)
+            // highlight-start
+            // 移除此處多餘的 onAppear 設定，因為設定已在 StockAppApp.swift 的 init() 中完成。
+            /*
             .onAppear {
                 AppSetupService.configure()
             }
+            */
+            // highlight-end
         }
         .toast(toast: $toastManager.toast)
     }

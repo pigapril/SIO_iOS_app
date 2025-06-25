@@ -14,21 +14,19 @@ let package = Package(
         ),
     ],
     dependencies: [
-        // highlight-start
-        // 重新加回 GoogleSignIn-iOS 套件
         .package(url: "https://github.com/google/GoogleSignIn-iOS.git", from: "7.0.0"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.0.0")
-        // highlight-end
     ],
     targets: [
         .target(
             name: "iOSAppSource",
             dependencies: [
-                // highlight-start
-                // 明確指定 FirebaseAuth 產品來自 firebase-ios-sdk 套件
                 .product(name: "FirebaseAuth", package: "firebase-ios-sdk"),
                 // 明確指定 GoogleSignIn 產品來自 GoogleSignIn-iOS 套件
-                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS")
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
+                // highlight-start
+                // 新增：明確加入 GoogleSignInSwift 產品以使用 SwiftUI 元件
+                .product(name: "GoogleSignInSwift", package: "GoogleSignIn-iOS")
                 // highlight-end
             ],
             resources: [
