@@ -1,4 +1,4 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/DashboardView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/DashboardView.swift
 import SwiftUI
 
 /// App 的新主頁，作為一個數據驅動的儀表板。
@@ -35,18 +35,25 @@ struct DashboardView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 300)
             } else {
-                // 主內容堆疊
+                // --- MODIFICATION START ---
+                // 主內容堆疊 (welcomeHeader 已移除)
                 VStack(alignment: .leading, spacing: 20) {
-                    welcomeHeader
                     marketSentimentCard
                     watchlistPreviewCard
                     quickAnalysisCard
                 }
                 .padding()
+                // --- MODIFICATION END ---
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(Text("nav.home", bundle: .module))
+        .navigationTitle(
+            Text(
+                authViewModel.user != nil ?
+                String(format: NSLocalizedString("dashboard.greeting", bundle: .module, comment: "Personalized user greeting"), authViewModel.user!.username) :
+                NSLocalizedString("dashboard.welcome", bundle: .module, comment: "Generic welcome title")
+            )
+        )
         .toolbar {
             // 新增右上角的設定按鈕，用於開啟 "MoreView"
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -75,25 +82,9 @@ struct DashboardView: View {
 
     // MARK: - Subviews
 
-    /// 歡迎使用者的標頭
-    private var welcomeHeader: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if let user = authViewModel.user {
-                // 對已登入使用者顯示個人化問候
-                Text(String(format: NSLocalizedString("dashboard.greeting", bundle: .module, comment: "Greeting for a logged in user"), user.username))
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-            } else {
-                // 對未登入使用者顯示通用歡迎訊息
-                Text("dashboard.welcome", bundle: .module)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-            }
-            Text("dashboard.subtitle", bundle: .module)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-    }
+    // --- MODIFICATION START ---
+    // welcomeHeader 已被移除
+    // --- MODIFICATION END ---
 
     /// 市場情緒卡片 (*** MODIFIED ***)
     private var marketSentimentCard: some View {

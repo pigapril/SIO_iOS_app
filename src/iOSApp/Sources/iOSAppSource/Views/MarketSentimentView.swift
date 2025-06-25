@@ -31,7 +31,9 @@ public struct MarketSentimentView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            // --- MODIFICATION START ---
+            VStack(spacing: 20) { // Increased spacing from 0 to 20
+            // --- MODIFICATION END ---
                 Picker("View Mode", selection: $selectedView) {
                     ForEach(SentimentViewType.allCases) { viewType in
                         Text(viewType.localized, bundle: .module).tag(viewType)
@@ -375,4 +377,3 @@ private struct HistoricalSentimentChart: View {
         }
     }
 }
-
