@@ -15,7 +15,7 @@ private struct DescriptionSection: Codable, Identifiable {
     let content: String
 }
 
-// MARK: - 主視圖
+// MARK: - Main View
 public struct MarketSentimentView: View {
     @StateObject private var viewModel = MarketSentimentViewModel()
     @State private var selectedIndicatorKey: IndicatorKey?
@@ -57,7 +57,6 @@ public struct MarketSentimentView: View {
                     compositionListView.cardStyle()
                 }
                 
-                // --- MODIFICATION: Use the improved ExpandableDescriptionView ---
                 ExpandableDescriptionView(
                     mainTitleKey: "marketSentiment.tabs.compositeIndex",
                     shortDescriptionKey: "marketSentiment.descriptions.composite.shortDescription",
@@ -78,7 +77,7 @@ public struct MarketSentimentView: View {
         }
     }
     
-    // MARK: - 子視圖
+    // MARK: - Subviews
     
     @ViewBuilder
     private var gaugeView: some View {
@@ -149,7 +148,7 @@ public struct MarketSentimentView: View {
                     Spacer()
                     Menu {
                         ForEach(TimeRangeOption.allCases) { range in
-                            Button(action: { viewModel.filterData(for: range) }) {
+                            Button(action: { viewModel.setDateRange(for: range) }) {
                                 Text(range.localizedKey, bundle: .module)
                             }
                         }
@@ -165,20 +164,21 @@ public struct MarketSentimentView: View {
 
                 HistoricalSentimentChart(data: viewModel.filteredHistoricalData)
                 
-                if let range = viewModel.dateRange, let selected = viewModel.selectedDate {
-                    VStack {
-                        Slider(
-                            value: Binding(get: { selected.timeIntervalSinceReferenceDate }, set: { viewModel.selectedDate = Date(timeIntervalSinceReferenceDate: $0) }),
-                            in: range.lowerBound.timeIntervalSinceReferenceDate...range.upperBound.timeIntervalSinceReferenceDate,
-                            onEditingChanged: { if !$0 { viewModel.filterDataBySlider() } }
-                        )
-                        HStack {
-                            Text(range.lowerBound, style: .date)
-                            Spacer()
-                            Text(range.upperBound, style: .date)
+                if let range = viewModel.dateRange, let fullBounds = viewModel.fullDateRange {
+                    RangeSliderView(
+                        value: Binding(
+                            get: { viewModel.dateRange ?? fullBounds },
+                            set: { viewModel.dateRange = $0 }
+                        ),
+                        bounds: fullBounds
+                    ) { isEditing in
+                        if !isEditing {
+                            viewModel.updateChartData()
                         }
-                        .font(.caption).foregroundColor(.secondary)
-                    }.padding(.horizontal)
+                    }
+                    // --- MODIFICATION: Increased frame height for more vertical space ---
+                    .frame(height: 60)
+                    .padding(.horizontal)
                 }
             }
         }
@@ -243,7 +243,103 @@ public struct MarketSentimentView: View {
     }
 }
 
-// --- NEW HELPER VIEW: ExpandableDescriptionView ---
+// MARK: - Custom Range Slider Component
+private struct RangeSliderView: View {
+    @Binding var value: ClosedRange<Date>
+    let bounds: ClosedRange<Date>
+    let onEditingChanged: (Bool) -> Void
+
+    @State private var dragOffset: CGFloat? = nil
+    
+    private let thumbRadius: CGFloat = 12
+
+    private func dateToRatio(_ date: Date, in geometry: GeometryProxy) -> CGFloat {
+        let totalInterval = bounds.upperBound.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
+        guard totalInterval > 0 else { return 0 }
+        let valueInterval = date.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
+        return CGFloat(valueInterval / totalInterval) * geometry.size.width
+    }
+
+    private func ratioToDate(_ ratio: CGFloat, in geometry: GeometryProxy) -> Date {
+        let totalInterval = bounds.upperBound.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
+        let interval = Double(ratio / geometry.size.width) * totalInterval
+        return Date(timeIntervalSinceReferenceDate: bounds.lowerBound.timeIntervalSinceReferenceDate + interval)
+    }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background Track
+                Capsule()
+                    .fill(Color(.systemGray4))
+                    .frame(height: 6)
+                
+                // Selected Range Track
+                let lowerPosition = dateToRatio(value.lowerBound, in: geometry)
+                let upperPosition = dateToRatio(value.upperBound, in: geometry)
+                Capsule()
+                    .fill(Color.accentColor)
+                    .frame(height: 6)
+                    .offset(x: lowerPosition)
+                    .frame(width: upperPosition - lowerPosition)
+
+                // Lower Thumb
+                thumbView
+                    .position(x: lowerPosition, y: geometry.size.height / 2)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gestureValue in
+                                onEditingChanged(true)
+                                let newLowerDate = ratioToDate(gestureValue.location.x, in: geometry)
+                                if newLowerDate < value.upperBound {
+                                    self.value = newLowerDate...self.value.upperBound
+                                }
+                            }
+                            .onEnded { _ in onEditingChanged(false) }
+                    )
+                
+                // Upper Thumb
+                thumbView
+                    .position(x: upperPosition, y: geometry.size.height / 2)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gestureValue in
+                                onEditingChanged(true)
+                                let newUpperDate = ratioToDate(gestureValue.location.x, in: geometry)
+                                if newUpperDate > value.lowerBound {
+                                    self.value = self.value.lowerBound...newUpperDate
+                                }
+                            }
+                            .onEnded { _ in onEditingChanged(false) }
+                    )
+            }
+            .overlay(
+                HStack {
+                    Text(value.lowerBound, style: .date)
+                    Spacer()
+                    Text(value.upperBound, style: .date)
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                // --- MODIFICATION: Increased padding to push dates further down ---
+                .padding(.top, 55)
+            )
+        }
+    }
+    
+    private var thumbView: some View {
+        Circle()
+            .fill(Color.white)
+            .frame(width: thumbRadius * 2, height: thumbRadius * 2)
+            .shadow(radius: 2)
+            .overlay(Circle().stroke(Color(.systemGray3), lineWidth: 1))
+    }
+}
+
+
+// MARK: - Other Helper Views (Unchanged)
+// (ExpandableDescriptionView, IndicatorRowView, HistoricalSentimentChart)
+
 private struct ExpandableDescriptionView: View {
     let mainTitleKey: LocalizedStringKey
     let shortDescriptionKey: LocalizedStringKey
@@ -253,27 +349,21 @@ private struct ExpandableDescriptionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            // 1. 主標題 (總是顯示)
             Text(mainTitleKey, bundle: .module)
                 .font(.title2.bold())
             
-            // 2. 簡短描述 (總是顯示，收合時限制行數)
             Text(shortDescriptionKey, bundle: .module)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .lineLimit(isExpanded ? nil : 3)
             
-            // 3. 詳細段落 (只有在展開時顯示)
             if isExpanded {
                 Divider()
                 
-                // 遍歷從 JSON 解析出的所有段落
                 ForEach(sections) { section in
                     VStack(alignment: .leading, spacing: 5) {
-                        // 段落標題
                         Text(section.title)
                             .font(.headline)
-                        // 段落內容
                         Text(section.content)
                             .font(.body)
                             .foregroundColor(.secondary)
@@ -282,7 +372,6 @@ private struct ExpandableDescriptionView: View {
                 }
             }
             
-            // 4. 「了解更多」/「收合」按鈕
             Button(action: {
                 withAnimation(.spring()) {
                     isExpanded.toggle()
@@ -301,9 +390,6 @@ private struct ExpandableDescriptionView: View {
         .cardStyle()
     }
 }
-
-
-// MARK: - Helper Components
 
 private struct IndicatorRowView: View {
     let indicatorName: String
