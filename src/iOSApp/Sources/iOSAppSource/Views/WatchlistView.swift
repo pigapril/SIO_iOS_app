@@ -239,7 +239,7 @@ private struct StockCardView: View {
             StockHeaderView(stock: stock)
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text(String(format: "$%.2f", stock.price))
+                Text("$\(PriceFormatter.format(price: stock.price))")
                     .font(.headline.weight(.semibold))
                 
                 if stock.analysis != nil {

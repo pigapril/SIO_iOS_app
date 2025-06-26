@@ -1,4 +1,4 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisView.swift
+// --- Cleaned Script ---
 
 import SwiftUI
 import Charts
@@ -15,7 +15,6 @@ struct PriceAnalysisView: View {
         ))
     }
     
-    // 使用翻譯鍵
     enum ChartType: String, CaseIterable {
         case standardDeviation = "priceAnalysis.chart.tabs.sd"
         case ulBand = "priceAnalysis.chart.tabs.ulband"
@@ -25,14 +24,14 @@ struct PriceAnalysisView: View {
         }
     }
 
-    // `body` 是 PriceAnalysisView 的一個屬性
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 queryCard
                 chartContainer
+                explanationCard
             }
-            .padding(.vertical) // <<< 修正點：從 .padding() 改為 .padding(.vertical)
+            .padding(.vertical)
         }
         .navigationTitle(Text("priceAnalysis.pageTitle", bundle: .module))
         .background(Color(.systemGroupedBackground))
@@ -40,15 +39,12 @@ struct PriceAnalysisView: View {
             if viewModel.chartData == nil {
                 viewModel.fetchStockData()
             }
-            // anm: 將 onAppear 修飾符應用於整個 View
             viewModel.fetchHotSearches()
         }
     }
     
-    // anm: --- 錯誤修正 ---
-    // anm: 以下所有 private var 和 private func 都必須從 body 移出，與 body 位於同一層級。
+    // MARK: - Subviews
     
-    // MARK: - Query Card
     private var queryCard: some View {
         let stockCodePlaceholder = NSLocalizedString("priceAnalysis.form.stockCodePlaceholder", bundle: .module, comment: "")
         let yearsPlaceholder = NSLocalizedString("priceAnalysis.form.yearsPlaceholder", bundle: .module, comment: "")
@@ -121,7 +117,6 @@ struct PriceAnalysisView: View {
         .cardStyle()
     }
     
-    // MARK: - Hot Searches
     private var hotSearchesSection: some View {
         VStack {
             Text("priceAnalysis.hotSearches.title", bundle: .module)
@@ -150,7 +145,6 @@ struct PriceAnalysisView: View {
         }
     }
     
-    // MARK: - Chart Container
     private var chartContainer: some View {
         VStack {
             if viewModel.isLoading {
@@ -190,9 +184,41 @@ struct PriceAnalysisView: View {
         .cardStyle()
     }
     
-    // MARK: - Analysis Result Header
+    private var explanationCard: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("priceAnalysis.explanation.mainTitle", bundle: .module)
+                .font(.title2.bold())
+            
+            Text("priceAnalysis.explanation.shortDescription", bundle: .module)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Divider()
+            
+            ExplanationSection(
+                titleKey: "priceAnalysis.explanation.sd.title",
+                contentKeys: [
+                    "priceAnalysis.explanation.sd.l1",
+                    "priceAnalysis.explanation.sd.l2",
+                    "priceAnalysis.explanation.sd.l3",
+                    "priceAnalysis.explanation.sd.l4"
+                ]
+            )
+            
+            ExplanationSection(
+                titleKey: "priceAnalysis.explanation.ulBand.title",
+                contentKeys: [
+                    "priceAnalysis.explanation.ulBand.l1",
+                    "priceAnalysis.explanation.ulBand.l2",
+                    "priceAnalysis.explanation.ulBand.l3"
+                ]
+            )
+        }
+        .cardStyle()
+    }
+
     private func analysisResultHeader(result: (price: Double, sentimentKey: String)) -> some View {
-        HStack(spacing: 20) {
+        HStack{
             VStack {
                 Text("priceAnalysis.result.stockCode", bundle: .module)
                     .font(.caption)
@@ -200,13 +226,17 @@ struct PriceAnalysisView: View {
                 Text(viewModel.stockCode.uppercased())
                     .font(.headline)
             }
+            .frame(maxWidth: .infinity)
+            Divider() 
             VStack {
                 Text("priceAnalysis.result.stockPrice", bundle: .module)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(String(format: "%.2f", result.price))
+                Text(PriceFormatter.format(price: result.price))
                     .font(.headline)
             }
+            .frame(maxWidth: .infinity)
+            Divider()
             VStack {
                 Text("priceAnalysis.result.marketSentiment", bundle: .module)
                     .font(.caption)
@@ -215,6 +245,7 @@ struct PriceAnalysisView: View {
                     .font(.headline)
                     .foregroundColor(sentimentColor(sentimentKey: result.sentimentKey))
             }
+            .frame(maxWidth: .infinity) 
         }
         .padding(.vertical)
     }
@@ -230,10 +261,30 @@ struct PriceAnalysisView: View {
         }
     }
 }
-// anm: 這裡缺少了一個 `}` 來關閉 `struct PriceAnalysisView`
-// anm: (This closing brace was missing, which caused the last error)
 
-// MARK: - Sub-charts (These were already correct, no changes needed)
+// MARK: - Explanation Section Helper View
+private struct ExplanationSection: View {
+    let titleKey: LocalizedStringKey
+    let contentKeys: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(titleKey, bundle: .module)
+                .font(.headline)
+            ForEach(contentKeys, id: \.self) { key in
+                HStack(alignment: .top) {
+                    Text("•")
+                        .foregroundColor(.secondary)
+                    Text(LocalizedStringKey(key), bundle: .module)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Sub-charts
 
 private struct PriceStandardDeviationChart: View {
     let chartData: PriceAnalysisData
@@ -248,6 +299,20 @@ private struct PriceStandardDeviationChart: View {
     
     private func date(from string: String) -> Date {
         return isoDateFormatter.date(from: string) ?? Date()
+    }
+    
+    private var yAxisDomain: ClosedRange<Double> {
+        let allDataPoints = chartData.prices +
+                            chartData.sdAnalysis.tl_plus_2sd +
+                            chartData.sdAnalysis.tl_minus_2sd
+        
+        guard let min = allDataPoints.compactMap({ $0 }).min(),
+              let max = allDataPoints.compactMap({ $0 }).max(), min != max else {
+            return (allDataPoints.first ?? 0)...(allDataPoints.first ?? 100)
+        }
+        
+        let padding = (max - min) * 0.05
+        return (min - padding)...(max + padding)
     }
 
     struct TidyChartDataPoint: Identifiable {
@@ -299,12 +364,6 @@ private struct PriceStandardDeviationChart: View {
                 )
                 .foregroundStyle(AppColors.trend)
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5]))
-                .annotation(position: .top, alignment: .leading) {
-                    Text(trendLineText)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 4)
-                }
             }
             
             if let selectedDate {
@@ -313,6 +372,7 @@ private struct PriceStandardDeviationChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
             }
         }
+        .chartYScale(domain: yAxisDomain)
         .chartForegroundStyleScale(domain: sortedSeriesKeys, range: colorRange)
         .chartLegend(.hidden)
         .chartXAxis {
@@ -362,7 +422,7 @@ private struct PriceStandardDeviationChart: View {
                         Text(seriesText)
                             .font(.caption)
                         Spacer()
-                        Text(String(format: "%.2f", value))
+                        Text(PriceFormatter.format(price: value))
                             .font(.caption.bold())
                     }
                 }
@@ -466,6 +526,16 @@ private struct ULBandChart: View {
         return isoDateFormatter.date(from: string) ?? Date()
     }
     
+    private var yAxisDomain: ClosedRange<Double> {
+        let allDataPoints = chartData.weeklyPrices + chartData.upperBand + chartData.lowerBand
+        guard let min = allDataPoints.compactMap({ $0 }).min(),
+              let max = allDataPoints.compactMap({ $0 }).max(), min != max else {
+            return (allDataPoints.first ?? 0)...(allDataPoints.first ?? 100)
+        }
+        let padding = (max - min) * 0.05
+        return (min - padding)...(max + padding)
+    }
+
     struct TidyChartDataPoint: Identifiable {
         let id = UUID()
         let date: Date
@@ -502,6 +572,7 @@ private struct ULBandChart: View {
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
             }
         }
+        .chartYScale(domain: yAxisDomain)
         .chartForegroundStyleScale(domain: sortedSeriesKeys, range: colorRange)
         .chartLegend(.hidden)
         .chartXAxis {
@@ -551,7 +622,7 @@ private struct ULBandChart: View {
                         Text(seriesText)
                             .font(.caption)
                         Spacer()
-                        Text(String(format: "%.2f", value))
+                        Text(PriceFormatter.format(price: value))
                             .font(.caption.bold())
                     }
                 }
