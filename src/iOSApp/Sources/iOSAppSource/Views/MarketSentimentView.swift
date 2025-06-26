@@ -163,7 +163,7 @@ public struct MarketSentimentView: View {
                 .padding([.horizontal, .top])
 
                 HistoricalSentimentChart(data: viewModel.filteredHistoricalData)
-                
+
                 if let range = viewModel.dateRange, let fullBounds = viewModel.fullDateRange {
                     RangeSliderView(
                         value: Binding(
@@ -462,6 +462,7 @@ private struct HistoricalSentimentChart: View {
                 }
             }
         }
+        .frame(height: 250)
         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
         .chartLegend(.hidden)
         .chartOverlay { proxy in
