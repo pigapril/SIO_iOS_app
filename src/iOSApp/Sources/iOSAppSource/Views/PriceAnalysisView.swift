@@ -98,7 +98,7 @@ struct PriceAnalysisView: View {
             }
             
             Button(action: {
-                viewModel.fetchStockData()
+                viewModel.fetchStockData(isManualSearch: true)
             }) {
                 Text(viewModel.isLoading ? "priceAnalysis.form.buttonAnalyzing" : "priceAnalysis.form.buttonStartAnalysis", bundle: .module)
                     .fontWeight(.bold)

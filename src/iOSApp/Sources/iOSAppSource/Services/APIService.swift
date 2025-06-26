@@ -129,7 +129,7 @@ class APIService {
 
     // MARK: - App Data Methods
 
-    func fetchPriceAnalysis(stockCode: String, years: String, backTestDate: String?) async throws -> PriceAnalysisData {
+     func fetchPriceAnalysis(stockCode: String, years: String, backTestDate: String?, source: String? = nil) async throws -> PriceAnalysisData {
         var queryItems = [
             URLQueryItem(name: "stockCode", value: stockCode),
             URLQueryItem(name: "years", value: years)
@@ -137,6 +137,11 @@ class APIService {
         if let date = backTestDate, !date.isEmpty {
             queryItems.append(URLQueryItem(name: "backTestDate", value: date))
         }
+        // 如果提供了 source，就將其添加到查詢參數中
+        if let source = source {
+            queryItems.append(URLQueryItem(name: "source", value: source))
+        }
+        
         return try await request(endpoint: "integrated-analysis", queryItems: queryItems, expectDataWrapper: true)
     }
 

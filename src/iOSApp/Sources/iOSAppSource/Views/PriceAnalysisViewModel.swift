@@ -45,7 +45,7 @@ class PriceAnalysisViewModel: ObservableObject {
         }
     }
 
-    func fetchStockData() {
+   func fetchStockData(isManualSearch: Bool = false) {
         isLoading = true
         errorMessage = nil
         analysisResult = nil
@@ -59,10 +59,14 @@ class PriceAnalysisViewModel: ObservableObject {
                     return formatter.string(from: $0)
                 } ?? ""
                 
+                // 根據 isManualSearch 決定 source 的值
+                let source = isManualSearch ? "manual_price_analysis" : nil
+                
                 let data = try await APIService.shared.fetchPriceAnalysis(
                     stockCode: stockCode,
                     years: years,
-                    backTestDate: dateString
+                    backTestDate: dateString,
+                    source: source // 將 source 傳遞給 APIService
                 )
                 self.chartData = data
                 calculateAnalysisResult(from: data)
@@ -98,7 +102,7 @@ class PriceAnalysisViewModel: ObservableObject {
         self.stockCode = item.keyword.uppercased()
         // To maintain consistency with form submission,
         // this immediately triggers a new data fetch.
-        fetchStockData()
+        fetchStockData(isManualSearch: true)
     }
     // MARK: - End Hot Searches Methods
     
