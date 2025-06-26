@@ -1,3 +1,5 @@
+# pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Scripts/convert_locales.py
+
 import json
 import os
 import sys
@@ -10,7 +12,11 @@ def flatten_json(y):
             for a in x:
                 flatten(x[a], name + a + '.')
         elif isinstance(x, list):
-            out[name[:-1]] = str(x)
+            # --- THIS IS THE FIX ---
+            # Before: out[name[:-1]] = str(x)
+            # After: Use json.dumps to create a valid JSON string
+            out[name[:-1]] = json.dumps(x, ensure_ascii=False)
+            # --- END OF FIX ---
         else:
             out[name[:-1]] = x
     flatten(y)
@@ -85,4 +91,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main() 
+    main()

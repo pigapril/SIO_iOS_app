@@ -1,4 +1,4 @@
-// 檔案路徑: pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
 
 import SwiftUI
 import Charts
@@ -6,6 +6,13 @@ import Charts
 // MARK: - Identifiable Wrapper for Sheet
 struct IndicatorKey: Identifiable {
     let id: String
+}
+
+// MARK: - Data Structure for Description Sections
+private struct DescriptionSection: Codable, Identifiable {
+    var id: String { title }
+    let title: String
+    let content: String
 }
 
 // MARK: - 主視圖
@@ -31,9 +38,7 @@ public struct MarketSentimentView: View {
 
     public var body: some View {
         ScrollView {
-            // --- MODIFICATION START ---
-            VStack(spacing: 20) { // Increased spacing from 0 to 20
-            // --- MODIFICATION END ---
+            VStack(spacing: 20) {
                 Picker("View Mode", selection: $selectedView) {
                     ForEach(SentimentViewType.allCases) { viewType in
                         Text(viewType.localized, bundle: .module).tag(viewType)
@@ -51,6 +56,13 @@ public struct MarketSentimentView: View {
                 case .composition:
                     compositionListView.cardStyle()
                 }
+                
+                // --- MODIFICATION: Use the improved ExpandableDescriptionView ---
+                ExpandableDescriptionView(
+                    mainTitleKey: "marketSentiment.tabs.compositeIndex",
+                    shortDescriptionKey: "marketSentiment.descriptions.composite.shortDescription",
+                    sections: getCompositeSections()
+                )
             }
             .padding(.vertical)
         }
@@ -213,9 +225,85 @@ public struct MarketSentimentView: View {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter(); formatter.dateStyle = .medium; formatter.timeStyle = .short; return formatter
     }()
+    
+    private func getCompositeSections() -> [DescriptionSection] {
+        let jsonKey = "marketSentiment.descriptions.composite.sections"
+        let jsonString = NSLocalizedString(jsonKey, bundle: .module, comment: "JSON array of composite description sections")
+
+        if jsonString == jsonKey {
+            return []
+        }
+        
+        guard let data = jsonString.data(using: .utf8),
+              let sections = try? JSONDecoder().decode([DescriptionSection].self, from: data) else {
+            return []
+        }
+        
+        return sections
+    }
 }
 
-// MARK: - Helper Components (Re-added)
+// --- NEW HELPER VIEW: ExpandableDescriptionView ---
+private struct ExpandableDescriptionView: View {
+    let mainTitleKey: LocalizedStringKey
+    let shortDescriptionKey: LocalizedStringKey
+    let sections: [DescriptionSection]
+    
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            // 1. 主標題 (總是顯示)
+            Text(mainTitleKey, bundle: .module)
+                .font(.title2.bold())
+            
+            // 2. 簡短描述 (總是顯示，收合時限制行數)
+            Text(shortDescriptionKey, bundle: .module)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .lineLimit(isExpanded ? nil : 3)
+            
+            // 3. 詳細段落 (只有在展開時顯示)
+            if isExpanded {
+                Divider()
+                
+                // 遍歷從 JSON 解析出的所有段落
+                ForEach(sections) { section in
+                    VStack(alignment: .leading, spacing: 5) {
+                        // 段落標題
+                        Text(section.title)
+                            .font(.headline)
+                        // 段落內容
+                        Text(section.content)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.bottom, 5)
+                }
+            }
+            
+            // 4. 「了解更多」/「收合」按鈕
+            Button(action: {
+                withAnimation(.spring()) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Text(isExpanded ? "common.collapse" : "common.learnMore", bundle: .module)
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                }
+                .font(.callout.weight(.semibold))
+                .foregroundColor(.blue)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, 5)
+        }
+        .cardStyle()
+    }
+}
+
+
+// MARK: - Helper Components
 
 private struct IndicatorRowView: View {
     let indicatorName: String
@@ -241,9 +329,6 @@ private struct IndicatorRowView: View {
         .padding(.vertical, 8)
     }
 }
-
-
-
 
 private struct HistoricalSentimentChart: View {
     let data: [HistoricalDataItem]

@@ -1,12 +1,49 @@
-// --- Cleaned Script ---
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisView.swift
 
 import SwiftUI
 import Charts
 
+// MARK: - Data Structures for Explanation
+private struct ExplanationSectionData: Identifiable {
+    let id = UUID()
+    let titleKey: LocalizedStringKey
+    let contentKeys: [String]
+}
+
+// MARK: - Main View
 struct PriceAnalysisView: View {
     @StateObject private var viewModel: PriceAnalysisViewModel
     @State private var activeChart: ChartType = .standardDeviation
     @State private var isAdvancedQuery: Bool = false
+    
+    // --- MODIFICATION START: Define the sections data here ---
+    private let explanationSections: [ExplanationSectionData] = [
+        .init(
+            titleKey: "priceAnalysis.explanation.sd.title",
+            contentKeys: [
+                "priceAnalysis.explanation.sd.l1",
+                "priceAnalysis.explanation.sd.l2",
+                "priceAnalysis.explanation.sd.l3",
+                "priceAnalysis.explanation.sd.l4"
+            ]
+        ),
+        .init(
+            titleKey: "priceAnalysis.explanation.ulBand.title",
+            contentKeys: [
+                "priceAnalysis.explanation.ulBand.l1",
+                "priceAnalysis.explanation.ulBand.l2",
+                "priceAnalysis.explanation.ulBand.l3"
+            ]
+        ),
+        .init(
+            titleKey: "priceAnalysis.explanation.combined.title",
+            contentKeys: [
+                "priceAnalysis.explanation.combined.l1",
+                "priceAnalysis.explanation.combined.l2"
+            ]
+        )
+    ]
+    // --- MODIFICATION END ---
     
     init(initialStockCode: String? = nil, initialYears: String? = nil) {
         _viewModel = StateObject(wrappedValue: PriceAnalysisViewModel(
@@ -29,7 +66,13 @@ struct PriceAnalysisView: View {
             VStack(spacing: 20) {
                 queryCard
                 chartContainer
-                explanationCard
+                // --- MODIFICATION START: Replace explanationCard with the new expandable view ---
+                ExpandableExplanationView(
+                    mainTitleKey: "priceAnalysis.explanation.mainTitle",
+                    shortDescriptionKey: "priceAnalysis.explanation.shortDescription",
+                    sections: explanationSections
+                )
+                // --- MODIFICATION END ---
             }
             .padding(.vertical)
         }
@@ -184,38 +227,9 @@ struct PriceAnalysisView: View {
         .cardStyle()
     }
     
-    private var explanationCard: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("priceAnalysis.explanation.mainTitle", bundle: .module)
-                .font(.title2.bold())
-            
-            Text("priceAnalysis.explanation.shortDescription", bundle: .module)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Divider()
-            
-            ExplanationSection(
-                titleKey: "priceAnalysis.explanation.sd.title",
-                contentKeys: [
-                    "priceAnalysis.explanation.sd.l1",
-                    "priceAnalysis.explanation.sd.l2",
-                    "priceAnalysis.explanation.sd.l3",
-                    "priceAnalysis.explanation.sd.l4"
-                ]
-            )
-            
-            ExplanationSection(
-                titleKey: "priceAnalysis.explanation.ulBand.title",
-                contentKeys: [
-                    "priceAnalysis.explanation.ulBand.l1",
-                    "priceAnalysis.explanation.ulBand.l2",
-                    "priceAnalysis.explanation.ulBand.l3"
-                ]
-            )
-        }
-        .cardStyle()
-    }
+    // --- MODIFICATION START: The old explanationCard is removed ---
+    // private var explanationCard: some View { ... } // REMOVED
+    // --- MODIFICATION END ---
 
     private func analysisResultHeader(result: (price: Double, sentimentKey: String)) -> some View {
         HStack{
@@ -262,27 +276,66 @@ struct PriceAnalysisView: View {
     }
 }
 
-// MARK: - Explanation Section Helper View
-private struct ExplanationSection: View {
-    let titleKey: LocalizedStringKey
-    let contentKeys: [String]
+// --- MODIFICATION START: New expandable view and the old ExplanationSection is removed ---
+private struct ExpandableExplanationView: View {
+    let mainTitleKey: LocalizedStringKey
+    let shortDescriptionKey: LocalizedStringKey
+    let sections: [ExplanationSectionData]
+    
+    @State private var isExpanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(titleKey, bundle: .module)
-                .font(.headline)
-            ForEach(contentKeys, id: \.self) { key in
-                HStack(alignment: .top) {
-                    Text("•")
-                        .foregroundColor(.secondary)
-                    Text(LocalizedStringKey(key), bundle: .module)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 15) {
+            Text(mainTitleKey, bundle: .module)
+                .font(.title2.bold())
+            
+            Text(shortDescriptionKey, bundle: .module)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .lineLimit(isExpanded ? nil : 4)
+
+            if isExpanded {
+                Divider()
+                
+                ForEach(sections) { section in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(section.titleKey, bundle: .module)
+                            .font(.headline)
+                        ForEach(section.contentKeys, id: \.self) { key in
+                            HStack(alignment: .top) {
+                                Text("•")
+                                    .foregroundColor(.secondary)
+                                Text(LocalizedStringKey(key), bundle: .module)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.bottom, 5)
                 }
             }
+
+            Button(action: {
+                withAnimation(.spring()) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Text(isExpanded ? "common.collapse" : "common.learnMore", bundle: .module)
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                }
+                .font(.callout.weight(.semibold))
+                .foregroundColor(.blue)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, 5)
         }
+        .cardStyle()
     }
 }
+// private struct ExplanationSection: View { ... } // REMOVED
+// --- MODIFICATION END ---
+
 
 // MARK: - Sub-charts
 
