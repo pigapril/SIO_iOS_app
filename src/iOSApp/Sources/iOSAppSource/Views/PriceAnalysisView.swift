@@ -1,4 +1,4 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV1/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisView.swift
 
 import SwiftUI
 import Charts
@@ -25,6 +25,7 @@ struct PriceAnalysisView: View {
         }
     }
 
+    // `body` 是 PriceAnalysisView 的一個屬性
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -39,8 +40,13 @@ struct PriceAnalysisView: View {
             if viewModel.chartData == nil {
                 viewModel.fetchStockData()
             }
+            // anm: 將 onAppear 修飾符應用於整個 View
+            viewModel.fetchHotSearches()
         }
     }
+    
+    // anm: --- 錯誤修正 ---
+    // anm: 以下所有 private var 和 private func 都必須從 body 移出，與 body 位於同一層級。
     
     // MARK: - Query Card
     private var queryCard: some View {
@@ -52,9 +58,7 @@ struct PriceAnalysisView: View {
                 .font(.headline)
             
             HStack {
-                // --- MODIFICATION START ---
                 Text("priceAnalysis.form.stockCodeLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                // --- MODIFICATION END ---
                 TextField(stockCodePlaceholder, text: $viewModel.stockCode)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .autocapitalization(.allCharacters)
@@ -62,9 +66,7 @@ struct PriceAnalysisView: View {
             
             if !isAdvancedQuery {
                 HStack {
-                    // --- MODIFICATION START ---
                     Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                    // --- MODIFICATION END ---
                     Picker(selection: $viewModel.analysisPeriod, label: Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module)) {
                         Text("priceAnalysis.form.periodShort", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.short)
                         Text("priceAnalysis.form.periodMedium", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.medium)
@@ -76,9 +78,7 @@ struct PriceAnalysisView: View {
             
             if isAdvancedQuery {
                 HStack {
-                    // --- MODIFICATION START ---
                     Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                    // --- MODIFICATION END ---
                     TextField(yearsPlaceholder, text: $viewModel.years)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.decimalPad)
@@ -126,12 +126,27 @@ struct PriceAnalysisView: View {
         VStack {
             Text("priceAnalysis.hotSearches.title", bundle: .module)
                 .font(.subheadline).bold()
-            HStack {
-                Button("TSLA") { viewModel.stockCode = "TSLA"; viewModel.fetchStockData() }
-                Button("NVDA") { viewModel.stockCode = "NVDA"; viewModel.fetchStockData() }
-                Button("AAPL") { viewModel.stockCode = "AAPL"; viewModel.fetchStockData() }
+
+            if viewModel.isLoadingHotSearches {
+                ProgressView()
+                    .padding(.vertical, 5)
+            } else if viewModel.hotSearches.isEmpty {
+                Text("priceAnalysis.hotSearches.noData", bundle: .module)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 5)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(viewModel.hotSearches) { item in
+                            Button(item.keyword) {
+                                viewModel.performHotSearch(item: item)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
     }
     
@@ -141,7 +156,7 @@ struct PriceAnalysisView: View {
             if viewModel.isLoading {
                 ProgressView()
                 .frame(maxWidth: .infinity)
-                .frame(height: 350)            
+                .frame(height: 350)
             } else if let errorMessage = viewModel.errorMessage {
                 Text("Error: \(errorMessage)")
                     .foregroundColor(.red)
@@ -215,8 +230,10 @@ struct PriceAnalysisView: View {
         }
     }
 }
+// anm: 這裡缺少了一個 `}` 來關閉 `struct PriceAnalysisView`
+// anm: (This closing brace was missing, which caused the last error)
 
-// MARK: - Sub-charts
+// MARK: - Sub-charts (These were already correct, no changes needed)
 
 private struct PriceStandardDeviationChart: View {
     let chartData: PriceAnalysisData

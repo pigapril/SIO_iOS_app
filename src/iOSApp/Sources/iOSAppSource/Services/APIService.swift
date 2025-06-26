@@ -1,4 +1,4 @@
-// pigapril/sio_ios_app/SIO_iOS_app-watchlist/src/iOSApp/Sources/iOSApp/Services/APIService.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Services/APIService.swift
 
 import Foundation
 
@@ -24,8 +24,7 @@ struct StatusResponse: Decodable {
 struct BackendErrorData: Decodable {
     let errorCode: String
     let message: String
-    // Add other fields if present and relevant, e.g., stack
-    let stack: String? // Assuming stack might be optional
+    let stack: String?
 }
 
 struct BackendErrorResponse: Decodable {
@@ -33,9 +32,21 @@ struct BackendErrorResponse: Decodable {
     let data: BackendErrorData
 }
 
+// MARK: - Hot Searches Data Structures
+// New structs to decode the response from /api/hot-searches
+struct HotSearchItem: Codable, Identifiable {
+    let keyword: String
+    var id: String { keyword }
+}
+
+struct HotSearchesData: Codable {
+    let top_searches: [HotSearchItem]
+}
+// MARK: - End Hot Searches Data Structures
+
+
 class APIService {
     static let shared = APIService()
-    // Make sure this points to your local server's address and port
     private let baseURL = URL(string: "http://127.0.0.1:5001/api/")!
     private var csrfToken: String?
 
@@ -70,13 +81,9 @@ class APIService {
             let dataString = String(data: data, encoding: .utf8) ?? "No data"
             print("HTTP Error: \(response) with data: \(dataString)")
 
-            // Attempt to decode backend specific error
             if let backendErrorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
-                // If successful, throw the specific backend error
                 throw AppError.backendError(code: backendErrorResponse.data.errorCode, message: backendErrorResponse.data.message)
             } else {
-                // If decoding fails (for any reason, DecodingError or otherwise),
-                // fall back to unknownError, but include the raw data for debugging.
                 print("Failed to decode backend error response from raw data: \(dataString)")
                 throw AppError.unknownError
             }
@@ -87,9 +94,8 @@ class APIService {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         decoder.dateDecodingStrategy = .formatted(dateFormatter)
 
-        // Handle cases where the response body might be empty
         guard !data.isEmpty else {
-             throw AppError.unknownError // Or a more specific "emptyData" error
+             throw AppError.unknownError
         }
 
         if expectDataWrapper {
@@ -134,6 +140,15 @@ class APIService {
         return try await request(endpoint: "integrated-analysis", queryItems: queryItems, expectDataWrapper: true)
     }
 
+    // MARK: - Hot Searches Method
+    /// Fetches the list of hot search stock symbols from the server.
+    /// This corresponds to the `/api/hot-searches` endpoint.
+    func fetchHotSearches() async throws -> [HotSearchItem] {
+        let response: HotSearchesData = try await request(endpoint: "hot-searches", expectDataWrapper: true)
+        return response.top_searches
+    }
+    // MARK: - End Hot Searches Method
+
     func fetchMarketSentiment() async throws -> MarketSentimentResponse {
         return try await request(endpoint: "market-sentiment", expectDataWrapper: false)
     }
@@ -155,51 +170,45 @@ class APIService {
     }
 
     func createCategory(name: String) async throws -> Category {
-    let body = try JSONEncoder().encode(["name": name])
-    let response: CreateCategoryResponse = try await request(
-        endpoint: "watchlist/categories", 
-        method: "POST", 
-        body: body, 
-        expectDataWrapper: true
-    )
-    return response.category
-}
+        let body = try JSONEncoder().encode(["name": name])
+        let response: CreateCategoryResponse = try await request(
+            endpoint: "watchlist/categories",
+            method: "POST",
+            body: body,
+            expectDataWrapper: true
+        )
+        return response.category
+    }
     
     func updateCategory(id: String, name: String) async throws -> Category {
-    let body = try JSONEncoder().encode(["name": name])
-    let response: UpdateCategoryResponse = try await request(
-        endpoint: "watchlist/categories/\(id)", 
-        method: "PUT", 
-        body: body, 
-        expectDataWrapper: true
-    )
-    return response.category
-}
+        let body = try JSONEncoder().encode(["name": name])
+        let response: UpdateCategoryResponse = try await request(
+            endpoint: "watchlist/categories/\(id)",
+            method: "PUT",
+            body: body,
+            expectDataWrapper: true
+        )
+        return response.category
+    }
     
     func deleteCategory(id: String) async throws {
-    _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as StatusResponse
-}
+        _ = try await request(endpoint: "watchlist/categories/\(id)", method: "DELETE", expectDataWrapper: false) as StatusResponse
+    }
 
     func addStock(categoryId: String, symbol: String) async throws -> Stock {
-    let body = try JSONEncoder().encode(["stockSymbol": symbol])
-    
-    // 1. 呼叫 request，並期望它解碼外層的 {"data": ...} 結構
-    //    所以 expectDataWrapper 應為 true。
-    // 2. request<T> 中的 T 現在是我們新定義的 AddStockResponse
-    let response: AddStockResponse = try await request(
-        endpoint: "watchlist/categories/\(categoryId)/stocks", 
-        method: "POST", 
-        body: body, 
-        expectDataWrapper: true // <<< 設為 true 來處理 {"data": ...}
-    )
-    
-    // 3. 從解碼後的回應中，返回內層的 item (這就是我們需要的 Stock 物件)
-    return response.item
-}
+        let body = try JSONEncoder().encode(["stockSymbol": symbol])
+        let response: AddStockResponse = try await request(
+            endpoint: "watchlist/categories/\(categoryId)/stocks",
+            method: "POST",
+            body: body,
+            expectDataWrapper: true
+        )
+        return response.item
+    }
 
     func removeStock(categoryId: String, itemId: String) async throws {
-    _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as StatusResponse
-}
+        _ = try await request(endpoint: "watchlist/categories/\(categoryId)/stocks/\(itemId)", method: "DELETE", expectDataWrapper: false) as StatusResponse
+    }
 
     func searchStocks(keyword: String) async throws -> [SearchResult] {
         let queryItems = [URLQueryItem(name: "keyword", value: keyword)]

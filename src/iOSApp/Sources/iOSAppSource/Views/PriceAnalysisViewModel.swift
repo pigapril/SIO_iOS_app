@@ -1,4 +1,4 @@
-// In file: pigapril/sio_ios_app/SIO_iOS_app-watchlist/src/iOSApp/Sources/iOSApp/Views/PriceAnalysisViewModel.swift
+// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/PriceAnalysisViewModel.swift
 
 import SwiftUI
 import Combine
@@ -14,9 +14,13 @@ class PriceAnalysisViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var analysisResult: (price: Double, sentimentKey: String)?
     
+    // MARK: - Hot Searches Properties
+    @Published var hotSearches: [HotSearchItem] = []
+    @Published var isLoadingHotSearches = false
+    // MARK: - End Hot Searches Properties
+    
     @Published var analysisPeriod: AnalysisPeriod {
         didSet {
-            // 當簡易模式的選項改變時，同步更新 years 的值
             self.years = analysisPeriod.rawValue
         }
     }
@@ -29,21 +33,17 @@ class PriceAnalysisViewModel: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     
-    // ✅ 新增點：自定義初始化方法
     init(stockCode: String = "SPY", years: String = "3.5", backTestDate: Date? = nil) {
         self.stockCode = stockCode
         self.years = years
         self.backTestDate = backTestDate
         
-        // 根據傳入的 years 初始化 analysisPeriod
         if let period = AnalysisPeriod(rawValue: years) {
             self.analysisPeriod = period
         } else {
-            // 如果 years 不是預設值之一，則預設為長期
             self.analysisPeriod = .long
         }
     }
-
 
     func fetchStockData() {
         isLoading = true
@@ -73,6 +73,34 @@ class PriceAnalysisViewModel: ObservableObject {
             self.isLoading = false
         }
     }
+    
+    // MARK: - Hot Searches Methods
+    /// Fetches the list of hot search items.
+    func fetchHotSearches() {
+        guard hotSearches.isEmpty else { return } // Avoid re-fetching
+        isLoadingHotSearches = true
+        Task {
+            do {
+                let items = try await APIService.shared.fetchHotSearches()
+                self.hotSearches = items
+            } catch {
+                // Silently fail, as the web version appears to do.
+                // An empty list will be shown in the UI.
+                print("Could not fetch hot searches: \(error.localizedDescription)")
+                self.hotSearches = []
+            }
+            self.isLoadingHotSearches = false
+        }
+    }
+    
+    /// Sets the stock code from a hot search item and triggers analysis.
+    func performHotSearch(item: HotSearchItem) {
+        self.stockCode = item.keyword.uppercased()
+        // To maintain consistency with form submission,
+        // this immediately triggers a new data fetch.
+        fetchStockData()
+    }
+    // MARK: - End Hot Searches Methods
     
     private func calculateAnalysisResult(from data: PriceAnalysisData) {
         guard let lastPrice = data.prices.last,
