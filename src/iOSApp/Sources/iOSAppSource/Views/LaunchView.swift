@@ -9,14 +9,31 @@ public struct LaunchView: View {
 
     public var body: some View {
         ZStack {
-            if authViewModel.isAuthenticated {
+            // While the authentication state is being determined, show a loading view.
+            if authViewModel.isLoading {
+                // A simple loading screen with the app logo and a progress indicator.
+                VStack(spacing: 20) {
+                    Image("Logo", bundle: .main) // Assuming Logo is in your main app assets
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 250, height: 250)
+                    ProgressView()
+                }
+            } else if authViewModel.isAuthenticated {
+                // Once loading is complete and the user is authenticated, show the main app.
                 MainTabView()
             } else {
+                // If loading is complete and the user is not authenticated, show the login wall.
                 LoginWallView()
             }
         }
+        .onAppear {
+            // This ensures the check is triggered if it hasn't started.
+            // The logic is in AuthenticationViewModel's init.
+        }
     }
 }
+
 
 private struct LoginWallView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
@@ -26,21 +43,18 @@ private struct LoginWallView: View {
             Color.white
                 .ignoresSafeArea()
             
-            // highlight-start
-            VStack(spacing: 40) { // 稍微加大整體間距
+            VStack(spacing: 40) {
                 
-                Spacer() // 這個 Spacer 會將整個內容區塊從螢幕頂部推開一點
+                Spacer()
                 
                 // Logo
-                Image("Logo")
+                Image("Logo", bundle: .main)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 250, height: 250)
-                
-                // --- 位於 Logo 和文字之間的 Spacer 已被移除 ---
 
-                // 將提示文字和按鈕放在同一個 VStack 中
-                VStack(spacing: 20) { // 這個群組使用較小的間距
+                // Prompt and Button
+                VStack(spacing: 20) {
                     Text("launch.login.prompt", bundle: .module)
                         .font(.headline)
                         .foregroundColor(.secondary)
@@ -54,10 +68,9 @@ private struct LoginWallView: View {
                     .padding(.horizontal, 40)
                 }
 
-                Spacer() // 這個 Spacer 會將整個內容區塊從螢幕底部推開
-                Spacer() // 再加一個 Spacer 會把它們向上推得更多
+                Spacer()
+                Spacer()
             }
-            // highlight-end
         }
     }
 }
