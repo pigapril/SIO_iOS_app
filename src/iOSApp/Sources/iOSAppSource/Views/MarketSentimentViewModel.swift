@@ -3,9 +3,9 @@
 import SwiftUI
 import Combine
 
-// The TimeRangeOption enum is already well-defined for this purpose.
+// --- MODIFICATION: Added .twoYears and .tenYears, updated localized keys ---
 enum TimeRangeOption: String, CaseIterable, Identifiable {
-    case oneMonth, threeMonths, sixMonths, oneYear, threeYears, fiveYears, all
+    case oneMonth, threeMonths, sixMonths, oneYear, twoYears, threeYears, fiveYears, tenYears, all
     
     var id: String { self.rawValue }
     
@@ -15,8 +15,10 @@ enum TimeRangeOption: String, CaseIterable, Identifiable {
         case .threeMonths: return "timeRangeSelector.month3"
         case .sixMonths: return "timeRangeSelector.month6"
         case .oneYear: return "timeRangeSelector.year1"
+        case .twoYears: return "timeRangeSelector.year2"
         case .threeYears: return "timeRangeSelector.year3"
         case .fiveYears: return "timeRangeSelector.year5"
+        case .tenYears: return "timeRangeSelector.year10"
         case .all: return "timeRangeSelector.all"
         }
     }
@@ -29,17 +31,14 @@ class MarketSentimentViewModel: ObservableObject {
     @Published var filteredHistoricalData: [HistoricalDataItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var selectedTimeRange: TimeRangeOption = .oneYear
+    
+    // --- MODIFICATION: Default time range changed to .twoYears ---
+    @Published var selectedTimeRange: TimeRangeOption = .twoYears
 
-    // This will now be bound to the dual-thumb slider and drive the chart's data.
     @Published var dateRange: ClosedRange<Date>? = nil
 
-    // This holds the absolute min/max dates of all available data, used to define the slider's bounds.
     private(set) var fullDateRange: ClosedRange<Date>? = nil
     
-    // The single selectedDate property is no longer needed.
-    // @Published var selectedDate: Date? = nil
-
     var compositeSentimentKey: String {
         guard let scoreString = sentimentData?.totalScore, let score = Double(scoreString) else {
             return "sentiment.notAvailable"
@@ -61,7 +60,6 @@ class MarketSentimentViewModel: ObservableObject {
                 self.sentimentData = try await sentiment
                 self.historicalData = try await history
                 
-                // This new function sets up the date ranges and triggers the initial data filtering.
                 setupDateRangeAndInitialFilter()
 
             } catch {
@@ -72,22 +70,16 @@ class MarketSentimentViewModel: ObservableObject {
         }
     }
 
-    // New combined setup function to be called once after data fetch.
     private func setupDateRangeAndInitialFilter() {
         guard !historicalData.isEmpty else { return }
         let dates = historicalData.map { $0.date }
         guard let minDate = dates.min(), let maxDate = dates.max() else { return }
         
-        // Set the absolute bounds for the slider.
         self.fullDateRange = minDate...maxDate
         
-        // Apply the initial filter based on the default selectedTimeRange (e.g., "1 Year").
-        // This will set the initial `dateRange` and populate `filteredHistoricalData`.
         setDateRange(for: self.selectedTimeRange)
     }
     
-    // This method is called when the user clicks a button like "1Y", "3Y", etc.
-    // It adjusts the `dateRange` which the slider thumbs will then represent.
     func setDateRange(for timeOption: TimeRangeOption) {
         selectedTimeRange = timeOption
         
@@ -96,30 +88,29 @@ class MarketSentimentViewModel: ObservableObject {
         let endDate = fullRange.upperBound
         var startDate: Date?
 
+        // --- MODIFICATION: Added cases for .twoYears and .tenYears ---
         switch timeOption {
         case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
         case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)
         case .sixMonths: startDate = calendar.date(byAdding: .month, value: -6, to: endDate)
         case .oneYear: startDate = calendar.date(byAdding: .year, value: -1, to: endDate)
+        case .twoYears: startDate = calendar.date(byAdding: .year, value: -2, to: endDate)
         case .threeYears: startDate = calendar.date(byAdding: .year, value: -3, to: endDate)
         case .fiveYears: startDate = calendar.date(byAdding: .year, value: -5, to: endDate)
+        case .tenYears: startDate = calendar.date(byAdding: .year, value: -10, to: endDate)
         case .all: startDate = fullRange.lowerBound
         }
         
         self.dateRange = (startDate ?? fullRange.lowerBound)...endDate
         
-        // After setting the range, update the chart's data.
         updateChartData()
     }
 
-    // This method is now called whenever the range slider's value changes.
     func updateChartData() {
         guard let range = dateRange else {
-            // If no range is set, show all data.
             filteredHistoricalData = historicalData
             return
         }
-        // Filter the historical data to include only items within the selected dateRange.
         filteredHistoricalData = historicalData.filter { range.contains($0.date) }
     }
     

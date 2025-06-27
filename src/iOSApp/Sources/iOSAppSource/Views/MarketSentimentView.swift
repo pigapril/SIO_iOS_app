@@ -132,6 +132,7 @@ public struct MarketSentimentView: View {
         }
     }
     
+    // --- MODIFICATION: Implemented pinch-to-zoom gesture and removed RangeSliderView ---
     @ViewBuilder
     private var historicalChartView: some View {
         if viewModel.isLoading && viewModel.historicalData.isEmpty {
@@ -141,6 +142,45 @@ public struct MarketSentimentView: View {
         } else if let errorMessage = viewModel.errorMessage, viewModel.historicalData.isEmpty {
             errorView(message: errorMessage)
         } else {
+            // State for managing the zoom gesture
+            @State var initialDateRange: ClosedRange<Date>? = nil
+
+            // The magnification gesture for pinch-to-zoom
+            let magnificationGesture = MagnificationGesture()
+                .onChanged { value in
+                    // Store the initial range when the gesture starts
+                    if initialDateRange == nil {
+                        initialDateRange = viewModel.dateRange
+                    }
+                    
+                    guard let initialRange = initialDateRange else { return }
+
+                    let originalInterval = initialRange.upperBound.timeIntervalSince(initialRange.lowerBound)
+                    let newInterval = originalInterval / Double(value)
+
+                    // Zoom from the center of the current date range
+                    let centerPoint = initialRange.lowerBound.timeIntervalSinceReferenceDate + originalInterval / 2
+                    
+                    var newLowerBound = Date(timeIntervalSinceReferenceDate: centerPoint - newInterval / 2)
+                    var newUpperBound = Date(timeIntervalSinceReferenceDate: centerPoint + newInterval / 2)
+
+                    // Clamp the new range to the absolute bounds of the data
+                    if let fullRange = viewModel.fullDateRange {
+                        newLowerBound = max(newLowerBound, fullRange.lowerBound)
+                        newUpperBound = min(newUpperBound, fullRange.upperBound)
+                    }
+                    
+                    // Apply the new range if it's valid
+                    if newUpperBound > newLowerBound {
+                        viewModel.dateRange = newLowerBound...newUpperBound
+                        viewModel.updateChartData()
+                    }
+                }
+                .onEnded { _ in
+                    // Reset the initial range state when the gesture ends
+                    initialDateRange = nil
+                }
+            
             VStack {
                 HStack {
                     Text("marketSentiment.viewMode.timeline", bundle: .module)
@@ -162,24 +202,11 @@ public struct MarketSentimentView: View {
                 }
                 .padding([.horizontal, .top])
 
+                // Apply the gesture to the chart
                 HistoricalSentimentChart(data: viewModel.filteredHistoricalData)
+                    .gesture(magnificationGesture)
 
-                if let range = viewModel.dateRange, let fullBounds = viewModel.fullDateRange {
-                    RangeSliderView(
-                        value: Binding(
-                            get: { viewModel.dateRange ?? fullBounds },
-                            set: { viewModel.dateRange = $0 }
-                        ),
-                        bounds: fullBounds
-                    ) { isEditing in
-                        if !isEditing {
-                            viewModel.updateChartData()
-                        }
-                    }
-                    // --- MODIFICATION: Increased frame height for more vertical space ---
-                    .frame(height: 60)
-                    .padding(.horizontal)
-                }
+                // The RangeSliderView has been removed.
             }
         }
     }
@@ -243,103 +270,11 @@ public struct MarketSentimentView: View {
     }
 }
 
-// MARK: - Custom Range Slider Component
-private struct RangeSliderView: View {
-    @Binding var value: ClosedRange<Date>
-    let bounds: ClosedRange<Date>
-    let onEditingChanged: (Bool) -> Void
-
-    @State private var dragOffset: CGFloat? = nil
-    
-    private let thumbRadius: CGFloat = 12
-
-    private func dateToRatio(_ date: Date, in geometry: GeometryProxy) -> CGFloat {
-        let totalInterval = bounds.upperBound.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
-        guard totalInterval > 0 else { return 0 }
-        let valueInterval = date.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
-        return CGFloat(valueInterval / totalInterval) * geometry.size.width
-    }
-
-    private func ratioToDate(_ ratio: CGFloat, in geometry: GeometryProxy) -> Date {
-        let totalInterval = bounds.upperBound.timeIntervalSinceReferenceDate - bounds.lowerBound.timeIntervalSinceReferenceDate
-        let interval = Double(ratio / geometry.size.width) * totalInterval
-        return Date(timeIntervalSinceReferenceDate: bounds.lowerBound.timeIntervalSinceReferenceDate + interval)
-    }
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // Background Track
-                Capsule()
-                    .fill(Color(.systemGray4))
-                    .frame(height: 6)
-                
-                // Selected Range Track
-                let lowerPosition = dateToRatio(value.lowerBound, in: geometry)
-                let upperPosition = dateToRatio(value.upperBound, in: geometry)
-                Capsule()
-                    .fill(Color.accentColor)
-                    .frame(height: 6)
-                    .offset(x: lowerPosition)
-                    .frame(width: upperPosition - lowerPosition)
-
-                // Lower Thumb
-                thumbView
-                    .position(x: lowerPosition, y: geometry.size.height / 2)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { gestureValue in
-                                onEditingChanged(true)
-                                let newLowerDate = ratioToDate(gestureValue.location.x, in: geometry)
-                                if newLowerDate < value.upperBound {
-                                    self.value = newLowerDate...self.value.upperBound
-                                }
-                            }
-                            .onEnded { _ in onEditingChanged(false) }
-                    )
-                
-                // Upper Thumb
-                thumbView
-                    .position(x: upperPosition, y: geometry.size.height / 2)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { gestureValue in
-                                onEditingChanged(true)
-                                let newUpperDate = ratioToDate(gestureValue.location.x, in: geometry)
-                                if newUpperDate > value.lowerBound {
-                                    self.value = self.value.lowerBound...newUpperDate
-                                }
-                            }
-                            .onEnded { _ in onEditingChanged(false) }
-                    )
-            }
-            .overlay(
-                HStack {
-                    Text(value.lowerBound, style: .date)
-                    Spacer()
-                    Text(value.upperBound, style: .date)
-                }
-                .font(.caption)
-                .foregroundColor(.secondary)
-                // --- MODIFICATION: Increased padding to push dates further down ---
-                .padding(.top, 55)
-            )
-        }
-    }
-    
-    private var thumbView: some View {
-        Circle()
-            .fill(Color.white)
-            .frame(width: thumbRadius * 2, height: thumbRadius * 2)
-            .shadow(radius: 2)
-            .overlay(Circle().stroke(Color(.systemGray3), lineWidth: 1))
-    }
-}
+// MARK: - Custom Range Slider Component (Removed)
+// The RangeSliderView struct is no longer needed.
 
 
 // MARK: - Other Helper Views (Unchanged)
-// (ExpandableDescriptionView, IndicatorRowView, HistoricalSentimentChart)
-
 private struct ExpandableDescriptionView: View {
     let mainTitleKey: LocalizedStringKey
     let shortDescriptionKey: LocalizedStringKey
@@ -430,6 +365,18 @@ private struct HistoricalSentimentChart: View {
     }
 
     var body: some View {
+        // --- MODIFICATION: The DragGesture for the tooltip is now defined here ---
+        let dragGesture = DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                // Using a ChartProxy to find the date at the gesture's location
+                // The actual proxy is passed in the .chartOverlay modifier
+                // This is a placeholder for the logic that will be in the overlay
+            }
+            .onEnded { _ in
+                selectedDate = nil
+                selectedValues = nil
+            }
+        
         ZStack {
             Chart {
                 ForEach(data) { item in
