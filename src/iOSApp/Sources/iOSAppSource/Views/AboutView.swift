@@ -1,3 +1,5 @@
+// src/iOSApp/Sources/iOSAppSource/Views/AboutView.swift
+
 import SwiftUI
 
 struct AboutView: View {
@@ -9,12 +11,12 @@ struct AboutView: View {
                     .scaledToFit()
                     .cornerRadius(10)
                 
-                // --- 修改開始: 使用翻譯鍵 ---
-                Text("about.heading", bundle: .module)
+                // --- 修改後：所有文字都使用 .localized() ---
+                Text("about.heading".localized())
                     .font(.largeTitle)
                     .bold()
                 
-                // 使用修改後的 SectionView，直接傳入翻譯鍵
+                // SectionView 也同樣使用 .localized()
                 SectionView(titleKey: "about.section1Title", textKey: "about.section1Text")
                 
                 SectionView(titleKey: "about.section2Title", textKey: "about.section2Text")
@@ -25,38 +27,35 @@ struct AboutView: View {
 
                 // 聯絡方式區塊
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("about.contactTitle", bundle: .module)
+                    Text("about.contactTitle".localized())
                         .font(.title2)
                         .bold()
                     HStack {
                         Image(systemName: "envelope.fill")
-                        // Email 地址本身通常不翻譯
+                        // Email 地址本身不需翻譯
                         Link("support@sentimentinsideout.com", destination: URL(string: "mailto:support@sentimentinsideout.com")!)
                     }
                 }
-                // --- 修改結束 ---
             }
             .padding()
         }
-        // --- 修改開始: 使用翻譯鍵 ---
-        .navigationTitle(Text("about.pageTitle", bundle: .module))
-        // --- 修改結束 ---
+        // 導航標題也使用 .localized()
+        .navigationTitle(Text("about.pageTitle".localized()))
     }
 }
 
-// --- 修改開始: 內部輔助視圖 SectionView 現在接收 LocalizedStringKey ---
+// 內部的 SectionView 現在也使用 .localized()
 struct SectionView: View {
-    let titleKey: LocalizedStringKey
-    let textKey: LocalizedStringKey
+    let titleKey: String
+    let textKey: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(titleKey, bundle: .module)
+            Text(titleKey.localized())
                 .font(.title2)
                 .bold()
-            Text(textKey, bundle: .module)
+            Text(textKey.localized())
                 .font(.body)
         }
     }
 }
-// --- 修改結束 ---
