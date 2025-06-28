@@ -1,4 +1,5 @@
 // pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/MarketSentimentView.swift
+// --- REFACTORED FOR DYNAMIC LOCALIZATION ---
 
 import SwiftUI
 import Charts
@@ -26,10 +27,6 @@ public struct MarketSentimentView: View {
         case composition = "marketSentiment.cta.composition"
 
         var id: String { self.rawValue }
-        
-        var localized: LocalizedStringKey {
-            return LocalizedStringKey(self.rawValue)
-        }
     }
     
     @State private var selectedView: SentimentViewType = .overview
@@ -41,7 +38,7 @@ public struct MarketSentimentView: View {
             VStack(spacing: 20) {
                 Picker("View Mode", selection: $selectedView) {
                     ForEach(SentimentViewType.allCases) { viewType in
-                        Text(viewType.localized, bundle: .module).tag(viewType)
+                        Text(viewType.rawValue.localized()).tag(viewType)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -65,7 +62,7 @@ public struct MarketSentimentView: View {
             }
             .padding(.vertical)
         }
-        .navigationTitle(Text("nav.marketSentiment", bundle: .module))
+        .navigationTitle(Text("nav.marketSentiment".localized()))
         .background(Color(.systemGroupedBackground))
         .sheet(item: $selectedIndicatorKey) { key in
             IndicatorDetailView(indicatorName: key.id)
@@ -94,7 +91,7 @@ public struct MarketSentimentView: View {
                     VStack {
                         Text(String(format: "%.0f", score))
                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                        Text("marketSentiment.composite.scoreLabel", bundle: .module)
+                        Text("marketSentiment.composite.scoreLabel".localized())
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -103,10 +100,10 @@ public struct MarketSentimentView: View {
                     Divider().frame(height: 35)
 
                     VStack {
-                        Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                        Text(sentimentKey.localized())
                             .font(.system(size: 28, weight: .bold, design: .default))
                             .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
-                        Text("marketSentiment.composite.sentimentLabel", bundle: .module)
+                        Text("marketSentiment.composite.sentimentLabel".localized())
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -120,7 +117,7 @@ public struct MarketSentimentView: View {
                     .offset(y: -60)
 
                 HStack {
-                    Text("marketSentiment.lastUpdateLabel", bundle: .module)
+                    Text("marketSentiment.lastUpdateLabel".localized())
                     Text(": \(sentimentData.compositeScoreLastUpdate, formatter: Self.dateFormatter)")
                 }
                 .font(.caption)
@@ -132,7 +129,6 @@ public struct MarketSentimentView: View {
         }
     }
     
-    // --- MODIFICATION: Implemented pinch-to-zoom gesture and removed RangeSliderView ---
     @ViewBuilder
     private var historicalChartView: some View {
         if viewModel.isLoading && viewModel.historicalData.isEmpty {
@@ -142,71 +138,51 @@ public struct MarketSentimentView: View {
         } else if let errorMessage = viewModel.errorMessage, viewModel.historicalData.isEmpty {
             errorView(message: errorMessage)
         } else {
-            // State for managing the zoom gesture
             @State var initialDateRange: ClosedRange<Date>? = nil
-
-            // The magnification gesture for pinch-to-zoom
             let magnificationGesture = MagnificationGesture()
                 .onChanged { value in
-                    // Store the initial range when the gesture starts
-                    if initialDateRange == nil {
-                        initialDateRange = viewModel.dateRange
-                    }
-                    
+                    if initialDateRange == nil { initialDateRange = viewModel.dateRange }
                     guard let initialRange = initialDateRange else { return }
-
                     let originalInterval = initialRange.upperBound.timeIntervalSince(initialRange.lowerBound)
                     let newInterval = originalInterval / Double(value)
-
-                    // Zoom from the center of the current date range
                     let centerPoint = initialRange.lowerBound.timeIntervalSinceReferenceDate + originalInterval / 2
-                    
                     var newLowerBound = Date(timeIntervalSinceReferenceDate: centerPoint - newInterval / 2)
                     var newUpperBound = Date(timeIntervalSinceReferenceDate: centerPoint + newInterval / 2)
-
-                    // Clamp the new range to the absolute bounds of the data
                     if let fullRange = viewModel.fullDateRange {
                         newLowerBound = max(newLowerBound, fullRange.lowerBound)
                         newUpperBound = min(newUpperBound, fullRange.upperBound)
                     }
-                    
-                    // Apply the new range if it's valid
                     if newUpperBound > newLowerBound {
                         viewModel.dateRange = newLowerBound...newUpperBound
                         viewModel.updateChartData()
                     }
                 }
-                .onEnded { _ in
-                    // Reset the initial range state when the gesture ends
-                    initialDateRange = nil
-                }
+                .onEnded { _ in initialDateRange = nil }
             
             VStack {
                 HStack {
-                    Text("marketSentiment.viewMode.timeline", bundle: .module)
+                    Text("marketSentiment.viewMode.timeline".localized())
                         .font(.title2.bold())
                     Spacer()
                     Menu {
                         ForEach(TimeRangeOption.allCases) { range in
                             Button(action: { viewModel.setDateRange(for: range) }) {
-                                Text(range.localizedKey, bundle: .module)
+                                // --- 修正後: 因為 localizedKey 現在是 String，所以 .localized() 可以正常呼叫 ---
+                                Text(range.localizedKey.localized())
                             }
                         }
                     } label: {
                         HStack {
-                            Text(viewModel.selectedTimeRange.localizedKey, bundle: .module)
+                            // --- 修正後 ---
+                            Text(viewModel.selectedTimeRange.localizedKey.localized())
                             Image(systemName: "chevron.down")
                         }
                         .font(.subheadline).foregroundColor(.secondary)
                     }
                 }
                 .padding([.horizontal, .top])
-
-                // Apply the gesture to the chart
                 HistoricalSentimentChart(data: viewModel.filteredHistoricalData)
                     .gesture(magnificationGesture)
-
-                // The RangeSliderView has been removed.
             }
         }
     }
@@ -223,7 +199,7 @@ public struct MarketSentimentView: View {
                 ForEach(displayableIndicatorKeys, id: \.self) { key in
                     if let indicator = indicators[key], let detailKey = viewModel.indicatorKey(forName: key) {
                         IndicatorRowView(
-                            indicatorName: NSLocalizedString("indicators.\(detailKey)", bundle: .module, comment: ""),
+                            indicatorNameKey: "indicators.\(detailKey)",
                             percentileRank: indicator.percentileRank,
                             viewModel: viewModel
                         )
@@ -244,7 +220,7 @@ public struct MarketSentimentView: View {
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundColor(.red)
-            Text("common.error", bundle: .module).font(.headline)
+            Text("common.error".localized()).font(.headline)
             Text(message).foregroundColor(.secondary).multilineTextAlignment(.center)
         }.padding().frame(minHeight: 300)
     }
@@ -255,11 +231,9 @@ public struct MarketSentimentView: View {
     
     private func getCompositeSections() -> [DescriptionSection] {
         let jsonKey = "marketSentiment.descriptions.composite.sections"
-        let jsonString = NSLocalizedString(jsonKey, bundle: .module, comment: "JSON array of composite description sections")
+        let jsonString = jsonKey.localized()
 
-        if jsonString == jsonKey {
-            return []
-        }
+        if jsonString == jsonKey { return [] }
         
         guard let data = jsonString.data(using: .utf8),
               let sections = try? JSONDecoder().decode([DescriptionSection].self, from: data) else {
@@ -270,31 +244,26 @@ public struct MarketSentimentView: View {
     }
 }
 
-// MARK: - Custom Range Slider Component (Removed)
-// The RangeSliderView struct is no longer needed.
-
-
-// MARK: - Other Helper Views (Unchanged)
+// MARK: - Helper Views
 private struct ExpandableDescriptionView: View {
-    let mainTitleKey: LocalizedStringKey
-    let shortDescriptionKey: LocalizedStringKey
+    let mainTitleKey: String
+    let shortDescriptionKey: String
     let sections: [DescriptionSection]
     
     @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text(mainTitleKey, bundle: .module)
+            Text(mainTitleKey.localized())
                 .font(.title2.bold())
             
-            Text(shortDescriptionKey, bundle: .module)
+            Text(shortDescriptionKey.localized())
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .lineLimit(isExpanded ? nil : 3)
             
             if isExpanded {
                 Divider()
-                
                 ForEach(sections) { section in
                     VStack(alignment: .leading, spacing: 5) {
                         Text(section.title)
@@ -313,7 +282,7 @@ private struct ExpandableDescriptionView: View {
                 }
             }) {
                 HStack {
-                    Text(isExpanded ? "common.collapse" : "common.learnMore", bundle: .module)
+                    Text((isExpanded ? "common.collapse" : "common.learnMore").localized())
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                 }
                 .font(.callout.weight(.semibold))
@@ -327,17 +296,17 @@ private struct ExpandableDescriptionView: View {
 }
 
 private struct IndicatorRowView: View {
-    let indicatorName: String
+    let indicatorNameKey: String
     let percentileRank: Double
     @ObservedObject var viewModel: MarketSentimentViewModel
     
     var body: some View {
         HStack {
-            Text(indicatorName).font(.subheadline)
+            Text(indicatorNameKey.localized()).font(.subheadline)
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
                 let sentimentKey = viewModel.sentimentKey(for: percentileRank)
-                Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                Text(sentimentKey.localized())
                     .font(.footnote).fontWeight(.medium)
                     .foregroundColor(viewModel.sentimentColor(for: sentimentKey))
                 ProgressView(value: percentileRank, total: 100)
@@ -365,37 +334,16 @@ private struct HistoricalSentimentChart: View {
     }
 
     var body: some View {
-        // --- MODIFICATION: The DragGesture for the tooltip is now defined here ---
-        let dragGesture = DragGesture(minimumDistance: 0)
-            .onChanged { value in
-                // Using a ChartProxy to find the date at the gesture's location
-                // The actual proxy is passed in the .chartOverlay modifier
-                // This is a placeholder for the logic that will be in the overlay
-            }
-            .onEnded { _ in
-                selectedDate = nil
-                selectedValues = nil
-            }
-        
         ZStack {
             Chart {
                 ForEach(data) { item in
                     AreaMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(.linearGradient(stops: [.init(color: Color(hex: 0xD24A93).opacity(0.6), location: 0.0), .init(color: Color(hex: 0x708090).opacity(0.4), location: 0.5), .init(color: .blue.opacity(0.0), location: 1.0)], startPoint: .top, endPoint: .bottom))
                     LineMark(x: .value("Date", item.date), y: .value("Score", item.compositeScore)).foregroundStyle(Color(hex: 0x9D00FF))
                 }
-                
-                if let selectedDate {
-                    RuleMark(x: .value("Selected Date", selectedDate))
-                        .foregroundStyle(Color.gray.opacity(0.5))
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
-                }
+                if let selectedDate { RuleMark(x: .value("Selected Date", selectedDate)).foregroundStyle(Color.gray.opacity(0.5)).lineStyle(StrokeStyle(lineWidth: 1, dash: [3])) }
             }
             .chartYScale(domain: 0...100)
-            .chartYAxis {
-                AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
-                    AxisGridLine()
-                }
-            }
+            .chartYAxis { AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in AxisGridLine() } }
             
             Chart {
                 ForEach(data) { item in
@@ -403,11 +351,7 @@ private struct HistoricalSentimentChart: View {
                 }
             }
             .chartYScale(domain: spyDomain)
-            .chartYAxis {
-                AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in
-                    AxisGridLine().foregroundStyle(.clear)
-                }
-            }
+            .chartYAxis { AxisMarks(position: .trailing, values: .automatic(desiredCount: 5)) { _ in AxisGridLine().foregroundStyle(.clear) } }
         }
         .frame(height: 250)
         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
@@ -417,13 +361,8 @@ private struct HistoricalSentimentChart: View {
                 Rectangle().fill(.clear).contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                updateSelection(at: value.location, proxy: proxy, geometry: geometry.size)
-                            }
-                            .onEnded { _ in
-                                selectedDate = nil
-                                selectedValues = nil
-                            }
+                            .onChanged { value in updateSelection(at: value.location, proxy: proxy, geometry: geometry.size) }
+                            .onEnded { _ in selectedDate = nil; selectedValues = nil }
                     )
             }
         }
@@ -436,25 +375,22 @@ private struct HistoricalSentimentChart: View {
         HStack(spacing: 20) {
             HStack(spacing: 5) {
                 Rectangle().fill(Color(hex: 0x9D00FF)).frame(width: 15, height: 3)
-                Text("marketSentiment.chart.compositeIndexLabel", bundle: .module).font(.caption)
+                Text("marketSentiment.chart.compositeIndexLabel".localized()).font(.caption)
             }
             HStack(spacing: 5) {
                 Rectangle().fill(.gray.opacity(0.8)).frame(width: 15, height: 3)
-                Text("marketSentiment.chart.spyPriceLabel", bundle: .module).font(.caption)
+                Text("marketSentiment.chart.spyPriceLabel".localized()).font(.caption)
             }
         }.padding(.top, 5)
     }
     
     private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize) {
-        guard location.x >= 0, location.x <= geometry.width,
-              let date: Date = proxy.value(atX: location.x) else {
+        guard location.x >= 0, location.x <= geometry.width, let date: Date = proxy.value(atX: location.x) else {
             self.selectedDate = nil
             self.selectedValues = nil
             return
         }
-        
         let closestItem = data.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
-        
         if let closestItem {
             self.selectedDate = closestItem.date
             self.selectedValues = (score: closestItem.compositeScore, price: closestItem.spyClose)
@@ -467,17 +403,15 @@ private struct HistoricalSentimentChart: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(selectedDate.formatted(date: .abbreviated, time: .omitted))
                     .font(.caption).bold().foregroundColor(.secondary)
-                
                 HStack {
                     Circle().fill(Color(hex: 0x9D00FF)).frame(width: 8, height: 8)
-                    Text("marketSentiment.chart.tooltipScore", bundle: .module).font(.caption)
+                    Text("marketSentiment.chart.tooltipScore".localized()).font(.caption)
                     Spacer()
                     Text(String(format: "%.2f", values.score)).font(.caption.bold())
                 }
-                
                 HStack {
                     Circle().fill(.gray.opacity(0.8)).frame(width: 8, height: 8)
-                    Text("marketSentiment.chart.tooltipSPY", bundle: .module).font(.caption)
+                    Text("marketSentiment.chart.tooltipSPY".localized()).font(.caption)
                     Spacer()
                     Text(String(format: "%.2f", values.price)).font(.caption.bold())
                 }

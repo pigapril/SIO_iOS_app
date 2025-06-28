@@ -1,81 +1,71 @@
-// 檔案路徑: /Users/tony.h/tony-stock/iOS App/src/iOSApp/Sources/iOSAppSource/Views/MainTabView.swift
+// src/iOSApp/Sources/iOSAppSource/Views/MainTabView.swift
 
 import SwiftUI
 import iOSAppSource
 
 public struct MainTabView: View {
-    @StateObject private var authViewModel = AuthenticationViewModel()
-    @StateObject private var toastManager = ToastManager.shared
-    @State private var selectedTab: Int = 0
+    // 從環境中接收共享的 ViewModel 和服務，而不是在本地創建新的實例
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @EnvironmentObject var toastManager: ToastManager
+    @EnvironmentObject var languageManager: LanguageManager
 
-    private var packageBundle: Bundle {
-        let bundleName = "iOSApp_iOSAppSource"
-        
-        if let bundleURL = Bundle.main.url(forResource: bundleName, withExtension: "bundle") {
-            if let bundle = Bundle(url: bundleURL) {
-                return bundle
-            }
-        }
-        
-        return Bundle(for: AuthenticationViewModel.self)
-    }
+    // 用於控制當前選中分頁的狀態
+    @State private var selectedTab: Int = 0
     
     public init() {}
 
     public var body: some View {
+        // ZStack 讓我們可以將 Toast 視圖疊加在 TabView 之上
         ZStack {
             TabView(selection: $selectedTab) {
-                // Dashboard Tab
+                // 首頁 (儀表板) 分頁
                 NavigationView {
                     DashboardView()
                 }
                 .tabItem {
                     Image(systemName: "house.fill")
-                    Text(NSLocalizedString("nav.home", bundle: packageBundle, comment: "Home tab title"))
+                    // 修改後：使用 .localized() 方法
+                    Text("nav.home".localized())
                 }
                 .tag(0)
 
-                // Price Analysis Tab
+                // 價格分析分頁
                 NavigationView {
                     PriceAnalysisView()
                 }
                 .tabItem {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                    Text(NSLocalizedString("nav.priceAnalysis", bundle: packageBundle, comment: "Price Analysis tab title"))
+                    // 修改後：使用 .localized() 方法
+                    Text("nav.priceAnalysis".localized())
                 }
                 .tag(1)
 
-                // Market Sentiment Tab
+                // 市場情緒分頁
                 NavigationView {
                     MarketSentimentView()
                 }
                 .tabItem {
                     Image(systemName: "heart.fill")
-                    Text(NSLocalizedString("nav.marketSentiment", bundle: packageBundle, comment: "Market Sentiment tab title"))
+                    // 修改後：使用 .localized() 方法
+                    Text("nav.marketSentiment".localized())
                 }
                 .tag(2)
 
-                // Watchlist Tab
+                // 追蹤清單分頁
                 NavigationView {
                     WatchlistView()
                 }
                 .tabItem {
                     Image(systemName: "list.star")
-                    Text(NSLocalizedString("nav.watchlist", bundle: packageBundle, comment: "Watchlist tab title"))
+                    // 修改後：使用 .localized() 方法
+                    Text("nav.watchlist".localized())
                 }
                 .tag(3)
             }
-            .environmentObject(authViewModel)
-            .environmentObject(toastManager)
-            // highlight-start
-            // 移除此處多餘的 onAppear 設定，因為設定已在 StockAppApp.swift 的 init() 中完成。
-            /*
-            .onAppear {
-                AppSetupService.configure()
-            }
-            */
-            // highlight-end
+            // 環境物件會自動向下傳遞給 TabView 內的所有子視圖，
+            // 因此不再需要在這裡單獨注入 authViewModel 和 toastManager。
         }
+        // 將 Toast 視圖修飾符應用於 ZStack，使其能顯示在所有內容之上
         .toast(toast: $toastManager.toast)
     }
 }

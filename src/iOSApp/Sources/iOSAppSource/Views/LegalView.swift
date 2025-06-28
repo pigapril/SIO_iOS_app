@@ -1,3 +1,5 @@
+// src/iOSApp/Sources/iOSAppSource/Views/LegalView.swift
+
 import SwiftUI
 
 // 主視圖：LegalView
@@ -5,8 +7,8 @@ struct LegalView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // 使用 "legal.mainHeading" 作為頁面主標題
-                Text("legal.mainHeading", bundle: .module)
+                // 使用新的 .localized() 方法來獲取翻譯字串
+                Text("legal.mainHeading".localized())
                     .font(.largeTitle)
                     .bold()
 
@@ -90,19 +92,19 @@ struct LegalView: View {
             }
             .padding()
         }
-        // 使用 "legal.pageTitle" 作為導航列標題
-        .navigationTitle(Text("legal.pageTitle", bundle: .module))
+        // 同樣使用 .localized() 設定導航列標題
+        .navigationTitle(Text("legal.pageTitle".localized()))
     }
 }
 
-// 子視圖：LegalSection (無需修改，但保持清晰)
+// 子視圖：LegalSection - 已修改為接受 String 型別的 key
 struct LegalSection: View {
-    let titleKey: LocalizedStringKey
+    let titleKey: String
     let subsections: [LegalSubsection]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(titleKey, bundle: .module)
+            Text(titleKey.localized())
                 .font(.title)
                 .bold()
             ForEach(subsections) { subsection in
@@ -112,15 +114,14 @@ struct LegalSection: View {
     }
 }
 
-// 子視圖：LegalSubsection (已修正)
+// 子視圖：LegalSubsection - 已修改為接受 String 型別的 key
 struct LegalSubsection: View, Identifiable {
     let id = UUID()
-    let titleKey: LocalizedStringKey
-    let introKey: LocalizedStringKey?
-    let pointKeys: [String] // <--- *** 修正點 1: 型別改為 [String] ***
+    let titleKey: String
+    let introKey: String?
+    let pointKeys: [String]
 
-    // 初始化方法也更新參數型別
-    init(titleKey: LocalizedStringKey, introKey: LocalizedStringKey? = nil, pointKeys: [String]) {
+    init(titleKey: String, introKey: String? = nil, pointKeys: [String]) {
         self.titleKey = titleKey
         self.introKey = introKey
         self.pointKeys = pointKeys
@@ -128,20 +129,19 @@ struct LegalSubsection: View, Identifiable {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(titleKey, bundle: .module)
+            Text(titleKey.localized())
                 .font(.title2)
                 .bold()
             
             if let intro = introKey {
-                Text(intro, bundle: .module)
+                Text(intro.localized())
             }
             
-            // <--- *** 修正點 2: ForEach 遍歷 String 陣列 ***
             ForEach(pointKeys, id: \.self) { key in
                 HStack(alignment: .top) {
                     Text("•")
-                    // <--- *** 修正點 3: 在此處將 String 轉為 LocalizedStringKey ***
-                    Text(LocalizedStringKey(key), bundle: .module)
+                    // 將陣列中的每個 key 也進行本地化
+                    Text(key.localized())
                 }
             }
         }

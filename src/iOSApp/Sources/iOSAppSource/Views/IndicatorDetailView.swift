@@ -37,11 +37,11 @@ struct IndicatorDetailView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(Text(LocalizedStringKey(indicatorTitleKey), bundle: .module))
+            .navigationTitle(Text(indicatorTitleKey.localized()))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 Button(action: { dismiss() }) {
-                                Text(NSLocalizedString("common.done", bundle: .module, comment: "Done button in toolbar"))
+                                Text("common.done".localized())
                 }
             }
             .onAppear(perform: viewModel.fetchData)
@@ -72,7 +72,7 @@ struct IndicatorDetailView: View {
     private var chartView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("marketSentiment.viewMode.timeline", bundle: .module)
+                Text("marketSentiment.viewMode.timeline".localized())
                     .font(.title3.bold())
                 Spacer()
                 Menu {
@@ -80,12 +80,12 @@ struct IndicatorDetailView: View {
                         Button(action: {
                             viewModel.filterData(for: option)
                         }) {
-                            Text(LocalizedStringKey(option.localizedKey), bundle: .module)
+                            Text(option.localizedKey.localized())
                         }
                     }
                 } label: {
                     HStack {
-                        Text(LocalizedStringKey(viewModel.selectedTimeRange.localizedKey), bundle: .module)
+                        Text(viewModel.selectedTimeRange.localizedKey.localized())
                         Image(systemName: "chevron.down")
                     }
                     .font(.subheadline)
@@ -101,7 +101,7 @@ struct IndicatorDetailView: View {
 
     private var descriptionView: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text(LocalizedStringKey(descriptionShortKey), bundle: .module)
+            Text(descriptionShortKey.localized())
                 .font(.body)
                 .foregroundColor(.secondary)
             
@@ -120,7 +120,7 @@ struct IndicatorDetailView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.red)
-            Text("common.dataLoadError", bundle: .module)
+            Text("common.dataLoadError".localized())
                 .font(.headline)
                 .padding(.top, 4)
             Text(message)
@@ -134,7 +134,7 @@ struct IndicatorDetailView: View {
     // MARK: - 輔助函式
 
     private func getSections() -> [IndicatorDetailSection] {
-        let jsonString = NSLocalizedString(descriptionSectionsKey, bundle: .module, comment: "JSON array of sections")
+        let jsonString = descriptionSectionsKey.localized()
         guard let data = jsonString.data(using: .utf8),
               let sections = try? JSONDecoder().decode([IndicatorDetailSection].self, from: data) else {
             return []
@@ -162,7 +162,7 @@ struct MetricView: View {
         VStack(alignment: .leading) {
             Text(value)
                 .font(.title2.bold())
-            Text(LocalizedStringKey(labelKey), bundle: .module)
+            Text(labelKey.localized())
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -184,6 +184,9 @@ struct IndicatorHistoricalChart: View {
     @State private var selectedDate: Date?
     @State private var selectedValues: [String: Double]?
 
+    private let valueSeriesKey = "marketSentiment.indicatorDetail.valueLabel"
+    private let scoreSeriesKey = "marketSentiment.indicatorDetail.sentimentScoreLabel"
+    
     // 1. 定義主軸 (情緒分數) 的數據域
     private let primaryDomain: ClosedRange<Double> = 0...100
     
@@ -227,10 +230,12 @@ struct IndicatorHistoricalChart: View {
         let series: String
     }
     
-    private let seriesKeyMap: [String: Color] = [
-        "指標數值": .orange,
-        "情緒分數": .blue
-    ]
+    private var seriesKeyMap: [String: Color] {
+        [
+            valueSeriesKey: .orange,
+            scoreSeriesKey: .blue
+        ]
+    }
 
     private var dataWithRank: [IndicatorHistoricalDataItem] {
         data.filter { $0.percentileRank != nil }
@@ -244,8 +249,8 @@ struct IndicatorHistoricalChart: View {
                     Chart {
                         ForEach(dataWithRank) { item in
                             LineMark(
-                                x: .value("日期", item.date),
-                                y: .value("情緒分數", item.percentileRank!)
+                                x: .value("Date", item.date),
+                                y: .value(scoreSeriesKey.localized(), item.percentileRank!)
                             )
                             .foregroundStyle(Color.blue)
                         }
@@ -263,11 +268,7 @@ struct IndicatorHistoricalChart: View {
                 if !data.isEmpty {
                     Chart {
                         ForEach(data) { item in
-                            // ✅ *** 修正點：移除 AreaMark ***
-                            // AreaMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
-                            //     .foregroundStyle(LinearGradient(gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.orange.opacity(0)]), startPoint: .top, endPoint: .bottom))
-                            
-                            LineMark(x: .value("日期", item.date), y: .value("指標數值", item.value))
+                            LineMark(x: .value("Date", item.date), y: .value(valueSeriesKey.localized(), item.value))
                                 .foregroundStyle(Color.orange)
                         }
                         
@@ -317,17 +318,17 @@ struct IndicatorHistoricalChart: View {
             
             // 自定義圖例
             HStack(spacing: 20) {
-                legendItem(color: .orange, label: "marketSentiment.indicatorDetail.valueLabel")
-                legendItem(color: .blue, label: "marketSentiment.indicatorDetail.sentimentScoreLabel")
+                legendItem(color: .orange, labelKey: valueSeriesKey)
+                legendItem(color: .blue, labelKey: scoreSeriesKey)
             }
             .padding(.top, 5)
         }
     }
 
-    private func legendItem(color: Color, label: LocalizedStringKey) -> some View {
+    private func legendItem(color: Color, labelKey: String) -> some View {
         HStack(spacing: 5) {
             Rectangle().fill(color).frame(width: 15, height: 3)
-            Text(label, bundle: .module).font(.caption).foregroundColor(.secondary)
+            Text(labelKey.localized()).font(.caption).foregroundColor(.secondary)
         }
     }
     
@@ -346,7 +347,7 @@ struct IndicatorHistoricalChart: View {
                         Circle()
                             .fill(seriesKeyMap[seriesKey] ?? .gray)
                             .frame(width: 8, height: 8)
-                        Text(LocalizedStringKey(seriesKey), bundle: .module)
+                        Text(seriesKey.localized())
                             .font(.caption)
                         Spacer()
                         Text(String(format: "%.2f", value))
@@ -401,9 +402,9 @@ struct IndicatorHistoricalChart: View {
     private func transformData() -> [TidyChartDataPoint] {
         var tidyData: [TidyChartDataPoint] = []
         for item in data {
-            tidyData.append(TidyChartDataPoint(date: item.date, value: item.value, series: "指標數值"))
+            tidyData.append(TidyChartDataPoint(date: item.date, value: item.value, series: valueSeriesKey))
             if let rank = item.percentileRank {
-                tidyData.append(TidyChartDataPoint(date: item.date, value: rank, series: "情緒分數"))
+                tidyData.append(TidyChartDataPoint(date: item.date, value: rank, series: scoreSeriesKey))
             }
         }
         return tidyData

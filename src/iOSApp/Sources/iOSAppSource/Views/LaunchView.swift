@@ -55,9 +55,12 @@ private struct LoginWallView: View {
 
                 // Prompt and Button
                 VStack(spacing: 20) {
-                    Text("launch.login.prompt", bundle: .module)
+                    // --- MODIFICATION START ---
+                    // Replaced `Text("launch.login.prompt", bundle: .module)` with the new `.localized()` method.
+                    Text("launch.login.prompt".localized())
                         .font(.headline)
                         .foregroundColor(.secondary)
+                    // --- MODIFICATION END ---
                     
                     GoogleSignInButtonView(colorScheme: .dark) {
                         Task {

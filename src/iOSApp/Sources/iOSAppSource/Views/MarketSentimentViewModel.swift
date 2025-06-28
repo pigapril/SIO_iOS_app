@@ -3,13 +3,13 @@
 import SwiftUI
 import Combine
 
-// --- MODIFICATION: Added .twoYears and .tenYears, updated localized keys ---
+// --- 修正：localizedKey 的回傳型別從 LocalizedStringKey 改為 String ---
 enum TimeRangeOption: String, CaseIterable, Identifiable {
     case oneMonth, threeMonths, sixMonths, oneYear, twoYears, threeYears, fiveYears, tenYears, all
     
     var id: String { self.rawValue }
     
-    var localizedKey: LocalizedStringKey {
+    var localizedKey: String { // <--- 型別已修改
         switch self {
         case .oneMonth: return "timeRangeSelector.month1"
         case .threeMonths: return "timeRangeSelector.month3"
@@ -32,7 +32,6 @@ class MarketSentimentViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    // --- MODIFICATION: Default time range changed to .twoYears ---
     @Published var selectedTimeRange: TimeRangeOption = .twoYears
 
     @Published var dateRange: ClosedRange<Date>? = nil
@@ -88,7 +87,6 @@ class MarketSentimentViewModel: ObservableObject {
         let endDate = fullRange.upperBound
         var startDate: Date?
 
-        // --- MODIFICATION: Added cases for .twoYears and .tenYears ---
         switch timeOption {
         case .oneMonth: startDate = calendar.date(byAdding: .month, value: -1, to: endDate)
         case .threeMonths: startDate = calendar.date(byAdding: .month, value: -3, to: endDate)

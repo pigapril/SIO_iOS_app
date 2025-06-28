@@ -1,10 +1,11 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Views/DashboardView.swift
+// pigapril/sio_ios_app/SIO_iOS_app-language-setting/src/iOSApp/Sources/iOSAppSource/Views/DashboardView.swift
 import SwiftUI
 
-/// App 的新主頁，作為一個數據驅動的儀表板。
+/// App 的主頁，作為一個數據驅動的儀表板。
 ///
-/// 這個視圖遵循 `iOS_rebuild_plan.md` 中 Phase 2 的規劃，整合了多個核心功能的摘要資訊，
-/// 為使用者提供一個快速概覽和方便的導航入口。
+/// 這個視圖遵循 `iOS_rebuild_plan.md` 中 Phase 2 的規劃，並已完全重構以支援動態語言切換。
+/// 所有面向使用者的文字都已從 `NSLocalizedString` 或 `Text("key", bundle:)`
+/// 轉換為使用新的 `"key".localized()` 方法。
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @EnvironmentObject var authViewModel: AuthenticationViewModel
@@ -24,7 +25,8 @@ struct DashboardView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
-                    Text("common.error", bundle: .module)
+                    // --- MODIFICATION ---
+                    Text("common.error".localized())
                         .font(.headline)
                         .padding(.top)
                     Text(errorMessage)
@@ -35,27 +37,24 @@ struct DashboardView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 300)
             } else {
-                // --- MODIFICATION START ---
-                // 主內容堆疊 (welcomeHeader 已移除)
                 VStack(alignment: .leading, spacing: 20) {
                     marketSentimentCard
                     watchlistPreviewCard
                     quickAnalysisCard
                 }
-                .padding(.vertical) // <<< 修正點：從 .padding() 改為 .padding(.vertical)
-                // --- MODIFICATION END ---
+                .padding(.vertical)
             }
         }
         .background(Color(.systemGroupedBackground))
+        // --- MODIFICATION ---
         .navigationTitle(
             Text(
                 authViewModel.user != nil ?
-                String(format: NSLocalizedString("dashboard.greeting", bundle: .module, comment: "Personalized user greeting"), authViewModel.user!.username) :
-                NSLocalizedString("dashboard.welcome", bundle: .module, comment: "Generic welcome title")
+                String(format: "dashboard.greeting".localized(), authViewModel.user!.username) :
+                "dashboard.welcome".localized()
             )
         )
         .toolbar {
-            // 新增右上角的設定按鈕，用於開啟 "MoreView"
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingMoreView = true }) {
                     Image(systemName: "gearshape")
@@ -63,17 +62,16 @@ struct DashboardView: View {
             }
         }
         .sheet(isPresented: $showingMoreView) {
-            // 以 Sheet 形式呈現 MoreView，並為其提供獨立的 NavigationView
             NavigationView {
                 MoreView()
-                    .navigationBarItems(trailing: Button(NSLocalizedString("common.done", bundle: .module, comment: "Done button")) {
+                    // --- MODIFICATION ---
+                    .navigationBarItems(trailing: Button("common.done".localized()) {
                         showingMoreView = false
                     })
             }
             .environmentObject(authViewModel)
         }
         .onAppear {
-            // 僅在初次載入時獲取數據
             if viewModel.marketSentiment == nil {
                 viewModel.fetchDashboardData()
             }
@@ -82,53 +80,43 @@ struct DashboardView: View {
 
     // MARK: - Subviews
 
-    // --- MODIFICATION START ---
-    // welcomeHeader 已被移除
-    // --- MODIFICATION END ---
-
-    /// 市場情緒卡片 (*** MODIFIED ***)
+    /// 市場情緒卡片
     private var marketSentimentCard: some View {
         NavigationLink(destination: MarketSentimentView()) {
             VStack(alignment: .leading) {
-                // Card Header
                 HStack {
-                    Text("dashboard.marketSentimentCard.title", bundle: .module)
+                    // --- MODIFICATION ---
+                    Text("dashboard.marketSentimentCard.title".localized())
                         .font(.headline)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .foregroundColor(.secondary)
                 }
                 
-                // Card Body
                 if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
                     let sentimentKey = sentimentKey(for: score)
                     HStack(alignment: .center,) {
-                        
-                        // Use the reusable, detailed gauge
                         SemiCircleGaugeView(value: score, showLabels: false)
                             .frame(width: 130, height: 90)
                             .offset(y: -10)
                         
                         Spacer()
 
-
-                        // Sentiment status text
                         VStack(alignment: .leading, spacing: 4) {
-                             Text("dashboard.marketSentimentCard.currentSentiment", bundle: .module)
+                             // --- MODIFICATION ---
+                             Text("dashboard.marketSentimentCard.currentSentiment".localized())
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
-                             Text(LocalizedStringKey(sentimentKey), bundle: .module)
+                             // --- MODIFICATION ---
+                             Text(sentimentKey.localized())
                                 .font(.system(size: 26, weight: .bold, design: .default))
                                 .foregroundColor(sentimentColor(for: sentimentKey))
                         }
                         .padding(.trailing, 20)
-
-                        
                     }
                     .padding(.top, 10)
                 } else {
-                    // Loading placeholder
                     ProgressView().frame(height: 120, alignment: .center)
                 }
             }
@@ -141,11 +129,13 @@ struct DashboardView: View {
     private var watchlistPreviewCard: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text("dashboard.watchlistCard.title", bundle: .module)
+                // --- MODIFICATION ---
+                Text("dashboard.watchlistCard.title".localized())
                     .font(.headline)
                 Spacer()
                 NavigationLink(destination: WatchlistView()) {
-                    Text("common.learnMore", bundle: .module)
+                    // --- MODIFICATION ---
+                    Text("common.learnMore".localized())
                     Image(systemName: "chevron.right")
                 }
                 .font(.subheadline)
@@ -153,13 +143,15 @@ struct DashboardView: View {
             
             if !authViewModel.isAuthenticated {
                 VStack {
-                    Text("dashboard.watchlistCard.loginPrompt", bundle: .module)
+                    // --- MODIFICATION ---
+                    Text("dashboard.watchlistCard.loginPrompt".localized())
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                     Button(action: {
                         Task { await authViewModel.signIn() }
                     }) {
-                        Text("userActions.login", bundle: .module)
+                        // --- MODIFICATION ---
+                        Text("userActions.login".localized())
                     }
                     .buttonStyle(.bordered)
                     .padding(.top, 5)
@@ -179,7 +171,8 @@ struct DashboardView: View {
                     .padding(.vertical, 4)
                 }
             } else {
-                Text("dashboard.watchlistCard.empty", bundle: .module)
+                // --- MODIFICATION ---
+                Text("dashboard.watchlistCard.empty".localized())
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
@@ -191,10 +184,12 @@ struct DashboardView: View {
     /// 樂活五線譜快速分析卡片
     private var quickAnalysisCard: some View {
         VStack(alignment: .leading) {
-            Text("dashboard.quickAnalysisCard.title", bundle: .module).font(.headline)
+            // --- MODIFICATION ---
+            Text("dashboard.quickAnalysisCard.title".localized()).font(.headline)
             
             HStack {
-                TextField(NSLocalizedString("dashboard.quickAnalysisCard.placeholder", bundle: .module, comment: "Stock symbol placeholder"), text: $quickSearchSymbol)
+                // --- MODIFICATION ---
+                TextField("dashboard.quickAnalysisCard.placeholder".localized(), text: $quickSearchSymbol)
                     .textFieldStyle(.roundedBorder)
                     .autocapitalization(.allCharacters)
                 
@@ -203,7 +198,8 @@ struct DashboardView: View {
                         isAnalysisLinkActive = true
                     }
                 }) {
-                    Text("dashboard.quickAnalysisCard.button", bundle: .module)
+                    // --- MODIFICATION ---
+                    Text("dashboard.quickAnalysisCard.button".localized())
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(quickSearchSymbol.isEmpty)
@@ -219,7 +215,6 @@ struct DashboardView: View {
 
     // MARK: - Helper Functions & Sub-components
 
-    /// 根據分數返回對應的情緒本地化鍵
     private func sentimentKey(for score: Double?) -> String {
         guard let score = score else { return "sentiment.notAvailable" }
         switch score {
@@ -232,7 +227,6 @@ struct DashboardView: View {
         }
     }
     
-    /// 根據情緒鍵返回對應的顏色
     private func sentimentColor(for sentimentKey: String) -> Color {
         switch sentimentKey {
         case "sentiment.extremeFear": return AppColors.minus2SD
@@ -247,7 +241,6 @@ struct DashboardView: View {
 
 
 // MARK: - Reusable Components (Private to DashboardView)
-// *** NOTE: DashboardGaugeView was removed. ***
 
 /// 追蹤清單預覽中的單個股票項目
 private struct WatchlistPreviewItem: View {
@@ -319,7 +312,8 @@ private struct DashboardPriceSentimentGauge: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(LocalizedStringKey(sentimentKey), bundle: .module)
+            // --- MODIFICATION ---
+            Text(sentimentKey.localized())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(sentimentColor)
             

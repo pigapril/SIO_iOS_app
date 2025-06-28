@@ -6,7 +6,7 @@ import Charts
 // MARK: - Data Structures for Explanation
 private struct ExplanationSectionData: Identifiable {
     let id = UUID()
-    let titleKey: LocalizedStringKey
+    let titleKey: String
     let contentKeys: [String]
 }
 
@@ -16,7 +16,6 @@ struct PriceAnalysisView: View {
     @State private var activeChart: ChartType = .standardDeviation
     @State private var isAdvancedQuery: Bool = false
     
-    // --- MODIFICATION START: Define the sections data here ---
     private let explanationSections: [ExplanationSectionData] = [
         .init(
             titleKey: "priceAnalysis.explanation.sd.title",
@@ -43,7 +42,6 @@ struct PriceAnalysisView: View {
             ]
         )
     ]
-    // --- MODIFICATION END ---
     
     init(initialStockCode: String? = nil, initialYears: String? = nil) {
         _viewModel = StateObject(wrappedValue: PriceAnalysisViewModel(
@@ -55,10 +53,8 @@ struct PriceAnalysisView: View {
     enum ChartType: String, CaseIterable {
         case standardDeviation = "priceAnalysis.chart.tabs.sd"
         case ulBand = "priceAnalysis.chart.tabs.ulband"
-
-        var localized: LocalizedStringKey {
-            return LocalizedStringKey(self.rawValue)
-        }
+        
+        // --- 修正：移除 .localized() 計算屬性 ---
     }
 
     var body: some View {
@@ -66,17 +62,15 @@ struct PriceAnalysisView: View {
             VStack(spacing: 20) {
                 queryCard
                 chartContainer
-                // --- MODIFICATION START: Replace explanationCard with the new expandable view ---
                 ExpandableExplanationView(
                     mainTitleKey: "priceAnalysis.explanation.mainTitle",
                     shortDescriptionKey: "priceAnalysis.explanation.shortDescription",
                     sections: explanationSections
                 )
-                // --- MODIFICATION END ---
             }
             .padding(.vertical)
         }
-        .navigationTitle(Text("priceAnalysis.pageTitle", bundle: .module))
+        .navigationTitle(Text("priceAnalysis.pageTitle".localized()))
         .background(Color(.systemGroupedBackground))
         .onAppear {
             if viewModel.chartData == nil {
@@ -89,27 +83,24 @@ struct PriceAnalysisView: View {
     // MARK: - Subviews
     
     private var queryCard: some View {
-        let stockCodePlaceholder = NSLocalizedString("priceAnalysis.form.stockCodePlaceholder", bundle: .module, comment: "")
-        let yearsPlaceholder = NSLocalizedString("priceAnalysis.form.yearsPlaceholder", bundle: .module, comment: "")
-
         return VStack(spacing: 15) {
-            Text("priceAnalysis.form.title", bundle: .module)
+            Text("priceAnalysis.form.title".localized())
                 .font(.headline)
             
             HStack {
-                Text("priceAnalysis.form.stockCodeLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                TextField(stockCodePlaceholder, text: $viewModel.stockCode)
+                Text("priceAnalysis.form.stockCodeLabel".localized()).frame(width: 140, alignment: .leading)
+                TextField("priceAnalysis.form.stockCodePlaceholder".localized(), text: $viewModel.stockCode)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .autocapitalization(.allCharacters)
             }
             
             if !isAdvancedQuery {
                 HStack {
-                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                    Picker(selection: $viewModel.analysisPeriod, label: Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module)) {
-                        Text("priceAnalysis.form.periodShort", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.short)
-                        Text("priceAnalysis.form.periodMedium", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.medium)
-                        Text("priceAnalysis.form.periodLong", bundle: .module).tag(PriceAnalysisViewModel.AnalysisPeriod.long)
+                    Text("priceAnalysis.form.analysisPeriodLabel".localized()).frame(width: 140, alignment: .leading)
+                    Picker(selection: $viewModel.analysisPeriod, label: Text("priceAnalysis.form.analysisPeriodLabel".localized())) {
+                        Text("priceAnalysis.form.periodShort".localized()).tag(PriceAnalysisViewModel.AnalysisPeriod.short)
+                        Text("priceAnalysis.form.periodMedium".localized()).tag(PriceAnalysisViewModel.AnalysisPeriod.medium)
+                        Text("priceAnalysis.form.periodLong".localized()).tag(PriceAnalysisViewModel.AnalysisPeriod.long)
                     }
                     .pickerStyle(.menu)
                 }
@@ -117,8 +108,8 @@ struct PriceAnalysisView: View {
             
             if isAdvancedQuery {
                 HStack {
-                    Text("priceAnalysis.form.analysisPeriodLabel", bundle: .module).frame(width: 140, alignment: .leading)
-                    TextField(yearsPlaceholder, text: $viewModel.years)
+                    Text("priceAnalysis.form.analysisPeriodLabel".localized()).frame(width: 140, alignment: .leading)
+                    TextField("priceAnalysis.form.yearsPlaceholder".localized(), text: $viewModel.years)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .keyboardType(.decimalPad)
                 }
@@ -128,18 +119,18 @@ struct PriceAnalysisView: View {
                         set: { viewModel.backTestDate = $0 }
                     ),
                     displayedComponents: .date,
-                    label: { Text("priceAnalysis.form.backTestDateLabel", bundle: .module) }
+                    label: { Text("priceAnalysis.form.backTestDateLabel".localized()) }
                 )
             }
             
             Toggle(isOn: $isAdvancedQuery.animation()) {
-                Text(isAdvancedQuery ? "priceAnalysis.form.switchToSimple" : "priceAnalysis.form.switchToAdvanced", bundle: .module)
+                Text(isAdvancedQuery ? "priceAnalysis.form.switchToSimple".localized() : "priceAnalysis.form.switchToAdvanced".localized())
             }
             
             Button(action: {
                 viewModel.fetchStockData(isManualSearch: true)
             }) {
-                Text(viewModel.isLoading ? "priceAnalysis.form.buttonAnalyzing" : "priceAnalysis.form.buttonStartAnalysis", bundle: .module)
+                Text(viewModel.isLoading ? "priceAnalysis.form.buttonAnalyzing".localized() : "priceAnalysis.form.buttonStartAnalysis".localized())
                     .fontWeight(.bold)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -162,14 +153,14 @@ struct PriceAnalysisView: View {
     
     private var hotSearchesSection: some View {
         VStack {
-            Text("priceAnalysis.hotSearches.title", bundle: .module)
+            Text("priceAnalysis.hotSearches.title".localized())
                 .font(.subheadline).bold()
 
             if viewModel.isLoadingHotSearches {
                 ProgressView()
                     .padding(.vertical, 5)
             } else if viewModel.hotSearches.isEmpty {
-                Text("priceAnalysis.hotSearches.noData", bundle: .module)
+                Text("priceAnalysis.hotSearches.noData".localized())
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.vertical, 5)
@@ -204,7 +195,8 @@ struct PriceAnalysisView: View {
                 
                 Picker("Chart Type", selection: $activeChart) {
                     ForEach(ChartType.allCases, id: \.self) { type in
-                        Text(type.localized, bundle: .module).tag(type)
+                        // --- 修正：直接在 View 中使用 .rawValue 進行本地化 ---
+                        Text(type.rawValue.localized()).tag(type)
                     }
                 }
                 .pickerStyle(SegmentedPickerStyle())
@@ -219,31 +211,27 @@ struct PriceAnalysisView: View {
                 }
                 
             } else {
-                Text("priceAnalysis.prompt.enterSymbol", bundle: .module)
+                Text("priceAnalysis.prompt.enterSymbol".localized())
                     .foregroundColor(.secondary)
                     .frame(height: 350)
             }
         }
         .cardStyle()
     }
-    
-    // --- MODIFICATION START: The old explanationCard is removed ---
-    // private var explanationCard: some View { ... } // REMOVED
-    // --- MODIFICATION END ---
 
     private func analysisResultHeader(result: (price: Double, sentimentKey: String)) -> some View {
         HStack{
             VStack {
-                Text("priceAnalysis.result.stockCode", bundle: .module)
+                Text("priceAnalysis.result.stockCode".localized())
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text(viewModel.stockCode.uppercased())
                     .font(.headline)
             }
             .frame(maxWidth: .infinity)
-            Divider() 
+            Divider()
             VStack {
-                Text("priceAnalysis.result.stockPrice", bundle: .module)
+                Text("priceAnalysis.result.stockPrice".localized())
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text(PriceFormatter.format(price: result.price))
@@ -252,14 +240,14 @@ struct PriceAnalysisView: View {
             .frame(maxWidth: .infinity)
             Divider()
             VStack {
-                Text("priceAnalysis.result.marketSentiment", bundle: .module)
+                Text("priceAnalysis.result.marketSentiment".localized())
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(LocalizedStringKey(result.sentimentKey), bundle: .module)
+                Text(result.sentimentKey.localized())
                     .font(.headline)
                     .foregroundColor(sentimentColor(sentimentKey: result.sentimentKey))
             }
-            .frame(maxWidth: .infinity) 
+            .frame(maxWidth: .infinity)
         }
         .padding(.vertical)
     }
@@ -276,20 +264,19 @@ struct PriceAnalysisView: View {
     }
 }
 
-// --- MODIFICATION START: New expandable view and the old ExplanationSection is removed ---
 private struct ExpandableExplanationView: View {
-    let mainTitleKey: LocalizedStringKey
-    let shortDescriptionKey: LocalizedStringKey
+    let mainTitleKey: String
+    let shortDescriptionKey: String
     let sections: [ExplanationSectionData]
     
     @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text(mainTitleKey, bundle: .module)
+            Text(mainTitleKey.localized())
                 .font(.title2.bold())
             
-            Text(shortDescriptionKey, bundle: .module)
+            Text(shortDescriptionKey.localized())
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .lineLimit(isExpanded ? nil : 4)
@@ -299,13 +286,13 @@ private struct ExpandableExplanationView: View {
                 
                 ForEach(sections) { section in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(section.titleKey, bundle: .module)
+                        Text(section.titleKey.localized())
                             .font(.headline)
                         ForEach(section.contentKeys, id: \.self) { key in
                             HStack(alignment: .top) {
                                 Text("•")
                                     .foregroundColor(.secondary)
-                                Text(LocalizedStringKey(key), bundle: .module)
+                                Text(key.localized())
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
@@ -321,7 +308,7 @@ private struct ExpandableExplanationView: View {
                 }
             }) {
                 HStack {
-                    Text(isExpanded ? "common.collapse" : "common.learnMore", bundle: .module)
+                    Text(isExpanded ? "common.collapse".localized() : "common.learnMore".localized())
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                 }
                 .font(.callout.weight(.semibold))
@@ -333,11 +320,9 @@ private struct ExpandableExplanationView: View {
         .cardStyle()
     }
 }
-// private struct ExplanationSection: View { ... } // REMOVED
-// --- MODIFICATION END ---
 
 
-// MARK: - Sub-charts
+// MARK: - Sub-charts (No changes needed below this line)
 
 private struct PriceStandardDeviationChart: View {
     let chartData: PriceAnalysisData
@@ -410,10 +395,10 @@ private struct PriceStandardDeviationChart: View {
             }
 
             ForEach(trendPoints) { point in
-                let trendLineText = NSLocalizedString(trendLineKey, bundle: .module, comment: "")
+                let trendLineText = trendLineKey.localized()
                 LineMark(
                     x: .value("Date", point.date),
-                    y: .value("Trend", point.value)
+                    y: .value(trendLineText, point.value)
                 )
                 .foregroundStyle(AppColors.trend)
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5]))
@@ -467,7 +452,7 @@ private struct PriceStandardDeviationChart: View {
                     .foregroundColor(.secondary)
                 
                 ForEach(sortedItems, id: \.key) { seriesKey, value in
-                    let seriesText = NSLocalizedString(seriesKey, bundle: .module, comment: "")
+                    let seriesText = seriesKey.localized()
                     HStack {
                         Circle()
                             .fill(seriesKeyMap[seriesKey] ?? AppColors.trend)
@@ -667,7 +652,7 @@ private struct ULBandChart: View {
                     .foregroundColor(.secondary)
                 
                 ForEach(sortedItems, id: \.key) { seriesKey, value in
-                    let seriesText = NSLocalizedString(seriesKey, bundle: .module, comment: "")
+                    let seriesText = seriesKey.localized()
                     HStack {
                         Circle()
                             .fill(seriesKeyMap[seriesKey]!)
