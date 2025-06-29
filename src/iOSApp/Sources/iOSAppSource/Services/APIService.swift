@@ -2,6 +2,20 @@
 
 import Foundation
 
+private enum APIConfig {
+    static let baseURL: URL = {
+        // 從 Info.plist 中讀取我們設定的 "ApiBaseUrl"
+        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String else {
+            fatalError("錯誤：ApiBaseUrl 未在 Info.plist 中設定！")
+        }
+        // 確保 URL 字串是有效的
+        guard let url = URL(string: urlString) else {
+            fatalError("錯誤：Info.plist 中的 URL 字串無效: \(urlString)")
+        }
+        return url
+    }()
+}
+
 // A generic response structure to handle APIs that wrap the main data
 struct APIResponse<T: Decodable>: Decodable {
     let data: T
@@ -47,7 +61,7 @@ struct HotSearchesData: Codable {
 
 class APIService {
     static let shared = APIService()
-    private let baseURL = URL(string: "http://127.0.0.1:5001/api/")!
+    private let baseURL = APIConfig.baseURL
     private var csrfToken: String?
 
     private func request<T: Decodable>(endpoint: String, method: String = "GET", queryItems: [URLQueryItem]? = nil, body: Data? = nil, expectDataWrapper: Bool = true) async throws -> T {
@@ -90,9 +104,35 @@ class APIService {
         }
         
         let decoder = JSONDecoder()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        let iso8601FullFormatter = ISO8601DateFormatter()
+        iso8601FullFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        let yyyyMMddFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+
+        decoder.dateDecodingStrategy = .custom({ (decoder) -> Date in
+        let container = try decoder.singleValueContainer()
+        let dateStr = try container.decode(String.self)
+
+        // 依序嘗試多種格式
+        if let date = iso8601FullFormatter.date(from: dateStr) {
+            // 嘗試完整的 ISO8601 格式 (例如: "2025-06-29T10:00:00.123Z")
+            return date
+        }
+        if let date = yyyyMMddFormatter.date(from: dateStr) {
+            // 嘗試只有日期的格式 (例如: "2025-06-29")
+            return date
+        }
+        
+        // 如果所有格式都失敗，才拋出錯誤
+        throw DecodingError.dataCorruptedError(in: container,
+            debugDescription: "無法解碼日期字串 '\(dateStr)'，它不符合任何預期的格式。")
+        })
 
         guard !data.isEmpty else {
              throw AppError.unknownError

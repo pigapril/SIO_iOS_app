@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Promises (Playground).xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>Sentiment Inside Out.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -13,6 +18,24 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>15ECC2A02DFD52E1002F9766</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>15ECC2AD2DFD52E3002F9766</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>15ECC2B72DFD52E3002F9766</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

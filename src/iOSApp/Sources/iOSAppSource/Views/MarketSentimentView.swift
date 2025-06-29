@@ -226,7 +226,10 @@ public struct MarketSentimentView: View {
     }
 
     private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter(); formatter.dateStyle = .medium; formatter.timeStyle = .short; return formatter
+        let formatter = DateFormatter()
+        // 將日期格式設定為 "年/月/日"
+        formatter.dateFormat = "yyyy/M/d"
+        return formatter
     }()
     
     private func getCompositeSections() -> [DescriptionSection] {

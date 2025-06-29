@@ -41,6 +41,37 @@ enum AppError: Error {
 
     // Custom initializer to determine error from various sources
     init(error: Error) {
+                if let decodingError = error as? DecodingError {
+            print("================ DECODING ERROR DETECTED ================")
+            print("Raw Error: \(decodingError)")
+            
+            switch decodingError {
+            case .typeMismatch(let type, let context):
+                print("Type Mismatch: '\(type)' was expected, but a different type was found.")
+                print("Debug Description: \(context.debugDescription)")
+                print("Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))")
+                
+            case .valueNotFound(let value, let context):
+                print("Value Not Found: Expected value of type '\(value)' but found null instead.")
+                print("Debug Description: \(context.debugDescription)")
+                print("Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))")
+                
+            case .keyNotFound(let key, let context):
+                print("Key Not Found: The key '\(key.stringValue)' was not found.")
+                print("Debug Description: \(context.debugDescription)")
+                print("Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))")
+                
+            case .dataCorrupted(let context):
+                print("Data Corrupted: The data appears to be malformed.")
+                print("Debug Description: \(context.debugDescription)")
+                print("Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))")
+                
+            @unknown default:
+                print("An unknown decoding error occurred.")
+            }
+            print("=======================================================")
+        }
+
         let nsError = error as NSError
         switch nsError.domain {
         case NSURLErrorDomain:
