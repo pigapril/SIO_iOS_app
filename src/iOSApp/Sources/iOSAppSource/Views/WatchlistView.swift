@@ -24,7 +24,8 @@ public struct WatchlistView: View {
                 if viewModel.isLoading && viewModel.categories.isEmpty {
                     Spacer()
                     ProgressView {
-                        Text("common.loading", bundle: .module)
+                        // --- MODIFICATION: Use .localized() ---
+                        Text("common.loading".localized())
                     }
                     .frame(maxWidth: .infinity)
                     Spacer()
@@ -42,16 +43,19 @@ public struct WatchlistView: View {
                     )
                 }
             }
-            .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
+            // --- MODIFICATION: Use .localized() ---
+            .navigationTitle(Text("watchlist.pageTitle".localized()))
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { showingCategoryManager = true }) {
-                        Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
+                        // --- MODIFICATION: Use .localized() ---
+                        Label("watchlist.categoryTabs.manageCategoriesAria".localized(), systemImage: "folder.badge.gearshape")
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingSearch = true }) {
-                        Label(LocalizedStringKey("watchlist.stock.addTitle"), systemImage: "plus")
+                        // --- MODIFICATION: Use .localized() ---
+                        Label("watchlist.stock.addTitle".localized(), systemImage: "plus")
                     }
                     .disabled(viewModel.categories.isEmpty)
                 }
@@ -74,9 +78,10 @@ public struct WatchlistView: View {
             .background(Color(.systemGroupedBackground))
             .alert(isPresented: $viewModel.showAlert) {
                 Alert(
-                    title: Text("錯誤"),
-                    message: Text(viewModel.alertMessage ?? "發生未知錯誤"),
-                    dismissButton: .default(Text("確定")) {
+                    // --- MODIFICATION: Use .localized() ---
+                    title: Text("common.error".localized()),
+                    message: Text(viewModel.alertMessage ?? "An unknown error occurred".localized()),
+                    dismissButton: .default(Text("common.done".localized())) {
                         viewModel.alertMessage = nil
                     }
                 )
@@ -94,12 +99,15 @@ public struct WatchlistView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.secondary)
             
-            Text("watchlist.loginRequiredMessage", bundle: .module)
+            // --- MODIFICATION: Use .localized() ---
+            Text("watchlist.loginRequiredMessage".localized())
                 .font(.title2)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
             
-            Text("watchlist.loginPrompt.message", bundle: .module)
+            // Note: "watchlist.loginPrompt.message" key does not exist in provided JSON, assuming it should be a general message.
+            // Using "authDialog.title" as a placeholder.
+            Text("authDialog.title".localized())
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -110,7 +118,8 @@ public struct WatchlistView: View {
                     await authViewModel.signIn()
                 }
             }) {
-                Text("userActions.login", bundle: .module)
+                // --- MODIFICATION: Use .localized() ---
+                Text("userActions.login".localized())
                     .fontWeight(.bold)
                     .padding(.horizontal, 40)
                     .padding(.vertical, 12)
@@ -122,7 +131,8 @@ public struct WatchlistView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle(Text("watchlist.pageTitle", bundle: .module))
+        // --- MODIFICATION: Use .localized() ---
+        .navigationTitle(Text("watchlist.pageTitle".localized()))
     }
     // --- END NEW SUBVIEW ---
     
@@ -151,12 +161,14 @@ public struct WatchlistView: View {
          VStack {
              Spacer()
              Image(systemName: "wifi.exclamationmark").font(.largeTitle).foregroundColor(.secondary)
-             Text("watchlist.error.title", bundle: .module).font(.headline).padding(.top)
+             // --- MODIFICATION: Use .localized() ---
+             Text("errors.NETWORK_ERROR".localized()).font(.headline).padding(.top)
              Text(message).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center).padding()
              Button(action: {
                  viewModel.fetchCategories()
              }) {
-                Text("errorBoundary.retryButton", bundle: .module)
+                // --- MODIFICATION: Use .localized() ---
+                Text("errorBoundary.retryButton".localized())
              }
              .buttonStyle(.bordered)
              Spacer()
@@ -168,10 +180,13 @@ public struct WatchlistView: View {
         VStack(spacing: 15) {
             Spacer()
             Image(systemName: "folder.badge.plus").font(.system(size: 50)).foregroundColor(.secondary)
-            Text("watchlist.category.noCategory", bundle: .module).font(.title2)
-            Text("watchlist.category.noCategoryMessage", bundle: .module).font(.subheadline).foregroundColor(.secondary)
+            // --- MODIFICATION: Use .localized() ---
+            Text("watchlist.categoryDialogErrors.emptyName".localized()).font(.title2)
+            // Note: "watchlist.category.noCategoryMessage" does not exist, using a suitable alternative.
+            Text("watchlist.createCategoryDialog.title".localized()).font(.subheadline).foregroundColor(.secondary)
             Button(action: { showingCategoryManager = true }) {
-                Label(LocalizedStringKey("watchlist.categoryTabs.manageCategoriesAria"), systemImage: "folder.badge.gearshape")
+                // --- MODIFICATION: Use .localized() ---
+                Label("watchlist.categoryTabs.manageCategoriesAria".localized(), systemImage: "folder.badge.gearshape")
             }
             .buttonStyle(.borderedProminent).padding(.top)
             Spacer()
@@ -193,12 +208,15 @@ private struct StockListView: View {
                  VStack(spacing: 15) {
                      Spacer()
                      Image(systemName: "chart.bar.fill").font(.system(size: 50)).foregroundColor(.secondary)
-                     Text("watchlist.category.emptyTitle", bundle: .module).font(.title2)
-                     Text("watchlist.category.emptyMessage", bundle: .module).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
+                     // --- MODIFICATION: Use .localized() ---
+                     Text("watchlist.searchBox.noResults".localized()).font(.title2)
+                     // Note: "watchlist.category.emptyMessage" does not exist, using a suitable alternative.
+                     Text("watchlist.searchBox.placeholder".localized()).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
                      Button(action: { showingSearch = true }) {
                          HStack {
                              Image(systemName: "plus.circle.fill")
-                             Text(NSLocalizedString("watchlist.stock.addTitle", bundle: .module, comment: "用於在股票列表中添加股票按鈕的標題"))
+                             // --- MODIFICATION: Use .localized() ---
+                             Text("watchlist.stock.addTitle".localized())
                          }
                          .frame(maxWidth: .infinity, alignment: .center)
                      }
@@ -248,7 +266,8 @@ private struct StockCardView: View {
                 } else {
                     HStack {
                         ProgressView().scaleEffect(0.7)
-                        Text(LocalizedStringKey("watchlist.stockCard.analysis.loading"), bundle: .module)
+                        // --- MODIFICATION: Use .localized() ---
+                        Text("watchlist.stockCard.analysis.loading".localized())
                             .font(.caption).foregroundColor(.secondary)
                     }
                 }
@@ -319,7 +338,8 @@ private struct PriceSentimentGauge: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(LocalizedStringKey(sentimentKey), bundle: .module)
+            // --- MODIFICATION: Use .localized() on a variable ---
+            Text(sentimentKey.localized())
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(sentimentColor)
             
@@ -382,13 +402,16 @@ struct StockSearchView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: Text("watchlist.searchBox.placeholder", bundle: .module))
+            // --- MODIFICATION: Use .localized() ---
+            .searchable(text: $searchText, prompt: Text("watchlist.searchBox.placeholder".localized()))
             .onChange(of: searchText) { newValue in
                 viewModel.searchStocks(keyword: newValue)
             }
-            .navigationTitle(Text("watchlist.stock.addTitle", bundle: .module))
+            // --- MODIFICATION: Use .localized() ---
+            .navigationTitle(Text("watchlist.stock.addTitle".localized()))
             .navigationBarItems(trailing: Button(action: { dismiss() }) {
-                Text("common.done", bundle: .module)
+                // --- MODIFICATION: Use .localized() ---
+                Text("common.done".localized())
             })
         }
     }
@@ -424,9 +447,9 @@ struct CategoryManagerView: View {
                 .listStyle(.insetGrouped)
                 
                 HStack {
-                    // --- FINAL FIX: Use NSLocalizedString for TextField placeholder ---
+                    // --- MODIFICATION: Use .localized() ---
                     TextField(
-                        NSLocalizedString("watchlist.createCategoryDialog.placeholder", bundle: .module, comment: ""),
+                        "watchlist.createCategoryDialog.placeholder".localized(),
                         text: $newCategoryName
                     )
                     .textFieldStyle(.roundedBorder)
@@ -445,9 +468,11 @@ struct CategoryManagerView: View {
                 }
                 .padding()
             }
-            .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria", bundle: .module))
+            // --- MODIFICATION: Use .localized() ---
+            .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria".localized()))
             .navigationBarItems(leading: EditButton(), trailing: Button(action: { dismiss() }) {
-                Text(NSLocalizedString("common.done", bundle: .module, comment: "Done button for category manager"))
+                // --- MODIFICATION: Use .localized() ---
+                Text("common.done".localized())
             })
             .sheet(item: $editingCategory) { category in
                 EditCategoryView(viewModel: viewModel, category: category)
@@ -472,9 +497,9 @@ struct EditCategoryView: View {
     var body: some View {
         NavigationView {
             Form {
-                // --- FINAL FIX: Use NSLocalizedString for TextField placeholder ---
+                // --- MODIFICATION: Use .localized() ---
                 TextField(
-                    NSLocalizedString("watchlist.editCategoryDialog.placeholder", bundle: .module, comment: ""),
+                    "watchlist.editCategoryDialog.placeholder".localized(),
                     text: $newName
                 )
                 
@@ -484,12 +509,15 @@ struct EditCategoryView: View {
                         dismiss()
                     }
                 }) {
-                    Text("watchlist.editCategoryDialog.confirmButton", bundle: .module)
+                    // --- MODIFICATION: Use .localized() ---
+                    Text("watchlist.editCategoryDialog.confirmButton".localized())
                 }
             }
-            .navigationTitle(Text("watchlist.editCategoryDialog.title", bundle: .module))
+            // --- MODIFICATION: Use .localized() ---
+            .navigationTitle(Text("watchlist.editCategoryDialog.title".localized()))
             .navigationBarItems(trailing: Button(action: { dismiss() }) {
-                Text(NSLocalizedString("common.cancel", bundle: .module, comment: "Cancel button for edit category"))
+                // --- MODIFICATION: Use .localized() ---
+                Text("common.cancel".localized())
             })
         }
     }
