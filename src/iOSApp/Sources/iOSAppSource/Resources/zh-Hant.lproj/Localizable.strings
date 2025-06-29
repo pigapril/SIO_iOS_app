@@ -213,10 +213,10 @@
 "marketSentiment.chart.spyPriceLabel" = "SPY 價格";
 "marketSentiment.chart.compositeIndexAxisLabel" = "SIO恐懼貪婪指標";
 "marketSentiment.chart.spyPriceAxisLabel" = "SPY 價格";
-"marketSentiment.chart.tooltipScore" = "情緒分數";
+"marketSentiment.chart.tooltipScore" = "恐懼貪婪分數";
 "marketSentiment.chart.tooltipSPY" = "SPY 價格";
 "marketSentiment.indicatorDetail.valueLabel" = "指標數值";
-"marketSentiment.indicatorDetail.sentimentScoreLabel" = "情緒分數";
+"marketSentiment.indicatorDetail.sentimentScoreLabel" = "恐懼貪婪分數";
 "marketSentiment.viewMode.overview" = "最新情緒指數";
 "marketSentiment.viewMode.timeline" = "歷史走勢";
 "marketSentiment.viewMode.overviewAria" = "切換至最新情緒視圖";
@@ -422,7 +422,9 @@
 "watchlist.categoryDialogErrors.nameTooLongChars" = "分類名稱不能超過 {{maxLength}} 個字元";
 "watchlist.category.createSuccess" = "分類創建成功";
 "watchlist.category.updateSuccess" = "分類已更新";
+"watchlist.category.deleteCategory" = "刪除分類";
 "watchlist.category.deleteConfirm" = "確定要刪除此分類嗎？此操作無法復原。";
+"watchlist.category.delete" = "刪除";
 "watchlist.category.deleteSuccess" = "分類已刪除";
 "watchlist.category.noCategory" = "目前沒有任何分類";
 "watchlist.category.noCategoryMessage" = "新增一個分類並開始追蹤你的股票吧！";

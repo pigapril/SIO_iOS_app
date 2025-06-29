@@ -424,7 +424,12 @@ struct CategoryManagerView: View {
     @State private var editingCategory: Category?
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject private var toastManager: ToastManager
-
+    
+    // --- MODIFICATION START ---
+    // State to control the confirmation alert
+    @State private var showingDeleteConfirm = false
+    @State private var categoryToDelete: Category?
+    // --- MODIFICATION END ---
 
     var body: some View {
         NavigationView {
@@ -432,22 +437,53 @@ struct CategoryManagerView: View {
                 List {
                     Section{
                         ForEach(viewModel.categories) { category in
-                            HStack {
+                            HStack(spacing: 15) {
+                                // --- MODIFICATION: This button now shows the confirmation alert ---
+                                Button(action: {
+                                    categoryToDelete = category
+                                    showingDeleteConfirm = true
+                                }) {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundColor(.red)
+                                        .imageScale(.large)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+
                                 Text(category.name)
                                 Spacer()
                                 Button(action: { editingCategory = category }) {
                                     Image(systemName: "pencil.line")
                                 }.buttonStyle(BorderlessButtonStyle())
                             }
-
                         }
-                        .onDelete(perform: viewModel.deleteCategory)
                     }
                 }
                 .listStyle(.insetGrouped)
+                // --- MODIFICATION: Added alert modifier for delete confirmation ---
+                .alert(isPresented: $showingDeleteConfirm) {
+                Alert(
+                        // Title: 使用您自訂的 key，這是好的做法
+                        title: Text("watchlist.category.deleteCategory".localized()),
+                        
+                        // Message: 這個 key 用在這裡是正確的
+                        message: Text("watchlist.category.deleteConfirm".localized()),
+                        
+                        // Primary Button (Destructive):
+                        primaryButton: .destructive(
+                            Text("watchlist.category.delete".localized()), 
+                        ) {
+                            // 按下刪除後要執行的動作
+                            if let category = categoryToDelete, let index = viewModel.categories.firstIndex(where: { $0.id == category.id }) {
+                                viewModel.deleteCategory(at: IndexSet(integer: index))
+                            }
+                        },
+                        
+                        // Secondary Button (Cancel):
+                        secondaryButton: .cancel(Text("common.cancel".localized()))
+                    )
+                }
                 
                 HStack {
-                    // --- MODIFICATION: Use .localized() ---
                     TextField(
                         "watchlist.createCategoryDialog.placeholder".localized(),
                         text: $newCategoryName
@@ -468,10 +504,8 @@ struct CategoryManagerView: View {
                 }
                 .padding()
             }
-            // --- MODIFICATION: Use .localized() ---
             .navigationTitle(Text("watchlist.categoryTabs.manageCategoriesAria".localized()))
-            .navigationBarItems(leading: EditButton(), trailing: Button(action: { dismiss() }) {
-                // --- MODIFICATION: Use .localized() ---
+            .navigationBarItems(trailing: Button(action: { dismiss() }) {
                 Text("common.done".localized())
             })
             .sheet(item: $editingCategory) { category in
@@ -480,6 +514,7 @@ struct CategoryManagerView: View {
         }
     }
 }
+
 
 // MARK: - Edit Category View
 struct EditCategoryView: View {
