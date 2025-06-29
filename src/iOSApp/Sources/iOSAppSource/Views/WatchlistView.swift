@@ -293,16 +293,7 @@ private struct StockHeaderView: View {
 
     var body: some View {
         HStack {
-            AsyncImage(url: URL(string: stock.logo ?? "")) { image in
-                 image.resizable().aspectRatio(contentMode: .fit)
-             } placeholder: {
-                 Text(String(stock.symbol.prefix(1)))
-                     .fontWeight(.bold)
-                     .foregroundColor(.secondary)
-             }
-            .frame(width: 40, height: 40)
-            .background(Color(.systemGray6))
-            .clipShape(Circle())
+            StockLogoView(stock: stock, size: 40)
             
             VStack(alignment: .leading) {
                 Text(stock.symbol).font(.headline)

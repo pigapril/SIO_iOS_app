@@ -248,14 +248,8 @@ private struct WatchlistPreviewItem: View {
 
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
-            AsyncImage(url: URL(string: stock.logo ?? "")) { image in
-                image.resizable().scaledToFit()
-            } placeholder: {
-                ProgressView()
-            }
-            .frame(width: 32, height: 32)
-            .clipShape(Circle())
-            
+            StockLogoView(stock: stock, size: 32)
+
             Text(stock.symbol)
                 .font(.headline)
                 .foregroundColor(.primary)

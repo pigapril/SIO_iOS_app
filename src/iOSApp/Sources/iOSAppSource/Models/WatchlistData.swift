@@ -1,51 +1,86 @@
 import Foundation
 
-struct Category: Codable, Identifiable {
-    let id: String
-    var name: String
-    var stocks: [Stock]?
+// --- MODIFICATION: Made struct and its initializer public ---
+public struct Category: Codable, Identifiable {
+    public let id: String
+    public var name: String
+    public var stocks: [Stock]?
+
+    public init(id: String, name: String, stocks: [Stock]?) {
+        self.id = id
+        self.name = name
+        self.stocks = stocks
+    }
 }
 
-struct Stock: Codable, Identifiable, Hashable {
-    let id: String
-    let symbol: String
-    let name: String
-    let nameEn: String?
-    let price: Double
-    let change: Double?
-    let changePercent: Double?
-    let logo: String?
-    let analysis: StockAnalysisData?
+// --- MODIFICATION: Made struct and its initializer public ---
+public struct Stock: Codable, Identifiable, Hashable {
+    public let id: String
+    public let symbol: String
+    public let name: String
+    public let nameEn: String?
+    public let price: Double
+    public let change: Double?
+    public let changePercent: Double?
+    public let logo: String?
+    public let analysis: StockAnalysisData?
     
+    public init(id: String, symbol: String, name: String, nameEn: String?, price: Double, change: Double?, changePercent: Double?, logo: String?, analysis: StockAnalysisData?) {
+        self.id = id
+        self.symbol = symbol
+        self.name = name
+        self.nameEn = nameEn
+        self.price = price
+        self.change = change
+        self.changePercent = changePercent
+        self.logo = logo
+        self.analysis = analysis
+    }
+
     // Conformance to Hashable
-    static func == (lhs: Stock, rhs: Stock) -> Bool {
+    public static func == (lhs: Stock, rhs: Stock) -> Bool {
         return lhs.id == rhs.id
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }
 
-struct StockAnalysisData: Codable, Hashable {
-    let tl_plus_2sd: Double
-    let tl_plus_sd: Double
-    let tl_minus_sd: Double
-    let tl_minus_2sd: Double
+// --- MODIFICATION: Made struct and its initializer public ---
+public struct StockAnalysisData: Codable, Hashable {
+    public let tl_plus_2sd: Double
+    public let tl_plus_sd: Double
+    public let tl_minus_sd: Double
+    public let tl_minus_2sd: Double
+
+    public init(tl_plus_2sd: Double, tl_plus_sd: Double, tl_minus_sd: Double, tl_minus_2sd: Double) {
+        self.tl_plus_2sd = tl_plus_2sd
+        self.tl_plus_sd = tl_plus_sd
+        self.tl_minus_sd = tl_minus_sd
+        self.tl_minus_2sd = tl_minus_2sd
+    }
 }
 
-struct SearchResult: Codable, Identifiable, Hashable {
-    var id: String { symbol }
-    let symbol: String
-    let name: String
-    let market: String
+// --- MODIFICATION: Made struct public ---
+public struct SearchResult: Codable, Identifiable, Hashable {
+    public var id: String { symbol }
+    public let symbol: String
+    public let name: String
+    public let market: String
     
+    public init(symbol: String, name: String, market: String) {
+        self.symbol = symbol
+        self.name = name
+        self.market = market
+    }
+
     // Conformance to Hashable
-    static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
+    public static func == (lhs: SearchResult, rhs: SearchResult) -> Bool {
         return lhs.id == rhs.id
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }
