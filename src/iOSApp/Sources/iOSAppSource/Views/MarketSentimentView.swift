@@ -31,6 +31,48 @@ public struct MarketSentimentView: View {
     
     @State private var selectedView: SentimentViewType = .overview
 
+    // --- MODIFICATION START ---
+    // 1. 將手勢相關的狀態變數移至 View 的頂層
+    @State private var initialDateRangeForZoom: ClosedRange<Date>? = nil
+
+    // 2. 將手勢定義為 View 的一個 computed property
+    private var magnificationGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                // 在手勢開始時，記錄當前的日期範圍
+                if initialDateRangeForZoom == nil {
+                    initialDateRangeForZoom = viewModel.dateRange
+                }
+                guard let initialRange = initialDateRangeForZoom else { return }
+
+                // 根據縮放比例計算新的時間間隔
+                let originalInterval = initialRange.upperBound.timeIntervalSince(initialRange.lowerBound)
+                let newInterval = originalInterval / Double(value)
+                
+                // 以原始範圍的中心點為基準進行縮放
+                let centerPoint = initialRange.lowerBound.timeIntervalSinceReferenceDate + originalInterval / 2
+                var newLowerBound = Date(timeIntervalSinceReferenceDate: centerPoint - newInterval / 2)
+                var newUpperBound = Date(timeIntervalSinceReferenceDate: centerPoint + newInterval / 2)
+
+                // 確保縮放範圍不會超過數據的總範圍
+                if let fullRange = viewModel.fullDateRange {
+                    newLowerBound = max(newLowerBound, fullRange.lowerBound)
+                    newUpperBound = min(newUpperBound, fullRange.upperBound)
+                }
+                
+                // 更新 ViewModel 中的日期範圍
+                if newUpperBound > newLowerBound {
+                    viewModel.dateRange = newLowerBound...newUpperBound
+                    viewModel.updateChartData()
+                }
+            }
+            .onEnded { _ in
+                // 手勢結束時，重置初始日期範圍狀態
+                initialDateRangeForZoom = nil
+            }
+    }
+    // --- MODIFICATION END ---
+
     public init() {}
 
     public var body: some View {
@@ -138,27 +180,6 @@ public struct MarketSentimentView: View {
         } else if let errorMessage = viewModel.errorMessage, viewModel.historicalData.isEmpty {
             errorView(message: errorMessage)
         } else {
-            @State var initialDateRange: ClosedRange<Date>? = nil
-            let magnificationGesture = MagnificationGesture()
-                .onChanged { value in
-                    if initialDateRange == nil { initialDateRange = viewModel.dateRange }
-                    guard let initialRange = initialDateRange else { return }
-                    let originalInterval = initialRange.upperBound.timeIntervalSince(initialRange.lowerBound)
-                    let newInterval = originalInterval / Double(value)
-                    let centerPoint = initialRange.lowerBound.timeIntervalSinceReferenceDate + originalInterval / 2
-                    var newLowerBound = Date(timeIntervalSinceReferenceDate: centerPoint - newInterval / 2)
-                    var newUpperBound = Date(timeIntervalSinceReferenceDate: centerPoint + newInterval / 2)
-                    if let fullRange = viewModel.fullDateRange {
-                        newLowerBound = max(newLowerBound, fullRange.lowerBound)
-                        newUpperBound = min(newUpperBound, fullRange.upperBound)
-                    }
-                    if newUpperBound > newLowerBound {
-                        viewModel.dateRange = newLowerBound...newUpperBound
-                        viewModel.updateChartData()
-                    }
-                }
-                .onEnded { _ in initialDateRange = nil }
-            
             VStack {
                 HStack {
                     Text("marketSentiment.viewMode.timeline".localized())
