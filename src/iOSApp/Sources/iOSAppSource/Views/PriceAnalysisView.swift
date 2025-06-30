@@ -53,8 +53,6 @@ struct PriceAnalysisView: View {
     enum ChartType: String, CaseIterable {
         case standardDeviation = "priceAnalysis.chart.tabs.sd"
         case ulBand = "priceAnalysis.chart.tabs.ulband"
-        
-        // --- 修正：移除 .localized() 計算屬性 ---
     }
 
     var body: some View {
@@ -195,7 +193,6 @@ struct PriceAnalysisView: View {
                 
                 Picker("Chart Type", selection: $activeChart) {
                     ForEach(ChartType.allCases, id: \.self) { type in
-                        // --- 修正：直接在 View 中使用 .rawValue 進行本地化 ---
                         Text(type.rawValue.localized()).tag(type)
                     }
                 }
@@ -322,21 +319,29 @@ private struct ExpandableExplanationView: View {
 }
 
 
-// MARK: - Sub-charts (No changes needed below this line)
+// MARK: - Sub-charts
 
 private struct PriceStandardDeviationChart: View {
     let chartData: PriceAnalysisData
     @State private var selectedDate: Date?
     @State private var selectedValues: [String: Double]?
 
+    private var dateDomain: ClosedRange<Date>? {
+        guard let firstDateStr = chartData.dates.first, let lastDateStr = chartData.dates.last,
+              let firstDate = date(from: firstDateStr), let lastDate = date(from: lastDateStr) else {
+            return nil
+        }
+        return firstDate...lastDate
+    }
+    
     private let isoDateFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
     
-    private func date(from string: String) -> Date {
-        return isoDateFormatter.date(from: string) ?? Date()
+    private func date(from string: String) -> Date? {
+        return isoDateFormatter.date(from: string)
     }
     
     private var yAxisDomain: ClosedRange<Double> {
@@ -484,14 +489,14 @@ private struct PriceStandardDeviationChart: View {
     }
 
     private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize, data: [TidyChartDataPoint], trendData: [TrendDataPoint]) {
-        guard location.x >= 0, location.x <= geometry.width else {
-            self.selectedDate = nil
-            self.selectedValues = nil
+        guard let domain = dateDomain,
+              let rawDate: Date = proxy.value(atX: location.x) else {
             return
         }
-        guard let date: Date = proxy.value(atX: location.x) else { return }
         
-        self.selectedDate = date
+        let clampedDate = min(max(rawDate, domain.lowerBound), domain.upperBound)
+        
+        self.selectedDate = clampedDate
         
         var newValues: [String: Double] = [:]
         
@@ -499,7 +504,7 @@ private struct PriceStandardDeviationChart: View {
         
         let closestPoints = Dictionary(grouping: allPoints, by: { $0.series })
             .mapValues { seriesPoints -> TidyChartDataPoint? in
-                seriesPoints.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
+                seriesPoints.min(by: { abs($0.date.timeIntervalSince(clampedDate)) < abs($1.date.timeIntervalSince(clampedDate)) })
             }
 
         for (series, point) in closestPoints {
@@ -533,7 +538,7 @@ private struct PriceStandardDeviationChart: View {
         guard !chartData.dates.isEmpty else { return ([], []) }
 
         for i in 0..<chartData.dates.count {
-            let date = date(from: chartData.dates[i])
+            guard let date = date(from: chartData.dates[i]) else { continue }
             
             if i < chartData.sdAnalysis.trendLine.count {
                 trendData.append(TrendDataPoint(date: date, value: chartData.sdAnalysis.trendLine[i]))
@@ -554,15 +559,44 @@ private struct ULBandChart: View {
     @State private var selectedDate: Date?
     @State private var selectedValues: [String: Double]?
     
+    private var dateDomain: ClosedRange<Date>? {
+        guard let firstDateStr = chartData.weeklyDates.first, let lastDateStr = chartData.weeklyDates.last,
+              let firstDate = date(from: firstDateStr), let lastDate = date(from: lastDateStr) else {
+            return nil
+        }
+        return firstDate...lastDate
+    }
+    
+    // --- BUG FIX: ULBandChart Blank Screen ---
+    // Create formatters that ULBandChart can use.
     private let isoDateFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+    
+    private let yyyyMMddFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // Assume UTC if no timezone info
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
 
-    private func date(from string: String) -> Date {
-        return isoDateFormatter.date(from: string) ?? Date()
+    // Create a flexible date parser for ULBandChart's specific data.
+    private func date(from string: String) -> Date? {
+        // First, try the full ISO format (which might be used elsewhere).
+        if let date = isoDateFormatter.date(from: string) {
+            return date
+        }
+        // If that fails, try the "yyyy-MM-dd" format. This is the fix.
+        if let date = yyyyMMddFormatter.date(from: string) {
+            return date
+        }
+        // If both fail, return nil.
+        return nil
     }
+    // --- END OF BUG FIX ---
     
     private var yAxisDomain: ClosedRange<Double> {
         let allDataPoints = chartData.weeklyPrices + chartData.upperBand + chartData.lowerBand
@@ -595,48 +629,56 @@ private struct ULBandChart: View {
         let sortedSeriesKeys = seriesKeyMap.keys.sorted()
         let colorRange = sortedSeriesKeys.map { seriesKeyMap[$0]! }
         
-        Chart(dataPoints) { point in
-            let lineWidth = point.series == "ulBandChart.priceLabel" ? 2.5 : 1.5
-            LineMark(
-                x: .value("Date", point.date),
-                y: .value("Value", point.value)
-            )
-            .foregroundStyle(by: .value("Series", point.series))
-            .lineStyle(StrokeStyle(lineWidth: lineWidth))
-            
-            if let selectedDate {
-                RuleMark(x: .value("Date", selectedDate))
-                    .foregroundStyle(Color.gray.opacity(0.5))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
+        // Add a check to ensure dataPoints is not empty before rendering the chart
+        if dataPoints.isEmpty {
+            // Display a message or a progress view if there's no data to show
+            Text("common.noData".localized())
+                .foregroundColor(.secondary)
+                .frame(height: 300)
+        } else {
+            Chart(dataPoints) { point in
+                let lineWidth = point.series == "ulBandChart.priceLabel" ? 2.5 : 1.5
+                LineMark(
+                    x: .value("Date", point.date),
+                    y: .value("Value", point.value)
+                )
+                .foregroundStyle(by: .value("Series", point.series))
+                .lineStyle(StrokeStyle(lineWidth: lineWidth))
+                
+                if let selectedDate {
+                    RuleMark(x: .value("Date", selectedDate))
+                        .foregroundStyle(Color.gray.opacity(0.5))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
+                }
             }
-        }
-        .chartYScale(domain: yAxisDomain)
-        .chartForegroundStyleScale(domain: sortedSeriesKeys, range: colorRange)
-        .chartLegend(.hidden)
-        .chartXAxis {
-            AxisMarks(preset: .automatic, values: .automatic)
-        }
-        .chartYAxis {
-            AxisMarks(position: .trailing)
-        }
-        .chartOverlay { proxy in
-            GeometryReader { geometry in
-                Rectangle().fill(.clear).contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                updateSelection(at: value.location, proxy: proxy, geometry: geometry.size, data: dataPoints)
-                            }
-                            .onEnded { _ in
-                                selectedDate = nil
-                                selectedValues = nil
-                            }
-                    )
+            .chartYScale(domain: yAxisDomain)
+            .chartForegroundStyleScale(domain: sortedSeriesKeys, range: colorRange)
+            .chartLegend(.hidden)
+            .chartXAxis {
+                AxisMarks(preset: .automatic, values: .automatic)
             }
-        }
-        .chartOverlay { proxy in
-            if let selectedDate = selectedDate, let selectedValues = selectedValues {
-                chartTooltip(selectedDate: selectedDate, selectedValues: selectedValues, proxy: proxy)
+            .chartYAxis {
+                AxisMarks(position: .trailing)
+            }
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    updateSelection(at: value.location, proxy: proxy, geometry: geometry.size, data: dataPoints)
+                                }
+                                .onEnded { _ in
+                                    selectedDate = nil
+                                    selectedValues = nil
+                                }
+                        )
+                }
+            }
+            .chartOverlay { proxy in
+                if let selectedDate = selectedDate, let selectedValues = selectedValues {
+                    chartTooltip(selectedDate: selectedDate, selectedValues: selectedValues, proxy: proxy)
+                }
             }
         }
     }
@@ -684,20 +726,20 @@ private struct ULBandChart: View {
     }
     
     private func updateSelection(at location: CGPoint, proxy: ChartProxy, geometry: CGSize, data: [TidyChartDataPoint]) {
-        guard location.x >= 0, location.x <= geometry.width else {
-            self.selectedDate = nil
-            self.selectedValues = nil
+        guard let domain = dateDomain,
+              let rawDate: Date = proxy.value(atX: location.x) else {
             return
         }
-        guard let date: Date = proxy.value(atX: location.x) else { return }
         
-        self.selectedDate = date
+        let clampedDate = min(max(rawDate, domain.lowerBound), domain.upperBound)
+        
+        self.selectedDate = clampedDate
         
         var newValues: [String: Double] = [:]
         
         let closestPoints = Dictionary(grouping: data, by: { $0.series })
             .mapValues { seriesPoints -> TidyChartDataPoint? in
-                seriesPoints.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
+                seriesPoints.min(by: { abs($0.date.timeIntervalSince(clampedDate)) < abs($1.date.timeIntervalSince(clampedDate)) })
             }
 
         for (series, point) in closestPoints {
@@ -728,7 +770,7 @@ private struct ULBandChart: View {
         guard !chartData.weeklyDates.isEmpty else { return [] }
 
         for i in 0..<chartData.weeklyDates.count {
-            let date = date(from: chartData.weeklyDates[i])
+            guard let date = date(from: chartData.weeklyDates[i]) else { continue }
             for (j, seriesKey) in seriesKeys.enumerated() {
                 if i < dataArrays[j].count {
                      tidyData.append(TidyChartDataPoint(date: date, value: dataArrays[j][i], series: seriesKey))
