@@ -61,7 +61,12 @@ private struct LoginWallView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                     // --- MODIFICATION END ---
-                    
+                    SignInWithAppleButtonView(type: .signIn, style: .black) { result in
+                        authViewModel.handleAppleSignInResult(result)
+                    }
+                    .frame(height: 48)
+                    .padding(.horizontal, 40)
+
                     GoogleSignInButtonView(colorScheme: .dark) {
                         Task {
                             await authViewModel.signIn()
