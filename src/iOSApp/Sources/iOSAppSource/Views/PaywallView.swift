@@ -1,4 +1,4 @@
-// src/iOSApp/Sources/iOSAppSource/Views/PaywallView.swift (修改後)
+// src/iOSApp/Sources/iOSAppSource/Views/PaywallView.swift
 
 import SwiftUI
 
@@ -9,26 +9,27 @@ struct PaywallView: View {
     @StateObject private var paymentService = PaymentService.shared
     @Environment(\.dismiss) private var dismiss
 
-    // --- NEW ---
+    // --- MODIFIED: The plans are now a computed property using the correct localization keys ---
     /// 定義可用的訂閱方案
-    private let plans: [SubscriptionPlan] = [
-        SubscriptionPlan(id: "monthly",
-                         title: "月度方案",
-                         price: "NT$ 59",
-                         period: "/ 月",
-                         description: "每月自動續訂",
-                         badge: nil),
-        SubscriptionPlan(id: "annual",
-                         title: "年度方案",
-                         price: "NT$ 590",
-                         period: "/ 年",
-                         description: "年繳方案，現省 17%",
-                         badge: "贈送2個月")
-    ]
+    private var plans: [SubscriptionPlan] {
+        [
+            SubscriptionPlan(id: "monthly",
+                             title: "paywall.plan.monthly.title".localized(),
+                             price: "paywall.plan.monthly.price".localized(),
+                             period: "paywall.plan.monthly.period".localized(),
+                             description: "paywall.plan.monthly.description".localized(),
+                             badge: nil), // 月度方案沒有徽章
+            SubscriptionPlan(id: "annual",
+                             title: "paywall.plan.annual.title".localized(),
+                             price: "paywall.plan.annual.price".localized(),
+                             period: "paywall.plan.annual.period".localized(),
+                             description: "paywall.plan.annual.description".localized(),
+                             badge: "paywall.plan.annual.badge".localized())
+        ]
+    }
     
     /// 追蹤使用者選擇的方案
     @State private var selectedPlanID: String = "annual"
-    // --- END NEW ---
 
     var body: some View {
         ZStack {
@@ -47,10 +48,9 @@ struct PaywallView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 250, height: 75)
-                            // --- DELETED: 完全移除頂部 padding ---
-                            // .padding(.top)
                         
-                        Text("一天只要不到 2 塊")
+                        // --- LOCALIZED (Corrected Key) ---
+                        Text("paywall.title".localized())
                             .font(.largeTitle).bold()
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -58,16 +58,17 @@ struct PaywallView: View {
 
                     // 特色列表
                     VStack(alignment: .leading, spacing: 20) {
-                        FeatureRow(icon: "🔓", text: "解鎖完整功能")
-                        FeatureRow(icon: "✨", text: "沒有廣告打擾")
-                        FeatureRow(icon: "🚀", text: "未來優先功能更新")
+                        // --- LOCALIZED (Corrected Keys) ---
+                        FeatureRow(icon: "🔓", text: "paywall.feature1".localized())
+                        FeatureRow(icon: "✨", text: "paywall.feature2".localized())
+                        FeatureRow(icon: "🚀", text: "paywall.feature3".localized())
                     }
                     .padding(EdgeInsets(top: 25, leading: 30, bottom: 25, trailing: 30))
                     .background(.thinMaterial)
                     .cornerRadius(20)
                     .padding(.horizontal)
                     
-                    // --- NEW: 方案選擇器 ---
+                    // 方案選擇器
                     VStack(spacing: 15) {
                         ForEach(plans) { plan in
                             SubscriptionOptionView(plan: plan, isSelected: selectedPlanID == plan.id)
@@ -77,7 +78,6 @@ struct PaywallView: View {
                         }
                     }
                     .padding(.horizontal)
-                    // --- END NEW ---
                     
                     Spacer()
 
@@ -88,13 +88,12 @@ struct PaywallView: View {
                                 .frame(height: 50)
                         } else {
                             Button(action: {
-                                // --- MODIFIED: 傳遞選擇的方案 ---
                                 if let selectedPlan = plans.first(where: { $0.id == selectedPlanID }) {
                                     paymentService.purchase(plan: selectedPlan)
                                 }
                             }) {
-                                // --- MODIFIED: 更新按鈕文字 ---
-                                Text("開始7天免費試用")
+                                // --- LOCALIZED (Corrected Key) ---
+                                Text("paywall.cta.trial".localized())
                                     .fontWeight(.bold)
                                     .frame(maxWidth: .infinity)
                                     .padding()
@@ -105,18 +104,18 @@ struct PaywallView: View {
                             }
                         }
                         
-                        // --- NEW: 試用期和續訂說明 ---
-                        Text("首次訂閱可享7天免費試用。試用期結束後，將依您選擇的方案自動續訂，您可以隨時在 App Store 帳號設定中取消。")
+                        // --- LOCALIZED (Corrected Key) ---
+                        Text("paywall.terms".localized())
                             .font(.caption2)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
-                        // --- END NEW ---
 
                         Button(action: {
                              paymentService.restorePurchases()
                         }) {
-                            Text("恢復購買")
+                            // --- LOCALIZED (Corrected Key) ---
+                            Text("paywall.restore".localized())
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
                         }
@@ -130,7 +129,6 @@ struct PaywallView: View {
     }
 }
 
-// --- NEW HELPER VIEW ---
 /// 用於顯示單個訂閱方案選項的視圖
 struct SubscriptionOptionView: View {
     let plan: SubscriptionPlan
@@ -159,7 +157,7 @@ struct SubscriptionOptionView: View {
             
             Spacer()
             
-            if let badge = plan.badge {
+            if let badge = plan.badge, !badge.isEmpty {
                 Text(badge)
                     .font(.caption)
                     .fontWeight(.bold)
@@ -182,7 +180,6 @@ struct SubscriptionOptionView: View {
         .animation(.spring(), value: isSelected)
     }
 }
-// --- END NEW HELPER VIEW ---
 
 
 /// 付費牆中的功能列表項目
