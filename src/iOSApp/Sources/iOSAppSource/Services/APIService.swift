@@ -46,6 +46,16 @@ struct BackendErrorResponse: Decodable {
     let data: BackendErrorData
 }
 
+struct AppleVerificationRequest: Codable {
+    let identityToken: String
+    let fullName: FullNameRequest?
+    let email: String?
+}
+
+struct FullNameRequest: Codable {
+    let givenName: String?
+    let familyName: String?
+}
 // MARK: - Hot Searches Data Structures
 // New structs to decode the response from /api/hot-searches
 struct HotSearchItem: Codable, Identifiable {
@@ -159,11 +169,39 @@ class APIService {
     }
 
     func logout() async throws {
-        _ = try await request(endpoint: "auth/logout", method: "POST", expectDataWrapper: false) as Data
+        _ = try await request(endpoint: "auth/logout", method: "POST", expectDataWrapper: false) as StatusResponse
     }
     
     func checkAuthStatus() async throws -> User {
         let response: AuthResponse = try await request(endpoint: "auth/status", method: "GET", expectDataWrapper: true)
+        return response.user
+    }
+
+        func verifyAppleToken(idToken: String, fullName: PersonNameComponents?, email: String?) async throws -> User {
+        // 1. 根據我們在步驟 1 定義的結構，建立請求的 body
+        let nameRequest = FullNameRequest(
+            givenName: fullName?.givenName,
+            familyName: fullName?.familyName
+        )
+        let requestBody = AppleVerificationRequest(
+            identityToken: idToken,
+            fullName: nameRequest,
+            email: email
+        )
+
+        // 2. 將 requestBody 物件編碼成 JSON Data
+        let body = try JSONEncoder().encode(requestBody)
+
+        // 3. 呼叫通用的 request 方法，並指定解碼的型別為 AuthResponse
+        //    因為 Apple 和 Google 登入成功後回傳的使用者資料結構是一樣的
+        let response: AuthResponse = try await request(
+            endpoint: "auth/apple/verify", // 我們在後端設定的端點
+            method: "POST",
+            body: body,
+            expectDataWrapper: true // 後端回應有 { "data": ... } 包裝
+        )
+        
+        // 4. 回傳從回應中解析出來的 user 物件
         return response.user
     }
 
