@@ -41,12 +41,13 @@ class PaymentService: ObservableObject {
         }
     }
     
-    /// 模擬購買訂閱的流程。
-    func purchase() {
+     // --- MODIFIED: 修改函式以接受一個方案 ---
+    func purchase(plan: SubscriptionPlan) {
         guard !isLoading else { return }
         
         isLoading = true
-        print("PaymentService: 開始模擬購買流程...")
+        // --- MODIFIED: Log 顯示正在購買哪個方案 ---
+        print("PaymentService: 開始模擬購買流程，方案: \(plan.title) (\(plan.id))")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             print("PaymentService: 模擬購買成功！")
@@ -55,13 +56,12 @@ class PaymentService: ObservableObject {
             
             ToastManager.shared.show(
                 type: .success,
-                title: "common.success".localized(),
+                title: "訂閱成功！", // 這裡可以使用本地化字串
                 message: "您已成功解鎖所有功能！"
             )
         }
     }
     
-    /// 模擬恢復購買的流程。
     func restorePurchases() {
         guard !isLoading else { return }
 
@@ -75,7 +75,7 @@ class PaymentService: ObservableObject {
 
             ToastManager.shared.show(
                 type: .success,
-                title: "common.success".localized(),
+                title: "恢復成功", // 這裡可以使用本地化字串
                 message: "已成功恢復您先前的購買項目。"
             )
         }
