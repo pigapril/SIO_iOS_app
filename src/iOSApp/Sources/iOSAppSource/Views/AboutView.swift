@@ -6,7 +6,7 @@ struct AboutView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Image("aboutme_placeholder") // 圖片名稱通常不需要本地化
+                Image("aboutme", bundle: .module) 
                     .resizable()
                     .scaledToFit()
                     .cornerRadius(10)

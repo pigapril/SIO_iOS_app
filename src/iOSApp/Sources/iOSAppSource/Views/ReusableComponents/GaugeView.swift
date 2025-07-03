@@ -71,13 +71,13 @@ public struct SemiCircleGaugeView: View {
                     
                 if showLabels {
                     HStack {
-                        Text("sentiment.extremeFear", bundle: .module)
+                        Text("sentiment.extremeFear".localized())
                         Spacer()
-                        Text("sentiment.extremeGreed", bundle: .module)
+                        Text("sentiment.extremeGreed".localized())
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .frame(width: radius * 2.1)
+                    .frame(width: radius * 2.6)
                     .position(x: center.x, y: center.y + 35)
                 }
             }

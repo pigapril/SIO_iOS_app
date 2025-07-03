@@ -155,8 +155,8 @@ public struct MarketSentimentView: View {
                 .padding(.top, 5)
 
                 SemiCircleGaugeView(value: score, showLabels: true)
-                    .frame(height: 250)
-                    .offset(y: -60)
+                    .frame(height: 140)
+                    .offset(y: -5)
 
                 HStack {
                     Text("marketSentiment.lastUpdateLabel".localized())
@@ -164,7 +164,7 @@ public struct MarketSentimentView: View {
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .offset(y: 5)
+                .padding(.top, 30)
             }
         } else if let errorMessage = viewModel.errorMessage {
             errorView(message: errorMessage)
