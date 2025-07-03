@@ -95,6 +95,7 @@ struct PriceAnalysisView: View {
             if !isAdvancedQuery {
                 HStack {
                     Text("priceAnalysis.form.analysisPeriodLabel".localized()).frame(width: 140, alignment: .leading)
+                    Spacer()
                     Picker(selection: $viewModel.analysisPeriod, label: Text("priceAnalysis.form.analysisPeriodLabel".localized())) {
                         Text("priceAnalysis.form.periodShort".localized()).tag(PriceAnalysisViewModel.AnalysisPeriod.short)
                         Text("priceAnalysis.form.periodMedium".localized()).tag(PriceAnalysisViewModel.AnalysisPeriod.medium)
