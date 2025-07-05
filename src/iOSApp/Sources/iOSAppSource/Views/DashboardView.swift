@@ -3,9 +3,8 @@ import SwiftUI
 
 /// App 的主頁，作為一個數據驅動的儀表板。
 ///
-/// 這個視圖遵循 `iOS_rebuild_plan.md` 中 Phase 2 的規劃，並已完全重構以支援動態語言切換。
-/// 所有面向使用者的文字都已從 `NSLocalizedString` 或 `Text("key", bundle:)`
-/// 轉換為使用新的 `"key".localized()` 方法。
+/// 這個視圖現在直接使用從後端獲取並預先排序好的追蹤清單預覽資料，
+/// 以達到最佳的載入效能和使用者體驗。
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @EnvironmentObject var authViewModel: AuthenticationViewModel
@@ -25,7 +24,6 @@ struct DashboardView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.red)
-                    // --- MODIFICATION ---
                     Text("common.error".localized())
                         .font(.headline)
                         .padding(.top)
@@ -43,10 +41,14 @@ struct DashboardView: View {
                     quickAnalysisCard
                 }
                 .padding(.vertical)
-            }
+           }
+        }
+        .refreshable {
+            // This block will be executed when the user pulls to refresh.
+            // It directly calls our data fetching function.
+            await viewModel.fetchDashboardData()
         }
         .background(Color(.systemGroupedBackground))
-        // --- MODIFICATION ---
         .navigationTitle(
             Text(
                 authViewModel.user != nil ?
@@ -64,7 +66,6 @@ struct DashboardView: View {
         .sheet(isPresented: $showingMoreView) {
             NavigationView {
                 MoreView()
-                    // --- MODIFICATION ---
                     .navigationBarItems(trailing: Button("common.done".localized()) {
                         showingMoreView = false
                     })
@@ -72,6 +73,7 @@ struct DashboardView: View {
             .environmentObject(authViewModel)
         }
         .onAppear {
+            // 現在 fetchDashboardData 會獲取所有儀表板需要的輕量級資料
             if viewModel.marketSentiment == nil {
                 viewModel.fetchDashboardData()
             }
@@ -80,12 +82,11 @@ struct DashboardView: View {
 
     // MARK: - Subviews
 
-    /// 市場情緒卡片
+    /// 市場情緒卡片 (此視圖無需修改)
     private var marketSentimentCard: some View {
         NavigationLink(destination: MarketSentimentView()) {
             VStack(alignment: .leading) {
                 HStack {
-                    // --- MODIFICATION ---
                     Text("dashboard.marketSentimentCard.title".localized())
                         .font(.headline)
                     Spacer()
@@ -103,12 +104,10 @@ struct DashboardView: View {
                         Spacer()
 
                         VStack(alignment: .leading, spacing: 4) {
-                             // --- MODIFICATION ---
                              Text("dashboard.marketSentimentCard.currentSentiment".localized())
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
-                             // --- MODIFICATION ---
                              Text(sentimentKey.localized())
                                 .font(.system(size: 26, weight: .bold, design: .default))
                                 .foregroundColor(sentimentColor(for: sentimentKey))
@@ -125,16 +124,14 @@ struct DashboardView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    /// 追蹤清單預覽卡片
+    /// 追蹤清單預覽卡片 (此視圖已更新為使用新的 `prioritizedWatchlistPreview` 屬性)
     private var watchlistPreviewCard: some View {
         VStack(alignment: .leading) {
             HStack {
-                // --- MODIFICATION ---
                 Text("dashboard.watchlistCard.title".localized())
                     .font(.headline)
                 Spacer()
                 NavigationLink(destination: WatchlistView()) {
-                    // --- MODIFICATION ---
                     Text("common.learnMore".localized())
                     Image(systemName: "chevron.right")
                 }
@@ -143,25 +140,26 @@ struct DashboardView: View {
             
             if !authViewModel.isAuthenticated {
                 VStack {
-                    // --- MODIFICATION ---
                     Text("dashboard.watchlistCard.loginPrompt".localized())
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                     Button(action: {
                         Task { await authViewModel.signIn() }
                     }) {
-                        // --- MODIFICATION ---
                         Text("userActions.login".localized())
                     }
                     .buttonStyle(.bordered)
                     .padding(.top, 5)
                 }
                 .frame(maxWidth: .infinity, minHeight: 100)
-                
-            } else if let firstCategory = viewModel.categories.first, let stocks = firstCategory.stocks, !stocks.isEmpty {
+            
+            // --- MODIFICATION ---
+            // 直接檢查 prioritizedWatchlistPreview 是否為空，不再需要遍歷 categories
+            } else if !viewModel.prioritizedWatchlistPreview.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(stocks.prefix(5)) { stock in
+                        // 直接遍歷由後端排序和篩選後的輕量級股票陣列
+                        ForEach(viewModel.prioritizedWatchlistPreview) { stock in
                             NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
                                 WatchlistPreviewItem(stock: stock)
                             }
@@ -171,7 +169,7 @@ struct DashboardView: View {
                     .padding(.vertical, 4)
                 }
             } else {
-                // --- MODIFICATION ---
+                // 如果 prioritizedWatchlistPreview 為空，則顯示空狀態
                 Text("dashboard.watchlistCard.empty".localized())
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .multilineTextAlignment(.center)
@@ -181,14 +179,12 @@ struct DashboardView: View {
         .cardStyle()
     }
 
-    /// 樂活五線譜快速分析卡片
+    /// 樂活五線譜快速分析卡片 (此視圖無需修改)
     private var quickAnalysisCard: some View {
         VStack(alignment: .leading) {
-            // --- MODIFICATION ---
             Text("dashboard.quickAnalysisCard.title".localized()).font(.headline)
             
             HStack {
-                // --- MODIFICATION ---
                 TextField("dashboard.quickAnalysisCard.placeholder".localized(), text: $quickSearchSymbol)
                     .textFieldStyle(.roundedBorder)
                     .autocapitalization(.allCharacters)
@@ -198,7 +194,6 @@ struct DashboardView: View {
                         isAnalysisLinkActive = true
                     }
                 }) {
-                    // --- MODIFICATION ---
                     Text("dashboard.quickAnalysisCard.button".localized())
                 }
                 .buttonStyle(.borderedProminent)
@@ -213,7 +208,7 @@ struct DashboardView: View {
         .cardStyle()
     }
 
-    // MARK: - Helper Functions & Sub-components
+    // MARK: - Helper Functions & Sub-components (無需修改)
 
     private func sentimentKey(for score: Double?) -> String {
         guard let score = score else { return "sentiment.notAvailable" }
@@ -240,7 +235,7 @@ struct DashboardView: View {
 }
 
 
-// MARK: - Reusable Components (Private to DashboardView)
+// MARK: - Reusable Components (無需修改)
 
 /// 追蹤清單預覽中的單個股票項目
 private struct WatchlistPreviewItem: View {
@@ -272,7 +267,7 @@ private struct WatchlistPreviewItem: View {
 }
 
 
-/// 從 WatchlistView 複製過來的價格情緒儀表 (Dashboard 版本)
+/// 儀表板版本的價格情緒儀表
 private struct DashboardPriceSentimentGauge: View {
     let stock: Stock
 
@@ -306,7 +301,6 @@ private struct DashboardPriceSentimentGauge: View {
 
     var body: some View {
         VStack(spacing: 2) {
-            // --- MODIFICATION ---
             Text(sentimentKey.localized())
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(sentimentColor)

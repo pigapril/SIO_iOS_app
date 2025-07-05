@@ -4,11 +4,9 @@ import Foundation
 
 private enum APIConfig {
     static let baseURL: URL = {
-        // 從 Info.plist 中讀取我們設定的 "ApiBaseUrl"
         guard let urlString = Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String else {
             fatalError("錯誤：ApiBaseUrl 未在 Info.plist 中設定！")
         }
-        // 確保 URL 字串是有效的
         guard let url = URL(string: urlString) else {
             fatalError("錯誤：Info.plist 中的 URL 字串無效: \(urlString)")
         }
@@ -57,7 +55,6 @@ struct FullNameRequest: Codable {
     let familyName: String?
 }
 // MARK: - Hot Searches Data Structures
-// New structs to decode the response from /api/hot-searches
 struct HotSearchItem: Codable, Identifiable {
     let keyword: String
     var id: String { keyword }
@@ -66,7 +63,6 @@ struct HotSearchItem: Codable, Identifiable {
 struct HotSearchesData: Codable {
     let top_searches: [HotSearchItem]
 }
-// MARK: - End Hot Searches Data Structures
 
 
 class APIService {
@@ -118,30 +114,26 @@ class APIService {
         iso8601FullFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         let yyyyMMddFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        return formatter
-    }()
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            return formatter
+        }()
 
         decoder.dateDecodingStrategy = .custom({ (decoder) -> Date in
-        let container = try decoder.singleValueContainer()
-        let dateStr = try container.decode(String.self)
+            let container = try decoder.singleValueContainer()
+            let dateStr = try container.decode(String.self)
 
-        // 依序嘗試多種格式
-        if let date = iso8601FullFormatter.date(from: dateStr) {
-            // 嘗試完整的 ISO8601 格式 (例如: "2025-06-29T10:00:00.123Z")
-            return date
-        }
-        if let date = yyyyMMddFormatter.date(from: dateStr) {
-            // 嘗試只有日期的格式 (例如: "2025-06-29")
-            return date
-        }
-        
-        // 如果所有格式都失敗，才拋出錯誤
-        throw DecodingError.dataCorruptedError(in: container,
-            debugDescription: "無法解碼日期字串 '\(dateStr)'，它不符合任何預期的格式。")
+            if let date = iso8601FullFormatter.date(from: dateStr) {
+                return date
+            }
+            if let date = yyyyMMddFormatter.date(from: dateStr) {
+                return date
+            }
+            
+            throw DecodingError.dataCorruptedError(in: container,
+                debugDescription: "無法解碼日期字串 '\(dateStr)'，它不符合任何預期的格式。")
         })
 
         guard !data.isEmpty else {
@@ -177,8 +169,7 @@ class APIService {
         return response.user
     }
 
-        func verifyAppleToken(idToken: String, fullName: PersonNameComponents?, email: String?) async throws -> User {
-        // 1. 根據我們在步驟 1 定義的結構，建立請求的 body
+    func verifyAppleToken(idToken: String, fullName: PersonNameComponents?, email: String?) async throws -> User {
         let nameRequest = FullNameRequest(
             givenName: fullName?.givenName,
             familyName: fullName?.familyName
@@ -188,20 +179,13 @@ class APIService {
             fullName: nameRequest,
             email: email
         )
-
-        // 2. 將 requestBody 物件編碼成 JSON Data
         let body = try JSONEncoder().encode(requestBody)
-
-        // 3. 呼叫通用的 request 方法，並指定解碼的型別為 AuthResponse
-        //    因為 Apple 和 Google 登入成功後回傳的使用者資料結構是一樣的
         let response: AuthResponse = try await request(
-            endpoint: "auth/apple/verify", // 我們在後端設定的端點
+            endpoint: "auth/apple/verify",
             method: "POST",
             body: body,
-            expectDataWrapper: true // 後端回應有 { "data": ... } 包裝
+            expectDataWrapper: true
         )
-        
-        // 4. 回傳從回應中解析出來的 user 物件
         return response.user
     }
 
@@ -215,7 +199,6 @@ class APIService {
         if let date = backTestDate, !date.isEmpty {
             queryItems.append(URLQueryItem(name: "backTestDate", value: date))
         }
-        // 如果提供了 source，就將其添加到查詢參數中
         if let source = source {
             queryItems.append(URLQueryItem(name: "source", value: source))
         }
@@ -223,14 +206,10 @@ class APIService {
         return try await request(endpoint: "integrated-analysis", queryItems: queryItems, expectDataWrapper: true)
     }
 
-    // MARK: - Hot Searches Method
-    /// Fetches the list of hot search stock symbols from the server.
-    /// This corresponds to the `/api/hot-searches` endpoint.
     func fetchHotSearches() async throws -> [HotSearchItem] {
         let response: HotSearchesData = try await request(endpoint: "hot-searches", expectDataWrapper: true)
         return response.top_searches
     }
-    // MARK: - End Hot Searches Method
 
     func fetchMarketSentiment() async throws -> MarketSentimentResponse {
         return try await request(endpoint: "market-sentiment", expectDataWrapper: false)
@@ -247,6 +226,15 @@ class APIService {
 
     // MARK: - Watchlist Methods
 
+    // +++ NEW METHOD for fetching dashboard preview +++
+    /// Fetches a lightweight, pre-sorted list of stocks for the dashboard preview.
+    func fetchWatchlistPreview() async throws -> [Stock] {
+        // The backend returns an array of stocks directly in the 'data' field.
+        // We expect the backend response to be: { status: "success", data: [Stock, Stock, ...] }
+        return try await request(endpoint: "watchlist/dashboard-preview", expectDataWrapper: true)
+    }
+
+    // This full fetch is now only used by the dedicated WatchlistView
     func fetchCategories() async throws -> [Category] {
         let response: CategoriesResponse = try await request(endpoint: "watchlist/categories", expectDataWrapper: true)
         return response.categories
