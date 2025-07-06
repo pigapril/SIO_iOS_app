@@ -28,7 +28,7 @@ public struct LaunchView: View {
                         loadingView(textKey: "launch.loading.preparing")
                             .onAppear {
                                 // Preload with an 8-second timeout.
-                                dashboardViewModel.preloadWatchlistPreview(withTimeout: 8.0)
+                                dashboardViewModel.preloadWatchlistPreview(withTimeout: 6.0)
                             }
                     case .loading:
                         loadingView(textKey: "launch.loading.preparing")
