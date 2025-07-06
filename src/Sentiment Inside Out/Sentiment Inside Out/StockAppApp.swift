@@ -23,6 +23,7 @@ struct StockAppApp: App {
     @StateObject private var authViewModel = AuthenticationViewModel()
     @StateObject private var toastManager = ToastManager.shared
     @StateObject private var languageManager = LanguageManager.shared
+    @StateObject private var tabSelectionManager = TabSelectionManager.shared // Add this line
 
     // App 初始化時，執行一次性的設定
     init() {
@@ -36,6 +37,7 @@ struct StockAppApp: App {
                 .environmentObject(authViewModel)
                 .environmentObject(toastManager)
                 .environmentObject(languageManager)
+                .environmentObject(tabSelectionManager) // Add this line
         }
     }
 }

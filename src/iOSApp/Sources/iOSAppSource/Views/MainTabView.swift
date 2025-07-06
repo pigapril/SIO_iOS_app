@@ -8,16 +8,17 @@ public struct MainTabView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     @EnvironmentObject var toastManager: ToastManager
     @EnvironmentObject var languageManager: LanguageManager
+    @EnvironmentObject var tabSelectionManager: TabSelectionManager // Add this line
 
-    // 用於控制當前選中分頁的狀態
-    @State private var selectedTab: Int = 0
+    // Use tabSelectionManager.selectedTab directly now
     
     public init() {}
 
     public var body: some View {
         // ZStack 讓我們可以將 Toast 視圖疊加在 TabView 之上
         ZStack {
-            TabView(selection: $selectedTab) {
+            // Bind TabView selection to the manager's property
+            TabView(selection: $tabSelectionManager.selectedTab) { // Modify this line
                 // 首頁 (儀表板) 分頁
                 NavigationView {
                     DashboardView()

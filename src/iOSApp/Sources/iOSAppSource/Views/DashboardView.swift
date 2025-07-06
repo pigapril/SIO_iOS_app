@@ -8,6 +8,7 @@ import SwiftUI
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @EnvironmentObject var tabSelectionManager: TabSelectionManager // Add this line
     
     @State private var showingMoreView = false
     @State private var quickSearchSymbol: String = ""
@@ -82,21 +83,29 @@ struct DashboardView: View {
 
     // MARK: - Subviews
 
-    /// 市場情緒卡片 (此視圖無需修改)
+    /// 市場情緒卡片
     private var marketSentimentCard: some View {
-        NavigationLink(destination: MarketSentimentView()) {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("dashboard.marketSentimentCard.title".localized())
-                        .font(.headline)
-                    Spacer()
-                    Text("common.learnMore".localized())
-                    Image(systemName: "chevron.right")
+        VStack(alignment: .leading) {
+            HStack {
+                Text("dashboard.marketSentimentCard.title".localized())
+                    .font(.headline)
+                Spacer()
+                // Change NavigationLink to Button for tab switching
+                Button(action: {
+                    tabSelectionManager.selectedTab = 2 // Tab index for Market Sentiment
+                }) {
+                    HStack {
+                        Text("common.learnMore".localized())
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline)
                 }
-                
-                if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
-                    let sentimentKey = sentimentKey(for: score)
-                    HStack(alignment: .center,) {
+                .buttonStyle(PlainButtonStyle()) // Remove default button styling if desired
+            }
+            
+            if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
+                let sentimentKey = sentimentKey(for: score)
+                HStack(alignment: .center,) {
                         SemiCircleGaugeView(value: score, showLabels: false)
                             .frame(width: 130, height: 90)
                             .offset(y: -10)
@@ -120,22 +129,26 @@ struct DashboardView: View {
                 }
             }
             .cardStyle()
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 
-    /// 追蹤清單預覽卡片 (此視圖已更新為使用新的 `prioritizedWatchlistPreview` 屬性)
+    /// 追蹤清單預覽卡片
     private var watchlistPreviewCard: some View {
         VStack(alignment: .leading) {
             HStack {
                 Text("dashboard.watchlistCard.title".localized())
                     .font(.headline)
                 Spacer()
-                NavigationLink(destination: WatchlistView()) {
-                    Text("common.learnMore".localized())
-                    Image(systemName: "chevron.right")
+                // Change NavigationLink to Button for tab switching
+                Button(action: {
+                    tabSelectionManager.selectedTab = 3 // Tab index for Watchlist
+                }) {
+                    HStack {
+                        Text("common.learnMore".localized())
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline)
                 }
-                .font(.subheadline)
+                .buttonStyle(PlainButtonStyle()) // Remove default button styling if desired
             }
             
             if !authViewModel.isAuthenticated {
@@ -153,12 +166,9 @@ struct DashboardView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 100)
             
-            // --- MODIFICATION ---
-            // 直接檢查 prioritizedWatchlistPreview 是否為空，不再需要遍歷 categories
             } else if !viewModel.prioritizedWatchlistPreview.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        // 直接遍歷由後端排序和篩選後的輕量級股票陣列
                         ForEach(viewModel.prioritizedWatchlistPreview) { stock in
                             NavigationLink(destination: PriceAnalysisView(initialStockCode: stock.symbol, initialYears: "3.5")) {
                                 WatchlistPreviewItem(stock: stock)
@@ -169,7 +179,6 @@ struct DashboardView: View {
                     .padding(.vertical, 4)
                 }
             } else {
-                // 如果 prioritizedWatchlistPreview 為空，則顯示空狀態
                 Text("dashboard.watchlistCard.empty".localized())
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .multilineTextAlignment(.center)
@@ -179,7 +188,7 @@ struct DashboardView: View {
         .cardStyle()
     }
 
-    /// 樂活五線譜快速分析卡片 (此視圖無需修改)
+    /// 樂活五線譜快速分析卡片 (No change for this card's NavigationLink)
     private var quickAnalysisCard: some View {
         VStack(alignment: .leading) {
             Text("dashboard.quickAnalysisCard.title".localized()).font(.headline)
