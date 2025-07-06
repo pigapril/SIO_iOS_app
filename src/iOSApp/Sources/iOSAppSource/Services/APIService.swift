@@ -1,17 +1,18 @@
-// pigapril/sio_ios_app/SIO_iOS_app-NewDesignV2/src/iOSApp/Sources/iOSAppSource/Services/APIService.swift
+// MODIFIED: Complete replacement for APIService.swift
 
 import Foundation
 
+// MODIFICATION: The enum now has a throwing function instead of a computed property.
 private enum APIConfig {
-    static let baseURL: URL = {
-        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String else {
-            fatalError("錯誤：ApiBaseUrl 未在 Info.plist 中設定！")
+    static func getBaseURL() throws -> URL {
+        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String, !urlString.isEmpty else {
+            throw AppError.backendError(code: "CONFIG_ERROR", message: "錯誤：ApiBaseUrl 未在 Info.plist 中設定！")
         }
         guard let url = URL(string: urlString) else {
-            fatalError("錯誤：Info.plist 中的 URL 字串無效: \(urlString)")
+            throw AppError.backendError(code: "CONFIG_ERROR", message: "錯誤：Info.plist 中的 URL 字串無效: \(urlString)")
         }
         return url
-    }()
+    }
 }
 
 // A generic response structure to handle APIs that wrap the main data
@@ -67,10 +68,13 @@ struct HotSearchesData: Codable {
 
 class APIService {
     static let shared = APIService()
-    private let baseURL = APIConfig.baseURL
+    // MODIFICATION: baseURL is no longer a static property here. It will be fetched in the request.
     private var csrfToken: String?
 
     private func request<T: Decodable>(endpoint: String, method: String = "GET", queryItems: [URLQueryItem]? = nil, body: Data? = nil, expectDataWrapper: Bool = true) async throws -> T {
+        // MODIFICATION: Get the base URL using the new throwing function.
+        let baseURL = try APIConfig.getBaseURL()
+        
         var urlComponents = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: false)!
         urlComponents.queryItems = queryItems
         
