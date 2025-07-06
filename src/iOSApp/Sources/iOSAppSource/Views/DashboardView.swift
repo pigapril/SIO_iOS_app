@@ -90,8 +90,8 @@ struct DashboardView: View {
                     Text("dashboard.marketSentimentCard.title".localized())
                         .font(.headline)
                     Spacer()
+                    Text("common.learnMore".localized())
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.secondary)
                 }
                 
                 if let sentimentData = viewModel.marketSentiment, let score = Double(sentimentData.totalScore) {
