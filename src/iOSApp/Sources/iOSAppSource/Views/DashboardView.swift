@@ -99,6 +99,7 @@ struct DashboardView: View {
                         Image(systemName: "chevron.right")
                     }
                     .font(.subheadline)
+                    .foregroundColor(.blue)
                 }
                 .buttonStyle(PlainButtonStyle()) // Remove default button styling if desired
             }
@@ -147,6 +148,7 @@ struct DashboardView: View {
                         Image(systemName: "chevron.right")
                     }
                     .font(.subheadline)
+                    .foregroundColor(.blue)
                 }
                 .buttonStyle(PlainButtonStyle()) // Remove default button styling if desired
             }
