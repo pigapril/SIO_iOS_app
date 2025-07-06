@@ -7,10 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1512A9132E1ABD7500CC3DC7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1512A9122E1ABD7500CC3DC7 /* WidgetKit.framework */; };
+		1512A9152E1ABD7500CC3DC7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1512A9142E1ABD7500CC3DC7 /* SwiftUI.framework */; };
+		1512A9242E1ABD7700CC3DC7 /* MarketSentimentWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1512A9112E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1512A93F2E1ACA1300CC3DC7 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 1512A93E2E1ACA1300CC3DC7 /* iOSApp */; };
 		151906992E0786EB001C35E0 /* iOSApp in Frameworks */ = {isa = PBXBuildFile; productRef = 151906982E0786EB001C35E0 /* iOSApp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1512A9222E1ABD7700CC3DC7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 15ECC2992DFD52E1002F9766 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1512A9102E1ABD7500CC3DC7;
+			remoteInfo = MarketSentimentWidgetExtension;
+		};
 		15ECC2AF2DFD52E3002F9766 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 15ECC2992DFD52E1002F9766 /* Project object */;
@@ -27,7 +38,24 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		1512A9252E1ABD7700CC3DC7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1512A9242E1ABD7700CC3DC7 /* MarketSentimentWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		1512A9112E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MarketSentimentWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1512A9122E1ABD7500CC3DC7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		1512A9142E1ABD7500CC3DC7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		155A1A5A2E07021300F2AE26 /* iOSApp */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = iOSApp; path = ../iOSApp; sourceTree = "<group>"; };
 		15AAE3982E0710310082BD29 /* MarketSentimentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketSentimentData.swift; sourceTree = "<group>"; };
 		15AAE3992E0710310082BD29 /* PriceAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceAnalysisData.swift; sourceTree = "<group>"; };
@@ -116,6 +144,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1512A9292E1ABD7700CC3DC7 /* Exceptions for "MarketSentimentWidget" folder in "MarketSentimentWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1512A9102E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension */;
+		};
 		1549BE842E0588E100D1EFC5 /* Exceptions for "Sentiment Inside Out" folder in "Sentiment Inside Out" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -126,6 +161,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		1512A9162E1ABD7500CC3DC7 /* MarketSentimentWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1512A9292E1ABD7700CC3DC7 /* Exceptions for "MarketSentimentWidget" folder in "MarketSentimentWidgetExtension" target */,
+			);
+			path = MarketSentimentWidget;
+			sourceTree = "<group>";
+		};
 		15ECC2A32DFD52E1002F9766 /* Sentiment Inside Out */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -147,6 +190,16 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		1512A90E2E1ABD7500CC3DC7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1512A9152E1ABD7500CC3DC7 /* SwiftUI.framework in Frameworks */,
+				1512A9132E1ABD7500CC3DC7 /* WidgetKit.framework in Frameworks */,
+				1512A93F2E1ACA1300CC3DC7 /* iOSApp in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		15ECC29E2DFD52E1002F9766 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -424,6 +477,7 @@
 				15ECC2A32DFD52E1002F9766 /* Sentiment Inside Out */,
 				15ECC2B12DFD52E3002F9766 /* StockAppTests */,
 				15ECC2BB2DFD52E3002F9766 /* StockAppUITests */,
+				1512A9162E1ABD7500CC3DC7 /* MarketSentimentWidget */,
 				15ECC2CD2DFD55FD002F9766 /* Frameworks */,
 				15ECC2A22DFD52E1002F9766 /* Products */,
 			);
@@ -435,6 +489,7 @@
 				15ECC2A12DFD52E1002F9766 /* Sentiment Inside Out.app */,
 				15ECC2AE2DFD52E3002F9766 /* StockAppTests.xctest */,
 				15ECC2B82DFD52E3002F9766 /* StockAppUITests.xctest */,
+				1512A9112E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -446,6 +501,8 @@
 				15AAE3DD2E0710650082BD29 /* iOSAppSource */,
 				15AAE4002E0710EA0082BD29 /* iOSAppSource */,
 				155A1A5A2E07021300F2AE26 /* iOSApp */,
+				1512A9122E1ABD7500CC3DC7 /* WidgetKit.framework */,
+				1512A9142E1ABD7500CC3DC7 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -453,6 +510,30 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1512A9102E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1512A9282E1ABD7700CC3DC7 /* Build configuration list for PBXNativeTarget "MarketSentimentWidgetExtension" */;
+			buildPhases = (
+				1512A90D2E1ABD7500CC3DC7 /* Sources */,
+				1512A90E2E1ABD7500CC3DC7 /* Frameworks */,
+				1512A90F2E1ABD7500CC3DC7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1512A93D2E1ACA0200CC3DC7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1512A9162E1ABD7500CC3DC7 /* MarketSentimentWidget */,
+			);
+			name = MarketSentimentWidgetExtension;
+			packageProductDependencies = (
+				1512A93E2E1ACA1300CC3DC7 /* iOSApp */,
+			);
+			productName = MarketSentimentWidgetExtension;
+			productReference = 1512A9112E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		15ECC2A02DFD52E1002F9766 /* Sentiment Inside Out */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 15ECC2C22DFD52E3002F9766 /* Build configuration list for PBXNativeTarget "Sentiment Inside Out" */;
@@ -460,10 +541,12 @@
 				15ECC29D2DFD52E1002F9766 /* Sources */,
 				15ECC29E2DFD52E1002F9766 /* Frameworks */,
 				15ECC29F2DFD52E1002F9766 /* Resources */,
+				1512A9252E1ABD7700CC3DC7 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1512A9232E1ABD7700CC3DC7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				15ECC2A32DFD52E1002F9766 /* Sentiment Inside Out */,
@@ -532,6 +615,9 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					1512A9102E1ABD7500CC3DC7 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					15ECC2A02DFD52E1002F9766 = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -566,11 +652,19 @@
 				15ECC2A02DFD52E1002F9766 /* Sentiment Inside Out */,
 				15ECC2AD2DFD52E3002F9766 /* StockAppTests */,
 				15ECC2B72DFD52E3002F9766 /* StockAppUITests */,
+				1512A9102E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		1512A90F2E1ABD7500CC3DC7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		15ECC29F2DFD52E1002F9766 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -595,6 +689,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1512A90D2E1ABD7500CC3DC7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		15ECC29D2DFD52E1002F9766 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -619,6 +720,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1512A9232E1ABD7700CC3DC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1512A9102E1ABD7500CC3DC7 /* MarketSentimentWidgetExtension */;
+			targetProxy = 1512A9222E1ABD7700CC3DC7 /* PBXContainerItemProxy */;
+		};
+		1512A93D2E1ACA0200CC3DC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 1512A93C2E1ACA0200CC3DC7 /* iOSApp */;
+		};
 		15ECC2B02DFD52E3002F9766 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 15ECC2A02DFD52E1002F9766 /* Sentiment Inside Out */;
@@ -662,6 +772,60 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1512A9262E1ABD7700CC3DC7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5DYGT685B5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MarketSentimentWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MarketSentimentWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.tony.SentimentInsideOut.MarketSentimentWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1512A9272E1ABD7700CC3DC7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5DYGT685B5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MarketSentimentWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MarketSentimentWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.tony.SentimentInsideOut.MarketSentimentWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		15ECC2C02DFD52E3002F9766 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -919,6 +1083,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1512A9282E1ABD7700CC3DC7 /* Build configuration list for PBXNativeTarget "MarketSentimentWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1512A9262E1ABD7700CC3DC7 /* Debug */,
+				1512A9272E1ABD7700CC3DC7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		15ECC29C2DFD52E1002F9766 /* Build configuration list for PBXProject "Sentiment Inside Out" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -965,6 +1138,15 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1512A93C2E1ACA0200CC3DC7 /* iOSApp */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 151906912E078599001C35E0 /* XCLocalSwiftPackageReference "../iOSApp" */;
+			productName = iOSApp;
+		};
+		1512A93E2E1ACA1300CC3DC7 /* iOSApp */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = iOSApp;
+		};
 		151906982E0786EB001C35E0 /* iOSApp */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 151906912E078599001C35E0 /* XCLocalSwiftPackageReference "../iOSApp" */;

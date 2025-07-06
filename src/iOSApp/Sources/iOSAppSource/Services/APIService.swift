@@ -65,8 +65,8 @@ struct HotSearchesData: Codable {
 }
 
 
-class APIService {
-    static let shared = APIService()
+public class APIService {
+    public static let shared = APIService()
     private let baseURL = APIConfig.baseURL
     private var csrfToken: String?
 

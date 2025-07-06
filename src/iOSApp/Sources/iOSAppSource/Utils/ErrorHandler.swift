@@ -1,6 +1,6 @@
 import Foundation
 
-enum AppError: Error {
+public enum AppError: Error {
     // General Errors
     case invalidURL // No raw value here, will use `id` property
     case networkError
@@ -95,7 +95,7 @@ enum AppError: Error {
 }
 
 extension AppError: LocalizedError {
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidURL:
             return NSLocalizedString("error.invalidURL", bundle: .module, comment: "Invalid URL error")
@@ -125,8 +125,8 @@ extension AppError: LocalizedError {
     }
 }
 
-class ErrorHandler {
-    static func handle(error: Error, component: String = "Unknown") {
+public class ErrorHandler {
+    public static func handle(error: Error, component: String = "Unknown") {
         let appError = AppError(error: error)
         
         Analytics.logError(

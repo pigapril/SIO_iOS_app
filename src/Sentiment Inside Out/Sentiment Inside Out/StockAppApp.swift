@@ -33,14 +33,20 @@ struct StockAppApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LaunchView()
-                // 將所有需要的服務注入到 SwiftUI 環境中
-                .environmentObject(authViewModel)
-                .environmentObject(toastManager)
-                .environmentObject(languageManager)
-                .environmentObject(tabSelectionManager)
-                .environmentObject(dashboardViewModel)
-
+    LaunchView()
+        .environmentObject(authViewModel)
+        .environmentObject(toastManager)
+        .environmentObject(languageManager)
+        .environmentObject(tabSelectionManager)
+        .environmentObject(dashboardViewModel)
+        .onOpenURL { url in
+            // 處理從 Widget 傳來的 URL
+            if url.host == "market-sentiment" {
+                // 使用你建立的 TabSelectionManager 來切換分頁
+                tabSelectionManager.selectedTab = 2 // 2 是市場情緒分頁的索引
+            }
+            // 你可以擴充這裡來處理其他 widget 的連結
         }
+}
     }
 }

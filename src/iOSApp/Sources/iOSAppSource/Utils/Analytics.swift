@@ -1,7 +1,7 @@
 import Foundation
 
-struct Analytics {
-    static func error(
+public struct Analytics {
+    public static func error(
         status: Int,
         errorCode: String,
         message: String,
@@ -24,7 +24,7 @@ struct Analytics {
     }
     
     // Alias for logError to match ErrorHandler
-    static func logError(status: Int, errorCode: String, message: String, component: String, path: String) {
+    public static func logError(status: Int, errorCode: String, message: String, component: String, path: String) {
         error(status: status, errorCode: errorCode, message: message, component: component, path: path)
     }
 } 

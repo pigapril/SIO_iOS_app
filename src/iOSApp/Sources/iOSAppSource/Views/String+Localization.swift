@@ -6,7 +6,7 @@ extension String {
     // +++ FIX: Add @MainActor to ensure this function runs on the main thread +++
     // 這樣它才能安全地存取同樣在 MainActor 上的 LanguageManager.shared.currentLanguage
     @MainActor
-    func localized() -> String {
+    public func localized() -> String {
         // 1. 從 LanguageManager 獲取當前選擇的語言代碼 (例如 "en" 或 "zh-Hant")。
         let currentLanguage = LanguageManager.shared.currentLanguage
         
