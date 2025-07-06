@@ -14,8 +14,26 @@ private struct ExplanationSectionData: Identifiable {
 struct PriceAnalysisView: View {
     @StateObject private var viewModel: PriceAnalysisViewModel
     @State private var activeChart: ChartType = .standardDeviation
-    @State private var isAdvancedQuery: Bool = false
     
+    // --- MODIFICATION: Use an enum for mode selection ---
+    @State private var analysisMode: AnalysisMode = .simple
+
+    enum AnalysisMode: String, CaseIterable, Identifiable {
+        case simple
+        case advanced
+
+        var id: String { self.rawValue }
+
+        // Key for the text displayed on the segmented control
+        var localizedKey: String {
+            switch self {
+            case .simple: return "priceAnalysis.form.switchToSimple"
+            case .advanced: return "priceAnalysis.form.switchToAdvanced"
+            }
+        }
+    }
+    // --- END MODIFICATION ---
+
     private let explanationSections: [ExplanationSectionData] = [
         .init(
             titleKey: "priceAnalysis.explanation.sd.title",
@@ -84,6 +102,15 @@ struct PriceAnalysisView: View {
         return VStack(spacing: 15) {
             Text("priceAnalysis.form.title".localized())
                 .font(.headline)
+
+            // --- MODIFICATION: Replaced Toggle with a Segmented Picker ---
+            Picker("Analysis Mode", selection: $analysisMode.animation()) {
+                ForEach(AnalysisMode.allCases) { mode in
+                    Text(mode.localizedKey.localized()).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            // --- END MODIFICATION ---
             
             HStack {
                 Text("priceAnalysis.form.stockCodeLabel".localized()).frame(width: 140, alignment: .leading)
@@ -92,7 +119,8 @@ struct PriceAnalysisView: View {
                     .autocapitalization(.allCharacters)
             }
             
-            if !isAdvancedQuery {
+            // --- MODIFICATION: Logic now based on analysisMode ---
+            if analysisMode == .simple {
                 HStack {
                     Text("priceAnalysis.form.analysisPeriodLabel".localized()).frame(width: 140, alignment: .leading)
                     Spacer()
@@ -105,7 +133,7 @@ struct PriceAnalysisView: View {
                 }
             }
             
-            if isAdvancedQuery {
+            if analysisMode == .advanced {
                 HStack {
                     Text("priceAnalysis.form.analysisPeriodLabel".localized()).frame(width: 140, alignment: .leading)
                     TextField("priceAnalysis.form.yearsPlaceholder".localized(), text: $viewModel.years)
@@ -121,11 +149,8 @@ struct PriceAnalysisView: View {
                     label: { Text("priceAnalysis.form.backTestDateLabel".localized()) }
                 )
             }
-            
-            Toggle(isOn: $isAdvancedQuery.animation()) {
-                Text(isAdvancedQuery ? "priceAnalysis.form.switchToSimple".localized() : "priceAnalysis.form.switchToAdvanced".localized())
-            }
-            
+            // --- END MODIFICATION ---
+
             Button(action: {
                 viewModel.fetchStockData(isManualSearch: true)
             }) {
