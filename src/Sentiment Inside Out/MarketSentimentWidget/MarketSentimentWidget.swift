@@ -66,12 +66,21 @@ func widgetGradientBackground() -> some View {
 struct SmallWidgetView: View {
     var data: SentimentWidgetData
     var body: some View {
-        VStack {
-            Text("分數")
-            Text(String(format: "%.0f", data.score))
-                .font(.largeTitle)
-                .bold()
-            Text(data.sentimentKey) // 假設您有本地化設定
+        VStack(spacing: 5) {
+            if let errorMessage = data.errorMessage {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.red)
+                Text("資料錯誤")
+                    .font(.caption)
+            } else {
+                Text("恐懼貪婪指數") // 使用本地化字串 "marketSentiment.tabs.compositeIndex".localized()
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(String(format: "%.0f", data.score))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                Text(data.sentimentKey) // 假設您有本地化設定
+                    .font(.headline)
+            }
         }
         .padding()
     }
@@ -82,16 +91,36 @@ struct MediumWidgetView: View {
     var body: some View {
         HStack {
             SmallWidgetView(data: data)
-            VStack(alignment: .leading) {
-                ForEach(data.indicators) { indicator in
-                    Text(indicator.name)
+                .frame(maxWidth: .infinity)
+            
+            if let errorMessage = data.errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .containerBackground(for: .widget) {}
+            } else if !data.indicators.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("成分指標")
+                        .font(.headline)
+                    ForEach(data.indicators) { indicator in
+                        HStack {
+                            Text(indicator.name)
+                            Spacer()
+                            Text(String(format: "%.0f", indicator.percentile))
+                        }
                         .font(.caption)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
             }
         }
         .padding()
     }
 }
+
 
 struct LargeWidgetView: View {
     var data: SentimentWidgetData
@@ -107,20 +136,33 @@ struct LargeWidgetView: View {
 // MARK: - 6. Widget 的資料提供者
 struct SentimentProvider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), data: .placeholder)
+        // ✨ Log 6
+        print("[WidgetLog] 6. provider.placeholder() - 提供佔位符資料。")
+        return SimpleEntry(date: Date(), data: .placeholder)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+        // ✨ Log 7
+        print("[WidgetLog] 7. provider.getSnapshot() - 提供快照資料。")
         let entry = SimpleEntry(date: Date(), data: .placeholder)
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+        // ✨ Log 8
+        print("[WidgetLog] 8. provider.getTimeline() - 開始請求真實時間軸資料。")
         Task {
             let data = await WidgetDataProvider.fetchSentimentData()
+            
+            // ✨ Log 9
+            print("[WidgetLog] 9. provider.getTimeline() - 從 WidgetDataProvider 收到資料。錯誤訊息: \(data.errorMessage ?? "無")")
+            
             let entry = SimpleEntry(date: .now, data: data)
             let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: .now)!
             let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+            
+            // ✨ Log 10
+            print("[WidgetLog] 10. provider.getTimeline() - 完成時間軸建立，準備更新畫面。")
             completion(timeline)
         }
     }
@@ -134,11 +176,14 @@ struct SentimentProvider: TimelineProvider {
 // MARK: - 7. 預覽用的 Placeholder 資料
 extension SentimentWidgetData {
     static var placeholder: SentimentWidgetData {
-        .init(score: 50, sentimentKey: "中性", lastUpdated: Date(), indicators: [
-            // 現在可以順利地呼叫 public init
-            .init(name: "VIX 恐慌指數", value: 15, percentile: 50),
-            .init(name: "AAII 散戶情緒", value: 0.1, percentile: 55),
-            .init(name: "CBOE 買/賣權比例", value: 0.8, percentile: 60)
+        .init(score: 50,
+              // ✨ 修正：使用翻譯鍵，而不是寫死的字串
+              sentimentKey: "sentiment.neutral",
+              lastUpdated: Date(),
+              indicators: [
+                .init(name: "VIX 恐慌指數", value: 15, percentile: 50),
+                .init(name: "AAII 散戶情緒", value: 0.1, percentile: 55),
+                .init(name: "CBOE 買/賣權比例", value: 0.8, percentile: 60)
         ])
     }
 }

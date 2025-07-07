@@ -12,7 +12,7 @@
 		<key>Promises (Playground).xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>3</integer>
 		</dict>
 		<key>Sentiment Inside Out.xcscheme_^#shared#^_</key>
 		<dict>
@@ -27,6 +27,11 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>1512A9102E1ABD7500CC3DC7</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>15ECC2A02DFD52E1002F9766</key>
 		<dict>
 			<key>primary</key>

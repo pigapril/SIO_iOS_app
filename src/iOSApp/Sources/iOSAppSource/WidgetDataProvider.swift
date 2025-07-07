@@ -1,5 +1,6 @@
 // src/iOSApp/Sources/iOSAppSource/WidgetDataProvider.swift
 
+
 import Foundation
 import SwiftUI
 
@@ -18,8 +19,7 @@ public struct SentimentWidgetData {
         public let value: Double
         public let percentile: Double
 
-        // +++ ✨ 修正 ✨ +++
-        // 手動提供一個 public 的初始化方法，讓外部模組 (Widget) 可以存取。
+        // +++ ✨ 新增此公開的初始化方法 ✨ +++
         public init(name: String, value: Double, percentile: Double) {
             self.name = name
             self.value = value
@@ -40,33 +40,44 @@ public struct SentimentWidgetData {
 // MARK: - 2. 公開的資料提供者 (這就是我們的 "窗口")
 public class WidgetDataProvider {
 
-    // 提供給 Widget 呼叫的公開靜態函式
     public static func fetchSentimentData() async -> SentimentWidgetData {
+        // ✨ Log 1: 確認 function 是否被呼叫
+        print("[WidgetLog] 1. fetchSentimentData() - 開始獲取資料。")
+        
         do {
             let rawData = try await APIService.shared.fetchMarketSentiment()
             
+            // ✨ Log 2: 確認 API 是否成功回傳資料
+            print("[WidgetLog] 2. APIService.shared.fetchMarketSentiment() - 成功。分數: \(rawData.totalScore)")
+            
             guard let score = Double(rawData.totalScore) else {
+                // ✨ Log 3: 記錄分數轉換失敗
+                print("[WidgetLog] 3. 錯誤：分數格式不正確 - \(rawData.totalScore)")
                 return self.createErrorData(message: "Invalid score format")
             }
             
             let sentimentKey = self.getSentimentKey(for: score)
-            
             let indicatorData = rawData.indicators.compactMap { (key, indicator) -> SentimentWidgetData.IndicatorData? in
                 guard let friendlyName = self.getFriendlyIndicatorName(for: key) else { return nil }
-                // 現在可以順利地呼叫我們建立的 public init
                 return SentimentWidgetData.IndicatorData(name: friendlyName, value: indicator.value, percentile: indicator.percentileRank)
             }
-            
             let sortedIndicators = indicatorData.sorted { $0.name < $1.name }
 
-            return SentimentWidgetData(
+            let finalWidgetData = SentimentWidgetData(
                 score: score,
                 sentimentKey: sentimentKey,
                 lastUpdated: rawData.compositeScoreLastUpdate,
                 indicators: Array(sortedIndicators.prefix(3)),
                 errorMessage: nil
             )
+            
+            // ✨ Log 4: 確認最終要顯示的資料
+            print("[WidgetLog] 4. 成功建立 Widget 資料。指標數量: \(finalWidgetData.indicators.count)")
+            return finalWidgetData
+
         } catch {
+            // ✨ Log 5: 記錄任何從 API 來的錯誤
+            print("[WidgetLog] 5. 錯誤：在 fetchSentimentData 中捕捉到錯誤 - \(error.localizedDescription)")
             ErrorHandler.handle(error: error, component: "WidgetDataProvider")
             return self.createErrorData(message: error.localizedDescription)
         }
